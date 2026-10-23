@@ -194,8 +194,8 @@ async function parseInstagram(url: string, apiKey: string): Promise<VideoMetadat
   // Title: take the first non-empty line of the caption, or default
   const firstLine = captionText
     .split('\n')
-    .map(line => line.trim())
-    .find(line => line.length > 3) || ''
+    .map((line: string) => line.trim())
+    .find((line: string) => line.length > 3) || ''
 
   const title =
     firstLine.length > 0

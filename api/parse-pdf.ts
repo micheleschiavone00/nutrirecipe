@@ -17,9 +17,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // The client side handles pdf.js directly, this is a fallback
   
   try {
-    const chunks: Buffer[] = []
+    const chunks: Uint8Array[] = []
     for await (const chunk of req) {
-      chunks.push(chunk as Buffer)
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
     }
     const buffer = Buffer.concat(chunks)
 
