@@ -1,4 +1,4 @@
-import type { NutritionProfile, Recipe, MealType } from '@/types'
+import type { NutritionProfile, Recipe, MealType, FoodGroup } from '@/types'
 import { CONFIG } from '@/config'
 
 async function chatCompletion(
@@ -33,59 +33,120 @@ async function chatCompletion(
   return data.content
 }
 
-// ─── PDF Analysis ─────────────────────────────────────────────────────────────
+// ─── PDF / Text Analysis ─────────────────────────────────────────────────────
 
 export async function analyzePDFText(pdfText: string): Promise<NutritionProfile['meals']> {
-  const systemPrompt = `Sei un esperto nutrizionista AI. Analizza il testo del piano nutrizionale e restituisci un JSON strutturato.
+  if (!pdfText || pdfText.trim().length < 15) {
+    throw new Error(
+      'Il testo del piano nutrizionale è vuoto o troppo breve. Se il PDF è una scansione (immagine), prova a incollare il testo direttamente.'
+    )
+  }
+
+  const systemPrompt = `Sei un esperto nutrizionista AI. Analizza il testo del piano nutrizionale e restituisci un JSON strutturato con TUTTI i pasti presenti.
   
-Il JSON deve avere questa forma:
+Il JSON deve avere questa forma esatta:
 {
   "meals": [
     {
-      "mealType": "breakfast" | "lunch" | "dinner" | "snack_am" | "snack_pm",
-      "label": "Nome del pasto in italiano",
+      "mealType": "breakfast",
+      "label": "🌅 Colazione",
       "groups": [
         {
-          "id": "unique-id",
-          "name": "Nome gruppo (es. Carboidrati, Proteine, Latticini)",
-          "category": "carbs" | "proteins" | "vegetables" | "fruits" | "dairy" | "fats" | "other",
-          "unit": "g" | "ml" | "pieces" | "portions",
+          "name": "Latticini o Yogurt",
+          "category": "dairy",
+          "unit": "g",
           "options": [
-            {
-              "name": "nome alimento",
-              "quantity": 150,
-              "unit": "g",
-              "calories": 120,
-              "proteins": 5,
-              "carbs": 20,
-              "fats": 2
-            }
-          ],
-          "minQuantity": 150,
-          "maxQuantity": 200,
-          "notes": "eventuali note"
+            { "name": "Yogurt greco 0%", "quantity": 150, "unit": "g" },
+            { "name": "Latte scremato", "quantity": 200, "unit": "ml" }
+          ]
         }
-      ],
-      "notes": "note generali sul pasto"
+      ]
     }
   ]
 }
 
-IMPORTANTE:
-- Estrai TUTTE le opzioni alternative per ogni gruppo alimentare
-- Se ci sono quantità diverse per opzioni diverse, mettile nell'opzione stessa
-- Stima le calorie e macronutrienti se non presenti
-- Restituisci SOLO il JSON, nessun testo extra`
+Regole fondamentali:
+1. I valori ammessi per "mealType" sono solo: "breakfast", "snack_am", "lunch", "snack_pm", "dinner".
+2. I valori ammessi per "category" sono solo: "carbs", "proteins", "vegetables", "fruits", "dairy", "fats", "other".
+3. "quantity" deve essere sempre un NUMERO intero (es. 150, NON "150g").
+4. Estrai tutte le alternative possibili fornite dalla nutrizionista come elementi dentro "options".
+5. Restituisci SOLO ed esclusivamente l'oggetto JSON, senza testo o markdown prima o dopo.`
 
-  const userPrompt = `Analizza questo piano nutrizionale:\n\n${pdfText}`
+  const userPrompt = `Analizza questo piano nutrizionale ed estrai pasti, gruppi alimentari, alimenti alternativi e relative grammature:\n\n${pdfText}`
 
   const result = await chatCompletion([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
   ])
 
-  const parsed = JSON.parse(result)
-  return parsed.meals
+  let parsed: any
+  try {
+    parsed = JSON.parse(result)
+  } catch {
+    throw new Error('Risposta AI non valida. Riprova tra qualche istante.')
+  }
+
+  const rawMeals = Array.isArray(parsed?.meals) ? parsed.meals : []
+  if (rawMeals.length === 0) {
+    throw new Error(
+      "L'AI non ha rilevato pasti con grammature nel testo fornito. Assicurati che contenga indicazioni per i pasti (es. colazione, pranzo, cena)."
+    )
+  }
+
+  // Normalizza e valida i pasti in modo che i campi React non siano mai vuoti o con NaN
+  const normalizedMeals: NutritionProfile['meals'] = rawMeals.map((meal: any, mIdx: number) => {
+    const mealType = ['breakfast', 'snack_am', 'lunch', 'snack_pm', 'dinner'].includes(meal.mealType)
+      ? meal.mealType
+      : 'lunch'
+
+    const groups = Array.isArray(meal.groups)
+      ? meal.groups.map((group: any, gIdx: number) => {
+          const options = Array.isArray(group.options) && group.options.length > 0
+            ? group.options.map((opt: any) => {
+                let qty =
+                  typeof opt.quantity === 'number'
+                    ? opt.quantity
+                    : parseFloat(String(opt.quantity || '100').replace(/[^0-9.,]/g, '').replace(',', '.'))
+                if (isNaN(qty) || qty <= 0) qty = 100
+
+                return {
+                  name: String(opt.name || 'Alimento').trim(),
+                  quantity: Math.round(qty),
+                  unit: String(opt.unit || group.unit || 'g').trim() || 'g',
+                  calories: typeof opt.calories === 'number' ? opt.calories : undefined,
+                  proteins: typeof opt.proteins === 'number' ? opt.proteins : undefined,
+                  carbs: typeof opt.carbs === 'number' ? opt.carbs : undefined,
+                  fats: typeof opt.fats === 'number' ? opt.fats : undefined,
+                }
+              })
+            : [{ name: 'Porzione', quantity: 100, unit: 'g' }]
+
+          return {
+            id: `grp-${mIdx}-${gIdx}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            name: String(group.name || 'Gruppo alimento').trim(),
+            category: (['carbs', 'proteins', 'vegetables', 'fruits', 'dairy', 'fats', 'other'].includes(
+              group.category
+            )
+              ? group.category
+              : 'other') as FoodGroup['category'],
+            unit: String(group.unit || 'g').trim() || 'g',
+            options,
+            minQuantity: typeof group.minQuantity === 'number' ? group.minQuantity : undefined,
+            maxQuantity: typeof group.maxQuantity === 'number' ? group.maxQuantity : undefined,
+            notes: group.notes || '',
+          }
+        })
+      : []
+
+    return {
+      mealType,
+      label: meal.label || mealType,
+      groups,
+      notes: meal.notes || '',
+    }
+  })
+
+  return normalizedMeals
 }
 
 // ─── Recipe Adaptation ────────────────────────────────────────────────────────
