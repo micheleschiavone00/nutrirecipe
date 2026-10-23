@@ -108,7 +108,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ message: 'Missing url parameter' })
   }
 
-  const rapidApiKey = process.env.RAPIDAPI_KEY || (req.headers['x-rapidapi-key'] as string)
+  const rapidApiKey =
+    process.env.RAPIDAPI_KEY ||
+    (req.headers['x-rapidapi-key'] as string) ||
+    '569cddf354msh7e271c4e13f475ap15d3a8jsn09bab6180f59'
   if (!rapidApiKey) {
     return res.status(500).json({ message: 'RapidAPI key non configurata sul server' })
   }

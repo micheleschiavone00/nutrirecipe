@@ -1,5 +1,6 @@
 import type { RecipeSource } from '@/types'
 import { getSettings } from '@/lib/db'
+import { CONFIG } from '@/config'
 
 export interface VideoMetadata {
   title: string
@@ -14,15 +15,16 @@ export interface VideoMetadata {
 /**
  * Calls our Vercel Edge/Serverless Function which in turn calls RapidAPI.
  * The RapidAPI key is kept securely on the server via RAPIDAPI_KEY env var.
- * If configured in local app settings, it is sent as fallback in header.
+ * If configured in local config or app settings, it is sent as fallback in header.
  */
 export async function extractVideoMetadata(url: string): Promise<VideoMetadata> {
   const apiBase = import.meta.env.VITE_API_BASE ?? ''
   const settings = await getSettings().catch(() => null)
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (settings?.rapidApiKey) {
-    headers['x-rapidapi-key'] = settings.rapidApiKey
+  const apiKey = CONFIG.rapidApiKey || settings?.rapidApiKey
+  if (apiKey) {
+    headers['x-rapidapi-key'] = apiKey
   }
 
   const response = await fetch(`${apiBase}/api/parse-video`, {

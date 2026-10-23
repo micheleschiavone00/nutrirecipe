@@ -1,11 +1,27 @@
 import type { NutritionProfile, Recipe, MealType } from '@/types'
+import { CONFIG } from '@/config'
 
 const OPENAI_BASE = 'https://api.openai.com/v1'
 
 function getApiKey(): string {
-  const key = localStorage.getItem('openai_api_key') ?? ''
-  if (!key) throw new Error('OpenAI API key non configurata. Vai in Impostazioni.')
-  return key
+  // 1. Chiave impostata direttamente nel codice in src/config.ts
+  if (CONFIG.openAIApiKey && CONFIG.openAIApiKey.trim().length > 0) {
+    return CONFIG.openAIApiKey.trim()
+  }
+
+  // 2. Chiave da variabile d'ambiente Vite
+  const envKey = import.meta.env.VITE_OPENAI_API_KEY
+  if (envKey && envKey.trim().length > 0) {
+    return envKey.trim()
+  }
+
+  // 3. Fallback da localStorage
+  const localKey = typeof localStorage !== 'undefined' ? localStorage.getItem('openai_api_key') : ''
+  if (localKey && localKey.trim().length > 0) {
+    return localKey.trim()
+  }
+
+  throw new Error('OpenAI API key non configurata. Inseriscila in src/config.ts o in .env.local')
 }
 
 async function chatCompletion(

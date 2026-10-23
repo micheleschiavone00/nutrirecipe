@@ -196,7 +196,7 @@ export default function ImportPage() {
         {status === 'error' && (
           <div className="card p-4 border-red-200 bg-red-50">
             <p className="text-red-600 font-medium text-sm">❌ {error}</p>
-            <p className="text-red-400 text-xs mt-1">Controlla l'API key nelle impostazioni e riprova.</p>
+            <p className="text-red-400 text-xs mt-1">Verifica che il link sia valido e riprova.</p>
           </div>
         )}
 

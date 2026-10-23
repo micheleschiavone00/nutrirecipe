@@ -355,8 +355,8 @@ export default function SetupPage() {
             <button onClick={() => navigate('/import')} className="btn-primary w-full mb-3">
               Importa la prima ricetta 🎥
             </button>
-            <button onClick={() => navigate('/settings')} className="btn-secondary w-full">
-              Configura API Key
+            <button onClick={() => navigate('/recipes')} className="btn-secondary w-full">
+              Vai al ricettario 📖
             </button>
           </div>
         )}

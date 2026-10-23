@@ -1,41 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getSettings, saveSettings, db } from '@/lib/db'
+import { getSettings, db } from '@/lib/db'
 import { PageHeader } from '@/components/ui'
-import type { AppSettings } from '@/types'
+import { isOpenAIConfigured, isRapidAPIConfigured } from '@/config'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
-  const [settings, setSettings] = useState<AppSettings>({
-    openAIApiKey: '',
-    rapidApiKey: '',
-    language: 'it',
-    theme: 'system',
-  })
-  const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [showOpenAIKey, setShowOpenAIKey] = useState(false)
-  const [showRapidKey, setShowRapidKey] = useState(false)
 
   useEffect(() => {
-    getSettings().then(s => {
-      setSettings(s)
+    getSettings().then(() => {
       setLoading(false)
     })
   }, [])
 
-  const save = async () => {
-    await saveSettings(settings)
-    // Also store in localStorage for direct API calls
-    if (settings.openAIApiKey) {
-      localStorage.setItem('openai_api_key', settings.openAIApiKey)
-    }
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
-
   const resetApp = async () => {
-    if (confirm('Eliminare tutti i dati? Quest\'operazione non è reversibile.')) {
+    if (confirm("Eliminare tutti i dati? Quest'operazione non è reversibile.")) {
       await db.recipes.clear()
       await db.profiles.clear()
       await db.plannedMeals.clear()
@@ -48,88 +28,73 @@ export default function SettingsPage() {
 
   if (loading) return null
 
+  const hasOpenAI = isOpenAIConfigured()
+  const hasRapidAPI = isRapidAPIConfigured()
+
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader title="Impostazioni" />
 
       <div className="px-4 pt-4 space-y-4 max-w-lg mx-auto">
-
-        {/* API Keys */}
-        <div className="card p-4 space-y-4">
-          <h2 className="font-semibold text-gray-900">🔑 API Keys</h2>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              OpenAI API Key
-              <a
-                href="https://platform.openai.com/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2 text-xs text-blue-500 underline"
-              >
-                Ottienila qui →
-              </a>
-            </label>
-            <div className="relative">
-              <input
-                type={showOpenAIKey ? 'text' : 'password'}
-                placeholder="sk-..."
-                value={settings.openAIApiKey}
-                onChange={e => setSettings(s => ({ ...s, openAIApiKey: e.target.value }))}
-                className="input-field pr-10"
-              />
-              <button
-                onClick={() => setShowOpenAIKey(!showOpenAIKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-              >
-                {showOpenAIKey ? '🙈' : '👁'}
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Usata per analizzare PDF e adattare le ricette. Costo stimato: ~€0.01 per ricetta.
-            </p>
+        {/* API Services Status */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">🔑 Servizi & API</h2>
+            <span className="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
+              Uso Personale
+            </span>
           </div>
+          <p className="text-xs text-gray-500">
+            Le API key sono integrate nel codice dell'app per la massima comodità e privacy.
+          </p>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              RapidAPI Key
-              <a
-                href="https://rapidapi.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2 text-xs text-blue-500 underline"
-              >
-                Ottienila qui →
-              </a>
-            </label>
-            <div className="relative">
-              <input
-                type={showRapidKey ? 'text' : 'password'}
-                placeholder="La tua RapidAPI key..."
-                value={settings.rapidApiKey}
-                onChange={e => setSettings(s => ({ ...s, rapidApiKey: e.target.value }))}
-                className="input-field pr-10"
-              />
-              <button
-                onClick={() => setShowRapidKey(!showRapidKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-              >
-                {showRapidKey ? '🙈' : '👁'}
-              </button>
+          <div className="space-y-2 pt-1">
+            {/* RapidAPI */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📸</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">RapidAPI Scraper</p>
+                  <p className="text-xs text-gray-500">Instagram, TikTok & YouTube</p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                {hasRapidAPI ? 'Attiva' : 'Disattivata'}
+              </span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Usata per estrarre dati da TikTok/Instagram. Piano gratuito: 100 richieste/mese.
-            </p>
+
+            {/* OpenAI */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🤖</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">OpenAI (GPT-4o)</p>
+                  <p className="text-xs text-gray-500">Analisi PDF & adattamento ricette</p>
+                </div>
+              </div>
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${
+                  hasOpenAI
+                    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                    : 'text-amber-700 bg-amber-50 border-amber-200'
+                }`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    hasOpenAI ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                  }`}
+                ></span>
+                {hasOpenAI ? 'Attiva' : 'Configura in src/config.ts'}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Nutrition Profile */}
         <div className="card p-4 space-y-3">
           <h2 className="font-semibold text-gray-900">🥗 Piano Nutrizionale</h2>
-          <button
-            onClick={() => navigate('/setup')}
-            className="btn-secondary w-full"
-          >
+          <button onClick={() => navigate('/setup')} className="btn-secondary w-full">
             Modifica piano nutrizionale
           </button>
         </div>
@@ -149,9 +114,8 @@ export default function SettingsPage() {
           </div>
           <div className="bg-blue-50 rounded-xl p-3">
             <p className="text-xs text-blue-700">
-              <strong>Privacy:</strong> NutriRecipe non invia i tuoi dati a nessun server esterno.
-              Il piano nutrizionale, le ricette e il meal planner vengono salvati solo nel browser del tuo iPhone.
-              Le API key vengono usate direttamente dal tuo browser per chiamare OpenAI e RapidAPI.
+              <strong>Privacy:</strong> NutriRecipe non invia i tuoi dati personali ad alcun server esterno.
+              Il piano nutrizionale, le ricette e il meal planner risiedono sul tuo dispositivo.
             </p>
           </div>
         </div>
@@ -182,14 +146,6 @@ export default function SettingsPage() {
             Reimposta app ed elimina tutti i dati
           </button>
         </div>
-
-        {/* Save button */}
-        <button
-          onClick={save}
-          className={`btn-primary w-full ${saved ? 'bg-green-500' : ''} transition-colors`}
-        >
-          {saved ? '✓ Salvato!' : 'Salva impostazioni'}
-        </button>
 
         <div className="h-4" />
       </div>
