@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    height: -webkit-fill-available;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+@layer utilities {
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .pb-nav {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* iOS-style active states */
+@layer components {
+  .btn-primary {
+    @apply bg-primary-500 text-white font-semibold py-3 px-6 rounded-2xl 
+           active:scale-95 transition-all duration-150 shadow-sm
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-white text-primary-600 font-semibold py-3 px-6 rounded-2xl 
+           border border-primary-200 active:scale-95 transition-all duration-150;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+  }
+  .input-field {
+    @apply w-full bg-gray-100 rounded-xl px-4 py-3 text-gray-900 
+           placeholder-gray-400 focus:outline-none focus:ring-2 
+           focus:ring-primary-400 focus:bg-white transition-all;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .section-title {
+    @apply text-xl font-bold text-gray-900;
+  }
+  .nav-item {
+    @apply flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl
+           transition-all duration-200 active:scale-95 cursor-pointer;
+  }
+}
