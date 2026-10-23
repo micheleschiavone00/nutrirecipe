@@ -1,55 +1,36 @@
 import type { NutritionProfile, Recipe, MealType } from '@/types'
 import { CONFIG } from '@/config'
 
-const OPENAI_BASE = 'https://api.openai.com/v1'
-
-function getApiKey(): string {
-  // 1. Chiave impostata direttamente nel codice in src/config.ts
-  if (CONFIG.openAIApiKey && CONFIG.openAIApiKey.trim().length > 0) {
-    return CONFIG.openAIApiKey.trim()
-  }
-
-  // 2. Chiave da variabile d'ambiente Vite
-  const envKey = import.meta.env.VITE_OPENAI_API_KEY
-  if (envKey && envKey.trim().length > 0) {
-    return envKey.trim()
-  }
-
-  // 3. Fallback da localStorage
-  const localKey = typeof localStorage !== 'undefined' ? localStorage.getItem('openai_api_key') : ''
-  if (localKey && localKey.trim().length > 0) {
-    return localKey.trim()
-  }
-
-  throw new Error('OpenAI API key non configurata. Inseriscila in src/config.ts o in .env.local')
-}
-
 async function chatCompletion(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   model = 'gpt-4o',
 ): Promise<string> {
-  const response = await fetch(`${OPENAI_BASE}/chat/completions`, {
+  const apiBase = import.meta.env.VITE_API_BASE ?? ''
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (CONFIG.openAIApiKey) {
+    headers['x-openai-key'] = CONFIG.openAIApiKey
+  }
+
+  const response = await fetch(`${apiBase}/api/ai`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getApiKey()}`,
-    },
+    headers,
     body: JSON.stringify({
       model,
       messages,
-      temperature: 0.3,
-      max_tokens: 4000,
-      response_format: { type: 'json_object' },
     }),
   })
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
-    throw new Error(`OpenAI error: ${err.error?.message ?? response.statusText}`)
+    throw new Error(err.message ?? `OpenAI error: ${response.statusText}`)
   }
 
   const data = await response.json()
-  return data.choices[0].message.content
+  return data.content
 }
 
 // ─── PDF Analysis ─────────────────────────────────────────────────────────────
