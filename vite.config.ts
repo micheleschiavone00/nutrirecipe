@@ -1,7 +1,68 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { parseVideoUrl } from './api/parse-video'
+
+function apiDevPlugin(): Plugin {
+  return {
+    name: 'api-dev-server',
+    configureServer(server) {
+      server.middlewares.use('/api/parse-video', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ message: 'Method not allowed' }))
+          return
+        }
+
+        let body = ''
+        req.on('data', chunk => {
+          body += chunk
+        })
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}')
+            const url = parsed.url
+            if (!url) {
+              res.statusCode = 400
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ message: 'Missing url parameter' }))
+              return
+            }
+
+            const env = loadEnv('development', process.cwd(), '')
+            const apiKey = env.RAPIDAPI_KEY || (req.headers['x-rapidapi-key'] as string)
+            if (!apiKey) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(
+                JSON.stringify({
+                  message: 'RapidAPI key non configurata sul server (aggiungila a .env.local)',
+                })
+              )
+              return
+            }
+
+            const metadata = await parseVideoUrl(url, apiKey)
+            res.statusCode = 200
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(metadata))
+          } catch (err: unknown) {
+            console.error('API dev server error:', err)
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(
+              JSON.stringify({
+                message: err instanceof Error ? err.message : 'Errore nel parsing del video',
+              })
+            )
+          }
+        })
+      })
+    },
+  }
+}
 
 export default defineConfig({
   resolve: {
@@ -10,6 +71,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    apiDevPlugin(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
