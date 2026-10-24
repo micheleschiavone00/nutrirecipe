@@ -24,6 +24,13 @@ const STATUS_MESSAGES: Record<ImportStatus, string> = {
   error: '❌ Errore',
 }
 
+function cleanPastedUrl(text: string): string {
+  if (!text) return ''
+  const trimmed = text.trim()
+  const match = trimmed.match(/https?:\/\/[^\s]+/i)
+  return match ? match[0] : trimmed
+}
+
 export default function ImportPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -38,23 +45,37 @@ export default function ImportPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const sharedUrl = params.get('url') || params.get('text') || ''
-    if (sharedUrl && sharedUrl.startsWith('http')) {
-      setUrl(sharedUrl)
+    if (sharedUrl) {
+      setUrl(cleanPastedUrl(sharedUrl))
     }
     getActiveProfile().then(p => p && setProfile(p))
   }, [location])
 
+  const handlePasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text) {
+        setUrl(cleanPastedUrl(text))
+      }
+    } catch {
+      // ignore clipboard permission error
+    }
+  }
+
   const handleImport = async () => {
-    if (!url.trim()) { setError('Inserisci un link'); return }
-    if (!profile) { setError('Nessun profilo configurato. Vai in Setup.'); return }
+    const cleanUrl = cleanPastedUrl(url)
+    if (!cleanUrl) {
+      setError('Inserisci o incolla un link valido (es. Instagram o TikTok)')
+      return
+    }
 
     setError('')
     setRecipe(null)
 
     try {
       setStatus('extracting')
-      const source = detectSource(url)
-      const metadata = await extractVideoMetadata(url)
+      const source = detectSource(cleanUrl)
+      const metadata = await extractVideoMetadata(cleanUrl)
 
       setStatus('analyzing')
       const rawText = [
@@ -64,32 +85,74 @@ export default function ImportPage() {
         ...(metadata.ingredients ?? []),
       ].join('\n')
 
-      const rawRecipe = await extractRecipeFromText(rawText, url)
+      const rawRecipe = await extractRecipeFromText(rawText, cleanUrl)
 
-      setStatus('adapting')
-      const adapted = await adaptRecipeToProfile(
-        {
-          ...rawRecipe,
-          thumbnailUrl: metadata.thumbnailUrl,
-          sourceUrl: url,
+      // Se l'utente ha configurato il piano nutrizionale, adattiamo le porzioni!
+      if (profile && profile.meals && profile.meals.length > 0) {
+        setStatus('adapting')
+        const adapted = await adaptRecipeToProfile(
+          {
+            ...rawRecipe,
+            thumbnailUrl: metadata.thumbnailUrl,
+            sourceUrl: cleanUrl,
+            source,
+          },
+          profile,
+          targetMeal,
+        )
+
+        const finalRecipe: Recipe = {
+          ...adapted,
+          id: generateId(),
+          isFavorite: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+        setRecipe(finalRecipe)
+      } else {
+        // Nessun profilo nutrizionale configurato: mostra gli ingredienti originali estratti dal video
+        const fallbackRecipe: Recipe = {
+          id: generateId(),
+          title: rawRecipe.title || metadata.title || 'Ricetta importata',
+          description: rawRecipe.description || metadata.description || '',
           source,
-        },
-        profile,
-        targetMeal,
-      )
-
-      const finalRecipe: Recipe = {
-        ...adapted,
-        id: generateId(),
-        isFavorite: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+          sourceUrl: cleanUrl,
+          thumbnailUrl: metadata.thumbnailUrl,
+          targetMeal,
+          originalIngredients: rawRecipe.ingredients.map(ing => ({
+            name: ing,
+            originalQuantity: '',
+            adaptedQuantity: '',
+            unit: '',
+            category: 'other',
+            isOptional: false,
+          })),
+          adaptedIngredients: rawRecipe.ingredients.map(ing => ({
+            name: ing,
+            originalQuantity: '',
+            adaptedQuantity: ing,
+            unit: '',
+            category: 'other',
+            isOptional: false,
+          })),
+          steps: rawRecipe.steps.map((step, i) => ({
+            order: i + 1,
+            description: step,
+          })),
+          adaptationNotes:
+            'Piano nutrizionale non ancora configurato: visualizzo gli ingredienti originali estratti dal video. Configura il piano in Setup per adattare automaticamente le porzioni.',
+          tags: ['social', source],
+          servings: 1,
+          isFavorite: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+        setRecipe(fallbackRecipe)
       }
 
-      setRecipe(finalRecipe)
       setStatus('done')
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Errore sconosciuto')
+      setError(e instanceof Error ? e.message : 'Errore durante l\'importazione della ricetta')
       setStatus('error')
     }
   }
@@ -110,6 +173,24 @@ export default function ImportPage() {
       />
 
       <div className="px-4 pt-4 space-y-4 max-w-lg mx-auto">
+        {/* Profile notification banner if no profile */}
+        {!profile && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">💡</span>
+              <p className="text-xs text-amber-800">
+                Piano nutrizionale non configurato: la ricetta verrà importata con le quantità originali del video.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/setup')}
+              className="text-xs bg-amber-600 text-white font-semibold px-2.5 py-1.5 rounded-xl whitespace-nowrap hover:bg-amber-700"
+            >
+              Configura
+            </button>
+          </div>
+        )}
+
         {/* URL input */}
         <div className="card p-4">
           <label className="text-sm font-semibold text-gray-700 mb-2 block">
@@ -118,19 +199,31 @@ export default function ImportPage() {
           <div className="flex gap-2">
             <input
               type="url"
-              placeholder="https://www.tiktok.com/@..."
+              placeholder="Incolla link Instagram o TikTok..."
               value={url}
-              onChange={e => setUrl(e.target.value)}
+              onChange={e => setUrl(cleanPastedUrl(e.target.value))}
+              onKeyDown={e => e.key === 'Enter' && handleImport()}
               className="input-field flex-1"
               disabled={isLoading}
             />
-            {url && (
+            {url ? (
               <button
                 onClick={() => setUrl('')}
-                className="w-10 h-10 flex items-center justify-center text-gray-400 rounded-xl bg-gray-100"
+                className="w-10 h-10 flex items-center justify-center text-gray-400 rounded-xl bg-gray-100 hover:bg-gray-200"
               >
                 ✕
               </button>
+            ) : (
+              typeof navigator !== 'undefined' &&
+              navigator.clipboard && (
+                <button
+                  type="button"
+                  onClick={handlePasteClipboard}
+                  className="px-3 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-200 whitespace-nowrap"
+                >
+                  📋 Incolla
+                </button>
+              )
             )}
           </div>
 
@@ -168,9 +261,9 @@ export default function ImportPage() {
         <button
           onClick={handleImport}
           disabled={isLoading || !url.trim()}
-          className="btn-primary w-full"
+          className="btn-primary w-full text-base py-3"
         >
-          {isLoading ? 'Elaborazione…' : '🤖 Importa e Adatta'}
+          {isLoading ? 'Elaborazione in corso…' : '🤖 Importa Ricetta'}
         </button>
 
         {/* Status */}
@@ -179,13 +272,13 @@ export default function ImportPage() {
             <LoadingSpinner size="lg" />
             <div className="text-center">
               <p className="font-medium text-gray-900">{STATUS_MESSAGES[status]}</p>
-              <p className="text-xs text-gray-400 mt-1">Questo può richiedere 10-20 secondi</p>
+              <p className="text-xs text-gray-400 mt-1">Questo può richiedere 5-15 secondi</p>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-1.5">
               <div
                 className="bg-primary-500 h-1.5 rounded-full transition-all duration-700"
                 style={{
-                  width: status === 'extracting' ? '33%' : status === 'analyzing' ? '66%' : '90%'
+                  width: status === 'extracting' ? '33%' : status === 'analyzing' ? '66%' : '90%',
                 }}
               />
             </div>
@@ -226,31 +319,43 @@ export default function ImportPage() {
               )}
 
               <div className="bg-primary-50 rounded-xl p-3">
-                <p className="text-xs font-semibold text-primary-700 mb-1">📋 Note adattamento AI</p>
+                <p className="text-xs font-semibold text-primary-700 mb-1">📋 Dettagli ricetta</p>
                 <p className="text-sm text-primary-900">{recipe.adaptationNotes}</p>
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ingredienti adattati</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  Ingredienti
+                </p>
                 <div className="space-y-1.5">
-                  {recipe.adaptedIngredients.slice(0, 5).map((ing, i) => (
+                  {recipe.adaptedIngredients.slice(0, 6).map((ing, i) => (
                     <div key={i} className="flex items-center justify-between text-sm">
                       <span className="text-gray-700">{ing.name}</span>
-                      <span className="font-semibold text-primary-700">{ing.adaptedQuantity}</span>
+                      <span className="font-semibold text-primary-700">
+                        {ing.adaptedQuantity || ing.originalQuantity}
+                      </span>
                     </div>
                   ))}
-                  {recipe.adaptedIngredients.length > 5 && (
-                    <p className="text-xs text-gray-400">+{recipe.adaptedIngredients.length - 5} altri…</p>
+                  {recipe.adaptedIngredients.length > 6 && (
+                    <p className="text-xs text-gray-400">
+                      +{recipe.adaptedIngredients.length - 6} altri…
+                    </p>
                   )}
                 </div>
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button onClick={() => { setRecipe(null); setStatus('idle') }} className="btn-secondary flex-1">
-                  Modifica
+                <button
+                  onClick={() => {
+                    setRecipe(null)
+                    setStatus('idle')
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Importa un'altra
                 </button>
                 <button onClick={saveRecipe} className="btn-primary flex-1">
-                  Salva Ricetta 💾
+                  Salva nel Ricettario 💾
                 </button>
               </div>
             </div>
@@ -262,9 +367,9 @@ export default function ImportPage() {
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
             <p className="text-sm font-semibold text-blue-800 mb-1">💡 Come usare</p>
             <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
-              <li>Su TikTok/Instagram, tocca <strong>Condividi</strong></li>
-              <li>Seleziona <strong>NutriRecipe</strong> dal menu</li>
-              <li>L'app importa e adatta automaticamente la ricetta</li>
+              <li>Copia il link del video da Instagram o TikTok</li>
+              <li>Incolla il link qui sopra e tocca <strong>"Importa Ricetta"</strong></li>
+              <li>L'AI estrarrà titolo, passaggi e tutti gli ingredienti</li>
             </ol>
           </div>
         )}
