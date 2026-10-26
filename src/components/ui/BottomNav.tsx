@@ -4,7 +4,7 @@ import { hasUnseenUpdate } from '@/data/changelog'
 
 const NAV_ITEMS = [
   { path: '/recipes', icon: '📚', label: 'Ricette' },
-  { path: '/import', icon: '➕', label: 'Importa' },
+  { path: '/import', icon: '➕', label: 'Aggiungi' },
   { path: '/planner', icon: '📅', label: 'Piano' },
   { path: '/shopping', icon: '🛒', label: 'Spesa' },
   { path: '/settings', icon: '⚙️', label: 'Settings', hasBadge: true },

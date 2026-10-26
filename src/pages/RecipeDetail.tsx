@@ -329,6 +329,12 @@ export default function RecipeDetailPage() {
               <span className="absolute right-2.5 pointer-events-none text-[9px] text-primary-600">▼</span>
             </div>
 
+            {recipe.dishType === 'side' && (
+              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 font-bold text-xs px-2.5 py-1">
+                🥗 Contorno
+              </Badge>
+            )}
+
             {recipe.source !== 'manual' && (
               <Badge className="bg-gray-100 text-gray-700 capitalize font-medium text-xs px-2.5 py-1">
                 {recipe.source}
@@ -354,6 +360,27 @@ export default function RecipeDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Side Dish / Incomplete Meal Advice Box */}
+        {(recipe.dishType === 'side' ||
+          (recipe.adaptedIngredients.length > 0 &&
+            recipe.adaptedIngredients.every(
+              i => i.category === 'vegetables' || i.category === 'fats' || i.category === 'other'
+            ) &&
+            !recipe.adaptedIngredients.some(i => i.category === 'proteins'))) && (
+          <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-emerald-900 shadow-2xs">
+            <span className="text-xl">🥗</span>
+            <div>
+              <p className="font-extrabold text-xs">Piatto Contorno (Solo Verdure)</p>
+              <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                Questa ricetta è un contorno e non costituisce un pasto completo. Nel{' '}
+                <strong>Meal Planner</strong> puoi abbinarlo a un secondo piatto o piatto principale
+                (es. Frittata, Salmone o Pollo): le verdure e i macro verranno ripartiti
+                automaticamente tra le due pietanze!
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Multi-Variant Selector Bar (Pranzo / Cena / Post Workout) ── */}
         {variants.length > 1 && (

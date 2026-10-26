@@ -87,6 +87,7 @@ export interface NutritionalValues {
 }
 
 export type RecipeSource = 'tiktok' | 'instagram' | 'youtube' | 'manual'
+export type DishType = 'complete' | 'main' | 'side'
 
 export interface RecipeMealVariant {
   id: string                  // es. "lunch", "dinner", "dinner_post_workout"
@@ -107,6 +108,7 @@ export interface Recipe {
   sourceUrl?: string
   source: RecipeSource
   targetMeal: TargetMealType
+  dishType?: DishType         // 'complete' = piatto unico bilanciato, 'main' = primo/secondo, 'side' = contorno
   originalIngredients: RecipeIngredient[]
   adaptedIngredients: RecipeIngredient[]
   steps: RecipeStep[]

@@ -229,6 +229,17 @@ function DayCard({
                 </button>
               ) : (
                 <div className="space-y-1.5">
+                  {slots.length > 1 && (
+                    <div className="px-2.5 py-1 bg-emerald-50/90 border border-emerald-200/80 rounded-xl text-[10px] text-emerald-800 font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <span>🥗</span>
+                        <span>Pasto Composto ({slots.length} pietanze)</span>
+                      </span>
+                      <span className="text-[9px] font-semibold text-emerald-700 bg-white px-1.5 py-0.2 rounded border border-emerald-200">
+                        Verdure &amp; Dosi Ripartite ✓
+                      </span>
+                    </div>
+                  )}
                   {slots.map(slot => {
                     const recipe = slot.recipeId ? recipesMap[slot.recipeId] : null
                     return (

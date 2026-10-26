@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.6.0'
+export const APP_VERSION = '1.7.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.7.0',
+    date: '27 Ottobre 2026',
+    title: 'Algoritmo Deterministico di Calibrazione Dosi, Creazione Ricette Ad-Hoc e Pasti Composti con Contorni',
+    isLatest: true,
+    summary:
+      'Introdotto un nuovo algoritmo matematico/deterministico indipendente dall\'AI per la calibrazione esatta delle dosi: quando sono presenti uova e parmigiano vengono entrambi dimezzati al 50% riconoscendo il parmigiano come proteina nobile. Nuova schermata "Aggiungi Ricetta" con creazione rapida ad hoc e suggeritore ingredienti dal titolo senza testi artificiali, rilevamento automatico dei contorni e supporto a pasti composti nel Planner con ripartizione automatica delle verdure.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Algoritmo Deterministico Indipendente dall\'AI (Uova + Parmigiano Dimezzati)',
+        description:
+          'Creato un algoritmo matematico che confronta direttamente le quantità salvate nel tuo piano. Quando rileva combinazioni multi-fonte come uova e parmigiano (anche negli impasti), dimezza entrambi al 50% della quota, ricordandosi che il parmigiano oltre ad essere formaggio è a tutti gli effetti una proteina. Funziona sia in automatico che come garanzia/fallback per correggere eventuali imprecisioni.',
+        howToUse: 'Applicato automaticamente a tutte le ricette create o importate.',
+      },
+      {
+        type: 'feat',
+        title: 'Nuova Schermata "Aggiungi Ricetta" con Creazione Ad-Hoc',
+        description:
+          'La sezione "Importa" diventa "Aggiungi": ora puoi creare una ricetta personalizzata da zero (es. "Salmone in friggitrice ad aria"). L\'AI non crea procedimenti artificiali: il sistema suggerisce istantaneamente gli ingredienti giusti dal titolo e l\'algoritmo calcola subito le dosi esatte.',
+        howToUse: 'Tocca "➕ Aggiungi" nella barra in basso e seleziona "✍️ Crea Ad-Hoc".',
+      },
+      {
+        type: 'feat',
+        title: 'Rilevamento Contorni e Pasti Composti (Piatto + Contorno)',
+        description:
+          'Una ricetta di sole verdure viene etichettata come "🥗 Contorno". Nel Meal Planner puoi ora associare più piatti allo stesso pranzo o cena (es. Frittata di zucchine + Contorno di verdure): la quota totale di verdure (es. 200g) viene ripartita equamente tra entrambe le pietanze (100g e 100g).',
+        howToUse: 'Aggiungi un contorno e un piatto principale nello stesso giorno: visualizzerai il badge "Pasto Composto Bilanciato".',
+      },
+      {
+        type: 'design',
+        title: 'Nuova Voce "Aggiungi" nella Barra di Navigazione',
+        description:
+          'La barra di navigazione inferiore è stata aggiornata con la dicitura "Aggiungi", offrendo un accesso unificato sia alla creazione ad hoc che all\'importazione da Instagram, TikTok e YouTube.',
+        howToUse: 'Icona ➕ "Aggiungi" nella navbar inferiore.',
+      },
+    ],
+  },
   {
     version: '1.6.0',
     date: '27 Ottobre 2026',
     title: 'Creazione Guidata Settimana Standard con Business Rules, Limiti Frequenze e Pasto Libero',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Nuova schermata dedicata "Crea Settimana Standard" giorno per giorno (da Lunedì a Domenica) con domanda a fuoco "Cosa vuoi mangiare oggi?". Il sistema monitora le frequenze alimentari del tuo piano in tempo reale: ti avvisa quando raggiungi il limite (es. max 3 volte carne rossa), ti suggerisce cosa mangiare (es. pesce se mangiato solo 2/4 volte) e ti ricorda di posizionare il tuo pasto libero al sabato sera se non l\'hai ancora fatto.',
     changes: [
