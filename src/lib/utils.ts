@@ -1,25 +1,27 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import type { MealType } from '@/types'
+import type { MealType, TargetMealType } from '@/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const MEAL_LABELS: Record<MealType, string> = {
+export const MEAL_LABELS: Record<TargetMealType, string> = {
   breakfast: '🌅 Colazione',
   snack_am: '🍎 Spuntino mattina',
   lunch: '☀️ Pranzo',
-  snack_pm: '🍪 Merenda',
   dinner: '🌙 Cena',
+  lunch_dinner: '☀️🌙 Pranzo e Cena',
+  snack_pm: '🍪 Merenda',
 }
 
-export const MEAL_ICONS: Record<MealType, string> = {
+export const MEAL_ICONS: Record<TargetMealType, string> = {
   breakfast: '🌅',
   snack_am: '🍎',
   lunch: '☀️',
-  snack_pm: '🍪',
   dinner: '🌙',
+  lunch_dinner: '☀️🌙',
+  snack_pm: '🍪',
 }
 
 export const CATEGORY_LABELS = {

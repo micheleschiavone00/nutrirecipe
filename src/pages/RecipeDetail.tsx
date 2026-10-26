@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { MEAL_LABELS, CATEGORY_LABELS, CATEGORY_COLORS, formatDate } from '@/lib/utils'
+import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, formatDate } from '@/lib/utils'
 import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
-import type { MealType } from '@/types'
+import type { MealType, TargetMealType } from '@/types'
 
 const MEAL_OPTIONS: { value: MealType; label: string }[] = [
   { value: 'breakfast', label: '🌅 Colazione' },
@@ -12,6 +12,15 @@ const MEAL_OPTIONS: { value: MealType; label: string }[] = [
   { value: 'lunch', label: '☀️ Pranzo' },
   { value: 'snack_pm', label: '🍪 Merenda' },
   { value: 'dinner', label: '🌙 Cena' },
+]
+
+const TARGET_MEAL_OPTIONS: { value: TargetMealType; label: string }[] = [
+  { value: 'breakfast', label: '🌅 Colazione' },
+  { value: 'lunch', label: '☀️ Pranzo' },
+  { value: 'dinner', label: '🌙 Cena' },
+  { value: 'lunch_dinner', label: '☀️🌙 Pranzo e Cena' },
+  { value: 'snack_am', label: '🍎 Spuntino mattina' },
+  { value: 'snack_pm', label: '🍪 Merenda' },
 ]
 
 export default function RecipeDetailPage() {
@@ -45,6 +54,21 @@ export default function RecipeDetailPage() {
     }
   }
 
+  const openAddToPlanner = () => {
+    if (recipe.targetMeal === 'dinner') {
+      setSelectedMeal('dinner')
+    } else if (recipe.targetMeal === 'breakfast') {
+      setSelectedMeal('breakfast')
+    } else if (recipe.targetMeal === 'snack_am') {
+      setSelectedMeal('snack_am')
+    } else if (recipe.targetMeal === 'snack_pm') {
+      setSelectedMeal('snack_pm')
+    } else {
+      setSelectedMeal('lunch')
+    }
+    setShowAddToPlanner(true)
+  }
+
   const addToPlanner = async () => {
     await db.plannedMeals.add({
       id: `pm-${Date.now()}`,
@@ -65,7 +89,7 @@ export default function RecipeDetailPage() {
           {recipe.thumbnailUrl ? (
             <img src={recipe.thumbnailUrl} alt={recipe.title} className="w-full h-full object-cover" />
           ) : (
-            <span className="text-8xl opacity-50">{MEAL_LABELS[recipe.targetMeal].split(' ')[0]}</span>
+            <span className="text-8xl opacity-50">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
           )}
         </div>
         {/* Back button */}
@@ -91,8 +115,22 @@ export default function RecipeDetailPage() {
             <h1 className="text-xl font-bold text-gray-900 leading-tight">{recipe.title}</h1>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-3">
-            <Badge variant="default">{MEAL_LABELS[recipe.targetMeal]}</Badge>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <div className="relative inline-flex items-center">
+              <select
+                value={recipe.targetMeal}
+                onChange={async (e) => {
+                  await db.recipes.update(recipe.id, { targetMeal: e.target.value as TargetMealType })
+                }}
+                className="appearance-none bg-primary-100 hover:bg-primary-200 text-primary-800 text-xs font-semibold px-3 py-1 pr-6 rounded-full border border-primary-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-400 transition-colors"
+                title="Cambia categoria pasto"
+              >
+                {TARGET_MEAL_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <span className="absolute right-2 pointer-events-none text-[9px] text-primary-600">▼</span>
+            </div>
             {recipe.source !== 'manual' && (
               <Badge className="bg-gray-100 text-gray-600 capitalize">{recipe.source}</Badge>
             )}
@@ -255,7 +293,7 @@ export default function RecipeDetailPage() {
             🗑 Elimina
           </button>
           <button
-            onClick={() => setShowAddToPlanner(true)}
+            onClick={openAddToPlanner}
             className="btn-primary flex-1"
           >
             📅 Aggiungi al piano

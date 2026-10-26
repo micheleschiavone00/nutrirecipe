@@ -1,4 +1,4 @@
-import type { NutritionProfile, Recipe, MealType, FoodGroup } from '@/types'
+import type { NutritionProfile, Recipe, MealType, TargetMealType, FoodGroup } from '@/types'
 import { CONFIG } from '@/config'
 
 async function chatCompletion(
@@ -162,51 +162,87 @@ export async function adaptRecipeToProfile(
     source: string
   },
   profile: NutritionProfile,
-  targetMeal: MealType,
+  targetMeal: TargetMealType,
 ): Promise<Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'isFavorite' | 'rating' | 'personalNotes'>> {
-  const meal = profile.meals.find(m => m.mealType === targetMeal)
-  const mealDescription = meal
-    ? JSON.stringify(meal.groups.map(g => ({
-        gruppo: g.name,
-        categoria: g.category,
-        quantità: `${g.minQuantity ?? ''}–${g.maxQuantity ?? ''} ${g.unit}`,
-        opzioni: g.options.map(o => `${o.name} ${o.quantity}${o.unit}`),
-        note: g.notes,
-      })))
-    : 'Piano non specificato per questo pasto'
+  const formatGroup = (g: any) => ({
+    gruppo: g.name,
+    categoria: g.category,
+    quantità: `${g.minQuantity ?? ''}–${g.maxQuantity ?? ''} ${g.unit}`,
+    opzioni: (g.options || []).map((o: any) => `${o.name} ${o.quantity}${o.unit}`),
+    note: g.notes || '',
+  })
 
-  const systemPrompt = `Sei un nutrizionista AI esperto. Adatta la ricetta al piano nutrizionale personale dell'utente.
-  
+  let mealDescription = ''
+  if (targetMeal === 'lunch_dinner') {
+    const lunchMeal = profile.meals.find(m => m.mealType === 'lunch')
+    const dinnerMeal = profile.meals.find(m => m.mealType === 'dinner')
+    const parts: string[] = []
+    if (lunchMeal) {
+      parts.push(`PIANO PRANZO:\n${JSON.stringify(lunchMeal.groups.map(formatGroup), null, 2)}`)
+    }
+    if (dinnerMeal) {
+      parts.push(`PIANO CENA:\n${JSON.stringify(dinnerMeal.groups.map(formatGroup), null, 2)}`)
+    }
+    mealDescription = parts.join('\n\n') || 'Piano per pranzo e cena non specificato'
+  } else {
+    const meal = profile.meals.find(m => m.mealType === targetMeal)
+    mealDescription = meal
+      ? JSON.stringify(meal.groups.map(formatGroup), null, 2)
+      : 'Piano non specificato per questo pasto'
+  }
+
+  const systemPrompt = `Sei un nutrizionista e chef AI d'élite. Il tuo compito è adattare le ricette social al piano nutrizionale personale dell'utente in modo intelligente, scientificamente corretto e rispettoso della ricetta originale.
+
+REGOLE CRUCIALI DI ADATTAMENTO:
+
+1. NON SOSTITUIRE GLI INGREDIENTI ORIGINALI DELLA RICETTA:
+   - Mantieni ASSOLUTAMENTE gli ingredienti scelti dall'utente nella ricetta (es. se la ricetta usa feta e uova, tieni feta e uova, NON sostituire con pollo o ricotta per variare la dieta).
+   - L'obiettivo è CALIBRARE LE DOSI della ricetta dell'utente in base al suo piano, NON stravolgere la ricetta né imporre cibi diversi.
+
+2. BILANCIAMENTO MULTI-INGREDIENTE DELLA STESSA CATEGORIA:
+   - Se la ricetta contiene 2 o più ingredienti della stessa categoria nutrizionale (es. 2 fonti proteiche come uova + tonno, oppure pollo + formaggio/parmigiano; oppure 2 fonti di carboidrati come farina + avena o pasta + legumi):
+     * NON dosarne uno solo eliminando l'altro!
+     * Suddividi la quota totale prevista dal piano nutrizionale tra tutti gli alimenti della stessa categoria in modo bilanciato ed equilibrato (es. 50/50 o proporzionale alle quantità originali della ricetta).
+     * In questo modo la somma totale dei macronutrienti di quella categoria corrisponde esattamente al piano, conservando tutti gli ingredienti della ricetta.
+
+3. IMPASTI E PREPARAZIONI TECNICHE (pancake, impasti, torte, piadine, pastelle, crêpes):
+   - Se la ricetta è un impasto o pastella, rispetta i rapporti tecnici fondamentali di cucina (rapporto tra farine/amidi, liquidi come latte/acqua/albume, leganti come uova, lievito e grassi).
+   - Se riduci o aumenti la farina per i carboidrati, adatta proporzionalmente anche i liquidi e gli altri elementi della struttura dell'impasto, in modo che la consistenza sia ottimale e la cottura riesca perfettamente.
+
+4. DOSI OBBLIGATORIE NEI PASSAGGI / PROCEDIMENTO (STEPS):
+   - In OGNI passaggio di 'steps', quando viene nominato o aggiunto un ingrediente, DEVI SEMPRE specificare tra parentesi tonde la quantità esatta adattata!
+   - Esempio di passaggio corretto: "In una ciotola unire le zucchine (200g) grattugiate, le uova (1 intero, 50g) e la feta (25g) sbriciolata."
+   - Esempio di passaggio corretto: "Scaldare una padella con l'olio extravergine d'oliva (10g) e versare il composto cuocendo per 5 minuti a fuoco medio."
+   - Questo permette a chi cucina di leggere direttamente il procedimento senza dover continuamente consultare la lista degli ingredienti.
+
+5. CATEGORIZZAZIONE "PRANZO E CENA" (se targetMeal è "lunch_dinner"):
+   - La ricetta deve poter essere consumata sia a pranzo che a cena. Calibra le grammature in modo che soddisfino entrambi i pasti. Se tra pranzo e cena ci sono differenze (es. quota carboidrati diversa), usa una dose equilibrata e specifica chiaramente in 'adaptationNotes' l'eventuale variazione raccomandata (es. "Se consumata a cena, ridurre la pasta a 50g").
+
 Restituisci SOLO un JSON con questa struttura:
 {
   "title": "Titolo ricetta",
   "description": "Descrizione breve",
   "targetMeal": "${targetMeal}",
   "originalIngredients": [
-    { "name": "nome", "originalQuantity": "200g", "adaptedQuantity": "200g", "unit": "g", "category": "proteins", "isOptional": false }
+    { "name": "nome ingrediente", "originalQuantity": "200g", "adaptedQuantity": "200g", "unit": "g", "category": "proteins", "isOptional": false }
   ],
   "adaptedIngredients": [
-    { "name": "nome", "originalQuantity": "200g", "adaptedQuantity": "150g", "unit": "g", "category": "proteins", "isOptional": false }
+    { "name": "nome ingrediente", "originalQuantity": "200g", "adaptedQuantity": "150g", "unit": "g", "category": "proteins", "isOptional": false }
   ],
   "steps": [
-    { "order": 1, "description": "...", "duration": "5 minuti", "tip": "consiglio opzionale" }
+    { "order": 1, "description": "Passaggio dettagliato con dosi tra parentesi tonde (es. zucchine (200g))", "duration": "5 minuti", "tip": "consiglio opzionale" }
   ],
   "nutritionalValues": { "calories": 450, "proteins": 35, "carbs": 40, "fats": 12, "fiber": 5 },
-  "adaptationNotes": "Spiegazione chiara di COME e PERCHÉ sono state modificate le quantità",
+  "adaptationNotes": "Spiegazione chiara di come sono state bilanciate le quantità (soprattutto se ci sono più ingredienti della stessa categoria o per la consistenza dell'impasto)",
   "tags": ["proteico", "facile", "veloce"],
   "prepTime": 10,
   "cookTime": 20,
   "servings": 1
 }
 
-Categorie disponibili: carbs, proteins, vegetables, fruits, dairy, fats, other
-Regole adattamento:
-- Rispetta ESATTAMENTE le quantità del piano nutrizionale per ogni categoria
-- Se la ricetta usa ingredienti non nel piano, segnalanello in adaptationNotes
-- Mantieni intatta la tecnica di cottura e i passaggi
-- Se un ingrediente non è compatibile, suggerisci la sostituzione più vicina nel piano`
+Categorie disponibili: carbs, proteins, vegetables, fruits, dairy, fats, other`
 
-  const userPrompt = `Piano nutrizionale per ${targetMeal}:
+  const userPrompt = `Piano nutrizionale per ${targetMeal === 'lunch_dinner' ? 'Pranzo e Cena' : targetMeal}:
 ${mealDescription}
 
 Ricetta originale da adattare:
@@ -214,7 +250,7 @@ Titolo: ${rawRecipe.title}
 Descrizione: ${rawRecipe.description}
 Ingredienti originali:
 ${rawRecipe.ingredients.join('\n')}
-Passaggi:
+Passaggi originali:
 ${rawRecipe.steps.join('\n')}`
 
   const result = await chatCompletion([
@@ -226,6 +262,7 @@ ${rawRecipe.steps.join('\n')}`
 
   return {
     ...parsed,
+    targetMeal,
     source: rawRecipe.source as Recipe['source'],
     sourceUrl: rawRecipe.sourceUrl,
     thumbnailUrl: rawRecipe.thumbnailUrl,

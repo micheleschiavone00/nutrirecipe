@@ -1,40 +1,46 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { MEAL_LABELS, MEAL_ICONS, truncate, cn } from '@/lib/utils'
+import { MEAL_LABELS, MEAL_ICONS, cn } from '@/lib/utils'
 import { PageHeader, EmptyState, Badge } from '@/components/ui'
-import type { Recipe, MealType } from '@/types'
+import type { Recipe, TargetMealType } from '@/types'
 
-const FILTER_OPTIONS: { value: MealType | 'all'; label: string }[] = [
+const FILTER_OPTIONS: { value: TargetMealType | 'all'; label: string }[] = [
   { value: 'all', label: 'Tutte' },
-  { value: 'breakfast', label: '🌅 Colazione' },
+  { value: 'lunch_dinner', label: '☀️🌙 Pranzo e Cena' },
   { value: 'lunch', label: '☀️ Pranzo' },
   { value: 'dinner', label: '🌙 Cena' },
+  { value: 'breakfast', label: '🌅 Colazione' },
   { value: 'snack_am', label: '🍎 Spuntino' },
 ]
 
 export default function RecipesPage() {
   const navigate = useNavigate()
-  const [filter, setFilter] = useState<MealType | 'all'>('all')
+  const [filter, setFilter] = useState<TargetMealType | 'all'>('all')
   const [search, setSearch] = useState('')
 
-  const recipes = useLiveQuery(
-    () => filter === 'all'
-      ? db.recipes.orderBy('createdAt').reverse().toArray()
-      : db.recipes.where('targetMeal').equals(filter).reverse().sortBy('createdAt'),
-    [filter]
+  const allRecipes = useLiveQuery(
+    () => db.recipes.orderBy('createdAt').reverse().toArray(),
+    []
   )
 
-  const filtered = recipes?.filter(r =>
-    !search || r.title.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = allRecipes?.filter(r => {
+    if (search && !r.title.toLowerCase().includes(search.toLowerCase())) {
+      return false
+    }
+    if (filter === 'all') return true
+    if (filter === 'lunch_dinner') return r.targetMeal === 'lunch_dinner'
+    if (filter === 'lunch') return r.targetMeal === 'lunch' || r.targetMeal === 'lunch_dinner'
+    if (filter === 'dinner') return r.targetMeal === 'dinner' || r.targetMeal === 'lunch_dinner'
+    return r.targetMeal === filter
+  })
 
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader
         title="Il mio Ricettario"
-        subtitle={`${recipes?.length ?? 0} ricette salvate`}
+        subtitle={`${allRecipes?.length ?? 0} ricette salvate`}
         action={
           <button
             onClick={() => navigate('/import')}

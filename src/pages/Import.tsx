@@ -3,16 +3,17 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { db, getActiveProfile } from '@/lib/db'
 import { extractVideoMetadata, detectSource } from '@/lib/social'
 import { extractRecipeFromText, adaptRecipeToProfile } from '@/lib/ai'
-import { generateId, MEAL_LABELS } from '@/lib/utils'
+import { generateId, MEAL_LABELS, MEAL_ICONS } from '@/lib/utils'
 import { PageHeader, LoadingSpinner, Badge, NutriBar } from '@/components/ui'
-import type { Recipe, MealType, ImportStatus, NutritionProfile } from '@/types'
+import type { Recipe, MealType, TargetMealType, ImportStatus, NutritionProfile } from '@/types'
 
-const MEAL_OPTIONS: { value: MealType; label: string }[] = [
+const MEAL_OPTIONS: { value: TargetMealType; label: string }[] = [
+  { value: 'lunch_dinner', label: '☀️🌙 Pranzo e Cena' },
+  { value: 'lunch', label: '☀️ Pranzo' },
+  { value: 'dinner', label: '🌙 Cena' },
   { value: 'breakfast', label: '🌅 Colazione' },
   { value: 'snack_am', label: '🍎 Spuntino mattina' },
-  { value: 'lunch', label: '☀️ Pranzo' },
   { value: 'snack_pm', label: '🍪 Merenda' },
-  { value: 'dinner', label: '🌙 Cena' },
 ]
 
 const STATUS_MESSAGES: Record<ImportStatus, string> = {
@@ -35,7 +36,7 @@ export default function ImportPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [url, setUrl] = useState('')
-  const [targetMeal, setTargetMeal] = useState<MealType>('lunch')
+  const [targetMeal, setTargetMeal] = useState<TargetMealType>('lunch_dinner')
   const [status, setStatus] = useState<ImportStatus>('idle')
   const [error, setError] = useState('')
   const [recipe, setRecipe] = useState<Recipe | null>(null)
@@ -47,6 +48,10 @@ export default function ImportPage() {
     const sharedUrl = params.get('url') || params.get('text') || ''
     if (sharedUrl) {
       setUrl(cleanPastedUrl(sharedUrl))
+    }
+    const mealParam = params.get('meal') as TargetMealType | null
+    if (mealParam && ['breakfast', 'snack_am', 'lunch', 'dinner', 'lunch_dinner', 'snack_pm'].includes(mealParam)) {
+      setTargetMeal(mealParam)
     }
     getActiveProfile().then(p => p && setProfile(p))
   }, [location])
@@ -306,7 +311,7 @@ export default function ImportPage() {
             <div className="p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="text-lg font-bold text-gray-900">{recipe.title}</h2>
-                <span className="text-2xl">{MEAL_LABELS[recipe.targetMeal].split(' ')[0]}</span>
+                <span className="text-2xl">{MEAL_ICONS[recipe.targetMeal]}</span>
               </div>
 
               {recipe.nutritionalValues && (

@@ -1,6 +1,7 @@
 // ─── Nutrition Plan Types ────────────────────────────────────────────────────
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack_am' | 'snack_pm'
+export type TargetMealType = MealType | 'lunch_dinner'
 
 export interface FoodGroup {
   id: string
@@ -78,7 +79,7 @@ export interface Recipe {
   thumbnailUrl?: string
   sourceUrl?: string
   source: RecipeSource
-  targetMeal: MealType
+  targetMeal: TargetMealType
   originalIngredients: RecipeIngredient[]
   adaptedIngredients: RecipeIngredient[]
   steps: RecipeStep[]
