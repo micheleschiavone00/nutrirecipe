@@ -1,130 +1,118 @@
-# 🥗 NutriRecipe
+<p align="center">
+  <img src="docs/screenshots/hero-banner.svg" alt="NutriRecipe Banner" width="100%" />
+</p>
 
-**PWA per adattare ricette dai social al tuo piano nutrizionale personale.**
-
-## Funzionalità
-
-- 📄 **Analisi PDF** del piano nutrizionale (con OpenAI GPT-4o)
-- 🎥 **Import ricette** da TikTok, Instagram, YouTube
-- 🤖 **Adattamento AI** delle quantità al tuo piano
-- 📚 **Ricettario personale** con filtri e ricerca
-- 📅 **Meal Planner** settimanale
-- 🛒 **Lista della spesa** generata automaticamente
-- 📱 **PWA installabile** su iPhone (senza Apple Developer Account)
+<p align="center">
+  <a href="https://recipenutriz.vercel.app"><img src="https://img.shields.io/badge/App_Live-recipenutriz.vercel.app-10b981?style=for-the-badge&logo=vercel&logoColor=white" alt="Live App" /></a>
+  <img src="https://img.shields.io/badge/Versione-1.1.0-blue?style=for-the-badge" alt="Versione" />
+  <img src="https://img.shields.io/badge/PWA-iOS_%26_Android-purple?style=for-the-badge&logo=pwa" alt="PWA" />
+  <img src="https://img.shields.io/badge/Privacy-100%25_Locale-emerald?style=for-the-badge" alt="Privacy" />
+</p>
 
 ---
 
-## Setup Locale
+## 🥗 Cos'è NutriRecipe?
 
-### 1. Prerequisiti
-- Node.js 18+
-- npm o pnpm
+Quante volte hai visto una ricetta sfiziosa su **TikTok** o **Instagram**, ma non sapevi quali grammature utilizzare per non sgarrare il tuo piano nutrizionale?
 
-### 2. Installa dipendenze
-```bash
-cd nutrirecipe
-npm install
-```
-
-### 3. Avvia in sviluppo
-```bash
-npm run dev
-```
-
-Apri `http://localhost:5173` in Safari su iPhone (o sul Mac per testare).
+**NutriRecipe** è una Progressive Web App (PWA) intelligente che trasforma qualsiasi video-ricetta social nel tuo pasto bilanciato su misura. Incolla il link del reel o video: l'intelligenza artificiale (**OpenAI GPT-4o**) estrae gli ingredienti e **calibra le dosi al grammo sulla tua scheda nutrizionale**, preservando il gusto e la consistenza della ricetta originale.
 
 ---
 
-## Deploy su Vercel (per accedere da iPhone)
+## 📱 Schermate dell'Applicazione
 
-### 1. Crea repository GitHub
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-gh repo create nutrirecipe --private
-git push -u origin main
-```
-
-### 2. Deploy su Vercel
-1. Vai su [vercel.com](https://vercel.com) e accedi con GitHub
-2. Clicca **"New Project"** → importa il repo `nutrirecipe`
-3. In **Environment Variables** aggiungi:
-   - `RAPIDAPI_KEY` = la tua chiave RapidAPI
-4. Clicca **Deploy** — sarà live in ~1 minuto!
-
-### 3. Configura le API Keys nell'app
-1. Apri l'URL Vercel su Safari iPhone
-2. Vai in **Impostazioni** → inserisci la tua **OpenAI API Key**
-3. La RapidAPI key è già nel server (Vercel env var)
-
-### 4. Installa come PWA su iPhone
-1. Apri l'URL Vercel in **Safari** (non Chrome!)
-2. Tocca il pulsante **Condividi** (□↑)
-3. Scorri → **"Aggiungi a schermata Home"**
-4. Dai un nome e tocca **Aggiungi**
-
-✅ NutriRecipe apparirà automaticamente nel menu **Condividi** di TikTok e Instagram!
-
----
-
-## Come usare
-
-### Importare una ricetta da TikTok
-1. Apri TikTok, trova una ricetta
-2. Tocca **Condividi** → **NutriRecipe**
-3. L'app estrae automaticamente gli ingredienti
-4. L'AI adatta le quantità al tuo piano
-5. Salva nel ricettario e/o aggiungi al Meal Planner
-
-### Caricare il piano nutrizionale
-1. Vai in **Setup** all'apertura dell'app
-2. Scegli **"Carica PDF"** e seleziona il documento della tua nutrizionista
-3. L'AI analizza il PDF e imposta tutti i gruppi alimentari automaticamente
-4. Puoi modificare manualmente qualsiasi valore
+<p align="center">
+  <table border="0">
+    <tr>
+      <td width="33%" align="center">
+        <b>👨‍🍳 Dosi nei Passaggi &amp; 50/50</b>
+      </td>
+      <td width="33%" align="center">
+        <b>🚀 Notifiche Aggiornamenti &amp; Changelog</b>
+      </td>
+      <td width="33%" align="center">
+        <b>📅 Meal Planner &amp; Lista Spesa</b>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <img src="docs/screenshots/screen-recipe.svg" alt="Dettaglio Ricetta con Dosi" width="100%" />
+      </td>
+      <td valign="top">
+        <img src="docs/screenshots/screen-changelog.svg" alt="Changelog In-App" width="100%" />
+      </td>
+      <td valign="top">
+        <img src="docs/screenshots/screen-planner.svg" alt="Meal Planner Settimanale" width="100%" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <small>Dosi indicate direttamente in ogni passaggio sequenziale <code>(200g)</code>, <code>(25g)</code>.</small>
+      </td>
+      <td align="center">
+        <small>Popup automatico ad ogni rilascio in produzione con lo storico delle novità.</small>
+      </td>
+      <td align="center">
+        <small>Pianifica colazione, pranzo e cena e genera la spesa divisa per corsie.</small>
+      </td>
+    </tr>
+  </table>
+</p>
 
 ---
 
-## Architettura
+## ✨ Funzionalità Principali
 
-```
-src/
-├── pages/           # Setup, Import, Recipes, RecipeDetail, Planner, Shopping, Settings
-├── components/ui/   # BottomNav, PageHeader, Badge, LoadingSpinner, NutriBar...
-├── lib/
-│   ├── db.ts        # IndexedDB con Dexie.js
-│   ├── ai.ts        # Chiamate OpenAI (analisi PDF + adattamento)
-│   ├── social.ts    # Parsing link social
-│   └── utils.ts     # Helper e costanti
-├── types/           # TypeScript types
-api/
-├── parse-video.ts   # Edge Function: parsing TikTok/IG
-└── parse-pdf.ts     # Edge Function: fallback PDF parsing
-```
+### 🧠 Motore AI Intelligente (v1.1.0)
+- **Zero sostituzioni arbitrarie**: Se la ricetta originale prevede uova e feta greca, l'AI conserva entrambi gli ingredienti (non rimpiazza la feta con petto di pollo solo per variare).
+- **Bilanciamento 50/50 multi-ingrediente**: Se la ricetta contiene 2 o più fonti della stessa categoria (es. 2 proteine come uova + tonno, o 2 carboidrati come farina + fiocchi d'avena), la quota del pasto viene divisa equamente tra tutti gli alimenti senza scartarne nessuno.
+- **Rapporti tecnici per impasti e pastelle**: Per pancake, torte fitness, crêpes e piadine, scala proporzionalmente farine, liquidi (latte, albume, acqua) e leganti per garantire una consistenza e cottura perfette.
+- **Dosi integrate nei procedimenti**: Ogni passaggio sequenziale riporta le quantità esatte tra parentesi tonde: puoi cucinare leggendo la sequenza senza dover cambiare scheda.
+- **☀️🌙 Nuova categoria "Pranzo e Cena"**: Salva ricette adatte a entrambi i pasti e visualizzale sia filtrando per Pranzo che per Cena.
 
-### Privacy & Sicurezza
-- I tuoi dati (piano nutrizionale, ricette, meal plan) vengono salvati **solo nel browser**
-- La OpenAI API key è salvata in `localStorage` — non va mai su server terzi
-- La RapidAPI key è in Vercel env var (server-side only)
+### 📅 Pianificazione & Spesa
+- **Meal Planner settimanale**: Assegna le ricette salvate ai pasti dal lunedì alla domenica.
+- **Lista della spesa automatica**: Genera istantaneamente la lista degli ingredienti necessari aggregati per reparto di supermercato.
+- **Lettura PDF del Nutrizionista**: Carica direttamente il PDF della tua dieta: l'AI estrae e configura automaticamente categorie, grammature e opzioni alimentari.
 
 ---
 
-## API Keys necessarie
+## 📲 Installazione come App su iPhone (PWA)
 
-| Servizio | Dove ottenerla | Costo |
-|----------|---------------|-------|
-| **OpenAI GPT-4o** | [platform.openai.com](https://platform.openai.com/api-keys) | ~$0.01/ricetta |
-| **RapidAPI** | [rapidapi.com](https://rapidapi.com) | Gratis (100 req/mese) |
-| **Vercel** | [vercel.com](https://vercel.com) | Gratis |
+Non serve scaricare l'app da App Store: NutriRecipe è una **PWA nativa**:
+
+1. Apri **[recipenutriz.vercel.app](https://recipenutriz.vercel.app)** in **Safari** su iPhone.
+2. Tocca l'icona di sistema **Condividi** (il quadrato con la freccia verso l'alto 􀈂).
+3. Scorri verso il basso e tocca **"Aggiungi a schermata Home"**.
+4. Conferma con **Aggiungi**: l'app sarà disponibile sulla tua Home come un'app nativa a schermo intero!
+5. Quando trovi una ricetta su TikTok o Instagram, premi **Condividi** → **NutriRecipe** per importarla con 1 tap.
 
 ---
 
-## Tech Stack
+## 🔒 Privacy & Sicurezza dei Dati
 
-- **React 18 + Vite + TypeScript**
-- **Tailwind CSS** (UI mobile-first)
-- **Dexie.js** (IndexedDB wrapper)
-- **vite-plugin-pwa** (Service Worker + Web Share Target)
-- **Vercel Edge Functions** (backend serverless)
-- **OpenAI GPT-4o** (AI engine)
-- **RapidAPI** (social scraping)
+- **Archiviazione 100% Locale**: La scheda nutrizionale, le ricette salvate, le note e il meal planner risiedono esclusivamente nel browser del tuo dispositivo (**IndexedDB tramite Dexie.js**). Nessun dato personale viene inviato o memorizzato su database terzi.
+- **Architettura Cloud Protetta**: Le richieste AI transitano attraverso una funzione serverless protetta (`/api/ai`), senza esporre chiavi API sul client.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Vite PWA
+- **Database Locale**: IndexedDB con Dexie.js (con reattività `dexie-react-hooks`)
+- **Motore AI**: OpenAI GPT-4o (ottimizzato per strutturazione JSON e ragionamento culinario)
+- **Scraping Social**: RapidAPI TikTok & Instagram Scraper
+- **Deployment**: Vercel Serverless Edge Functions
+
+---
+
+## 📜 Tracciamento Versioni & Changelog
+
+Ogni aggiornamento rilasciato sul branch `main` include le note di rilascio pubblicate nel changelog in-app.  
+Gli utenti vengono notificati direttamente all'apertura dell'applicazione con il dettaglio di cosa è cambiato e come testare le nuove funzionalità.
+
+---
+
+<p align="center">
+  Realizzato con ❤️ per rendere la nutrizione semplice, flessibile e gustosa.
+</p>

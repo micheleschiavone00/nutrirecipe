@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 760" width="100%" height="100%">
+  <defs>
+    <filter id="phoneShadow2" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#0f172a" flood-opacity="0.25" />
+    </filter>
+    <linearGradient id="primaryGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+
+  <!-- Phone Bezel -->
+  <rect x="10" y="10" width="360" height="740" rx="44" fill="#0f172a" filter="url(#phoneShadow2)" />
+  <rect x="18" y="18" width="344" height="724" rx="36" fill="#0f172a" />
+
+  <!-- Background Dim overlay -->
+  <rect x="18" y="18" width="344" height="724" rx="36" fill="#090d16" fill-opacity="0.75" />
+
+  <!-- Dynamic Island -->
+  <rect x="130" y="26" width="120" height="26" rx="13" fill="#000000" />
+
+  <!-- Bottom Sheet / Modal (Cosa c'è di nuovo) -->
+  <g transform="translate(18, 140)">
+    <!-- Sheet background -->
+    <rect width="344" height="602" rx="32" fill="#ffffff" />
+
+    <!-- Sheet drag pill -->
+    <rect x="152" y="12" width="40" height="4" rx="2" fill="#cbd5e1" />
+
+    <!-- Header -->
+    <g transform="translate(24, 34)">
+      <text x="0" y="24" font-family="sans-serif" font-size="24">🚀</text>
+      <text x="36" y="16" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="18" font-weight="800" fill="#0f172a">
+        Cosa c'è di nuovo
+      </text>
+      
+      <rect x="36" y="24" width="98" height="20" rx="10" fill="#d1fae5" />
+      <text x="85" y="38" font-family="sans-serif" font-size="11" font-weight="700" fill="#065f46" text-anchor="middle">
+        Versione 1.1.0
+      </text>
+      <text x="142" y="38" font-family="sans-serif" font-size="11" fill="#94a3b8">26 Ottobre</text>
+
+      <!-- Close icon button -->
+      <circle cx="282" cy="16" r="14" fill="#f1f5f9" />
+      <text x="282" y="21" font-family="sans-serif" font-size="12" font-weight="700" fill="#64748b" text-anchor="middle">✕</text>
+    </g>
+
+    <line x1="20" y1="88" x2="324" y2="88" stroke="#f1f5f9" stroke-width="1.5" />
+
+    <!-- Summary Box -->
+    <g transform="translate(20, 100)">
+      <rect width="304" height="48" rx="12" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="12" y="20" font-family="sans-serif" font-size="11" fill="#475569">
+        Nuovo motore di bilanciamento multi-ingrediente,
+      </text>
+      <text x="12" y="36" font-family="sans-serif" font-size="11" fill="#475569">
+        dosi nei procedimenti e categoria Pranzo/Cena.
+      </text>
+    </g>
+
+    <!-- Changelog Items Cards -->
+    <g transform="translate(20, 160)">
+      <!-- Item 1: Zero sostituzioni -->
+      <rect width="304" height="74" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+      <rect x="12" y="10" width="76" height="18" rx="6" fill="#f3e8ff" stroke="#e9d5ff" />
+      <text x="50" y="23" font-family="sans-serif" font-size="9.5" font-weight="700" fill="#7e22ce" text-anchor="middle">🤖 AI Smart</text>
+      <text x="96" y="23" font-family="sans-serif" font-size="12" font-weight="700" fill="#0f172a">Zero sostituzioni arbitrarie</text>
+      <text x="12" y="44" font-family="sans-serif" font-size="10.5" fill="#64748b">
+        Non sostituisce più i cibi scelti con altri della
+      </text>
+      <text x="12" y="58" font-family="sans-serif" font-size="10.5" fill="#64748b">
+        dieta: mantiene intatta la ricetta originale.
+      </text>
+
+      <!-- Item 2: Bilanciamento 50/50 -->
+      <g transform="translate(0, 84)">
+        <rect width="304" height="74" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+        <rect x="12" y="10" width="76" height="18" rx="6" fill="#f3e8ff" stroke="#e9d5ff" />
+        <text x="50" y="23" font-family="sans-serif" font-size="9.5" font-weight="700" fill="#7e22ce" text-anchor="middle">🤖 AI Smart</text>
+        <text x="96" y="23" font-family="sans-serif" font-size="12" font-weight="700" fill="#0f172a">Bilanciamento 50/50</text>
+        <text x="12" y="44" font-family="sans-serif" font-size="10.5" fill="#64748b">
+          Se ci sono due proteine (es. uova + feta) quota
+        </text>
+        <text x="12" y="58" font-family="sans-serif" font-size="10.5" fill="#64748b">
+          ripartita equamente senza scartarne una!
+        </text>
+      </g>
+
+      <!-- Item 3: Dosi nei procedimenti -->
+      <g transform="translate(0, 168)">
+        <rect width="304" height="74" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+        <rect x="12" y="10" width="62" height="18" rx="6" fill="#d1fae5" stroke="#a7f3d0" />
+        <text x="43" y="23" font-family="sans-serif" font-size="9.5" font-weight="700" fill="#065f46" text-anchor="middle">✨ Novità</text>
+        <text x="82" y="23" font-family="sans-serif" font-size="12" font-weight="700" fill="#0f172a">Dosi nei passaggi</text>
+        <text x="12" y="44" font-family="sans-serif" font-size="10.5" fill="#64748b">
+          Quantità visibili direttamente nel testo:
+        </text>
+        <text x="12" y="58" font-family="sans-serif" font-size="10.5" font-weight="600" fill="#059669">
+          "Unire zucchine (200g) e feta (25g)"
+        </text>
+      </g>
+    </g>
+
+    <!-- Dismiss Button -->
+    <g transform="translate(20, 426)">
+      <rect width="304" height="46" rx="14" fill="url(#primaryGrad2)" />
+      <text x="152" y="28" font-family="sans-serif" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">
+        Ho capito, continua! 🎉
+      </text>
+    </g>
+  </g>
+
+  <!-- Home Indicator bar -->
+  <rect x="120" y="730" width="140" height="4.5" rx="2.5" fill="#ffffff" />
+</svg>
