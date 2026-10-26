@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, getActiveProfile } from '@/lib/db'
+import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, CATEGORY_ICONS, formatDate } from '@/lib/utils'
-import { enrichRecipeStepsWithDoses } from '@/lib/recipeEnricher'
-import { reformatRecipeStepsWithAI, reorganizeRecipeWithAI } from '@/lib/ai'
 import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
 import type { MealType, TargetMealType } from '@/types'
 
@@ -33,19 +31,17 @@ export default function RecipeDetailPage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedMeal, setSelectedMeal] = useState<MealType>('lunch')
   const [ingredientView, setIngredientView] = useState<'category' | 'component' | 'list'>('category')
-  const [isReformatting, setIsReformatting] = useState(false)
-  const [enrichMsg, setEnrichMsg] = useState('')
 
   const recipe = useLiveQuery(() => id ? db.recipes.get(id) : undefined, [id])
 
   if (recipe === undefined) return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="flex justify-center items-center min-h-screen bg-gray-50">
       <LoadingSpinner size="lg" />
     </div>
   )
 
   if (recipe === null) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <EmptyState icon="😕" title="Ricetta non trovata" description="La ricetta potrebbe essere stata eliminata." />
     </div>
   )
@@ -53,7 +49,7 @@ export default function RecipeDetailPage() {
   const toggleFavorite = () => db.recipes.update(recipe.id, { isFavorite: !recipe.isFavorite })
 
   const deleteRecipe = async () => {
-    if (confirm('Eliminare questa ricetta?')) {
+    if (confirm('Eliminare questa ricetta dal ricettario?')) {
       await db.recipes.delete(recipe.id)
       navigate('/recipes')
     }
@@ -86,147 +82,138 @@ export default function RecipeDetailPage() {
     navigate('/planner')
   }
 
-  const handleEnrichSteps = async () => {
-    if (!recipe) return
-    const { recipe: enriched, changed } = enrichRecipeStepsWithDoses(recipe)
-    if (changed) {
-      await db.recipes.put(enriched)
-      setEnrichMsg('✅ Dosi aggiunte ai passaggi!')
-    } else {
-      setEnrichMsg('ℹ️ Le dosi sono già presenti nei passaggi')
-    }
-    setTimeout(() => setEnrichMsg(''), 3000)
-  }
-
-  const handleReformatWithAI = async () => {
-    if (!recipe) return
-    setIsReformatting(true)
-    setEnrichMsg("🤖 L'AI sta integrando le dosi nei passaggi…")
-    try {
-      const updatedSteps = await reformatRecipeStepsWithAI(recipe.title, recipe.adaptedIngredients, recipe.steps)
-      await db.recipes.update(recipe.id, { steps: updatedSteps, updatedAt: new Date() })
-      setEnrichMsg('✅ Passaggi riformulati con successo!')
-    } catch {
-      setEnrichMsg('❌ Errore durante la riformulazione AI')
-    } finally {
-      setIsReformatting(false)
-      setTimeout(() => setEnrichMsg(''), 3000)
-    }
-  }
-
-  const handleReorganizeWithAI = async () => {
-    if (!recipe) return
-    setIsReformatting(true)
-    setEnrichMsg("🤖 L'AI sta organizzando ingredienti per componente e ripartendo le verdure…")
-    try {
-      const profile = await getActiveProfile()
-      if (!profile) {
-        setEnrichMsg('⚠️ Nessun profilo nutrizionale attivo')
-        return
-      }
-      const reorganized = await reorganizeRecipeWithAI(recipe, profile)
-      await db.recipes.update(recipe.id, {
-        adaptedIngredients: reorganized.adaptedIngredients,
-        steps: reorganized.steps,
-        adaptationNotes: reorganized.adaptationNotes || recipe.adaptationNotes,
-        updatedAt: new Date(),
-      })
-      setEnrichMsg('✅ Ingredienti riorganizzati e verdure ripartite al grammo!')
-    } catch {
-      setEnrichMsg("❌ Errore durante la riorganizzazione AI")
-    } finally {
-      setIsReformatting(false)
-      setTimeout(() => setEnrichMsg(''), 4000)
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero image / back button */}
-      <div className="relative">
-        <div className="h-64 bg-gradient-to-br from-primary-200 to-primary-400 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 pb-12">
+      {/* ── Top Framed Hero Image ─────────────────────────────────── */}
+      <div className="p-4 pb-0 max-w-2xl mx-auto">
+        <div className="relative aspect-[16/10] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md bg-gray-900 border border-gray-200/80">
           {recipe.thumbnailUrl ? (
-            <img src={recipe.thumbnailUrl} alt={recipe.title} className="w-full h-full object-cover" />
+            <img
+              src={recipe.thumbnailUrl}
+              alt={recipe.title}
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <span className="text-8xl opacity-50">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+            <div className="w-full h-full bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 flex items-center justify-center">
+              <span className="text-7xl">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+            </div>
           )}
+
+          {/* Contrast gradient overlay for buttons */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/35 pointer-events-none" />
+
+          {/* Back button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute top-3.5 left-3.5 w-10 h-10 bg-white/90 hover:bg-white text-gray-800 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10"
+            aria-label="Indietro"
+          >
+            <span className="text-base font-bold">←</span>
+          </button>
+
+          {/* Favorite button */}
+          <button
+            onClick={toggleFavorite}
+            className="absolute top-3.5 right-3.5 w-10 h-10 bg-white/90 hover:bg-white backdrop-blur-md rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10"
+            aria-label="Preferito"
+          >
+            <span className="text-base">{recipe.isFavorite ? '❤️' : '🤍'}</span>
+          </button>
+
+          {/* Meal Pill in bottom left of image */}
+          <div className="absolute bottom-3 left-3 z-10">
+            <span className="bg-black/60 backdrop-blur-md text-white font-semibold text-xs px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm">
+              <span>{MEAL_ICONS[recipe.targetMeal]}</span>
+              <span>{MEAL_LABELS[recipe.targetMeal]}</span>
+            </span>
+          </div>
         </div>
-        {/* Back button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-safe left-4 mt-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md"
-        >
-          ←
-        </button>
-        {/* Favorite */}
-        <button
-          onClick={toggleFavorite}
-          className="absolute top-safe right-4 mt-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md"
-        >
-          {recipe.isFavorite ? '❤️' : '🤍'}
-        </button>
       </div>
 
-      {/* Content */}
-      <div className="px-4 -mt-6">
-        <div className="card p-4 mb-4">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">{recipe.title}</h1>
+      {/* ── Content Container ────────────────────────────────────────── */}
+      <div className="px-4 pt-3 space-y-4 max-w-2xl mx-auto">
+        {/* Title, Badges & NutriBar Card */}
+        <div className="card p-4 sm:p-5 space-y-3.5">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug">
+              {recipe.title}
+            </h1>
+            {recipe.prepTime && (
+              <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                <span>⏱</span>
+                <span>Tempo totale: {recipe.prepTime + (recipe.cookTime ?? 0)} minuti</span>
+              </p>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+          {/* Meta & Category Selector */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
+            {/* Quick Meal Re-categorizer */}
             <div className="relative inline-flex items-center">
               <select
                 value={recipe.targetMeal}
                 onChange={async (e) => {
                   await db.recipes.update(recipe.id, { targetMeal: e.target.value as TargetMealType })
                 }}
-                className="appearance-none bg-primary-100 hover:bg-primary-200 text-primary-800 text-xs font-semibold px-3 py-1 pr-6 rounded-full border border-primary-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-400 transition-colors"
+                className="appearance-none bg-primary-50 hover:bg-primary-100 text-primary-800 text-xs font-semibold px-3 py-1.5 pr-7 rounded-xl border border-primary-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-400 transition-colors"
                 title="Cambia categoria pasto"
               >
                 {TARGET_MEAL_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <span className="absolute right-2 pointer-events-none text-[9px] text-primary-600">▼</span>
+              <span className="absolute right-2.5 pointer-events-none text-[9px] text-primary-600">▼</span>
             </div>
+
             {recipe.source !== 'manual' && (
-              <Badge className="bg-gray-100 text-gray-600 capitalize">{recipe.source}</Badge>
+              <Badge className="bg-gray-100 text-gray-700 capitalize font-medium text-xs px-2.5 py-1">
+                {recipe.source}
+              </Badge>
             )}
-            {recipe.prepTime && (
-              <Badge className="bg-blue-50 text-blue-600">⏱ {recipe.prepTime + (recipe.cookTime ?? 0)} min</Badge>
-            )}
+
             {recipe.tags.map(tag => (
-              <Badge key={tag} className="bg-gray-50 text-gray-500">#{tag}</Badge>
+              <Badge key={tag} className="bg-gray-50 text-gray-500 text-xs px-2 py-0.5">
+                #{tag}
+              </Badge>
             ))}
           </div>
 
+          {/* NutriBar */}
           {recipe.nutritionalValues && (
-            <NutriBar
-              calories={recipe.nutritionalValues.calories}
-              proteins={recipe.nutritionalValues.proteins}
-              carbs={recipe.nutritionalValues.carbs}
-              fats={recipe.nutritionalValues.fats}
-            />
+            <div className="pt-2 border-t border-gray-100">
+              <NutriBar
+                calories={recipe.nutritionalValues.calories}
+                proteins={recipe.nutritionalValues.proteins}
+                carbs={recipe.nutritionalValues.carbs}
+                fats={recipe.nutritionalValues.fats}
+              />
+            </div>
           )}
         </div>
 
-        {/* Adaptation notes */}
+        {/* Notes on recipe / balance (clean, no robot label) */}
         {recipe.adaptationNotes && (
-          <div className="bg-primary-50 border border-primary-100 rounded-2xl p-4 mb-4">
-            <p className="text-xs font-semibold text-primary-700 mb-1 uppercase tracking-wide">🤖 Note adattamento AI</p>
-            <p className="text-sm text-primary-900 leading-relaxed">{recipe.adaptationNotes}</p>
+          <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4">
+            <p className="text-xs font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+              <span>💡</span>
+              <span>Note di preparazione e bilanciamento</span>
+            </p>
+            <p className="text-xs sm:text-sm text-emerald-950 leading-relaxed">
+              {recipe.adaptationNotes}
+            </p>
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex bg-gray-100 rounded-2xl p-1 mb-4">
+        {/* Navigation Tabs */}
+        <div className="flex bg-gray-200/80 rounded-2xl p-1 shadow-inner">
           {(['ingredients', 'steps', 'notes'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+              className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                tab === t
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               {t === 'ingredients' ? '🥗 Ingredienti' : t === 'steps' ? '👨‍🍳 Preparazione' : '📝 Note'}
@@ -234,22 +221,18 @@ export default function RecipeDetailPage() {
           ))}
         </div>
 
-        {/* Ingredients tab */}
+        {/* ── Tab: Ingredients ────────────────────────────────────── */}
         {tab === 'ingredients' && (
           <div className="space-y-3 mb-4">
-            {/* View Mode Switcher & AI Reorganize Button */}
-            <div className="card p-3 space-y-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-bold text-gray-700">Visualizzazione:</span>
-                <button
-                  onClick={handleReorganizeWithAI}
-                  disabled={isReformatting}
-                  className="text-[11px] font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-2.5 py-1 rounded-xl transition-all shadow-xs flex items-center gap-1 disabled:opacity-50"
-                  title="Riorganizza componenti e ripartisce le verdure al grammo esatto"
-                >
-                  <span>✨</span>
-                  <span>{isReformatting ? 'Riorganizzo…' : 'Riorganizza con AI'}</span>
-                </button>
+            {/* View Mode Switcher */}
+            <div className="card p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Organizzazione ingredienti
+                </span>
+                <span className="text-xs text-gray-400">
+                  {recipe.adaptedIngredients.length} ingredienti
+                </span>
               </div>
 
               <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 rounded-xl">
@@ -284,15 +267,9 @@ export default function RecipeDetailPage() {
                   📋 Lista
                 </button>
               </div>
-
-              {enrichMsg && (
-                <div className="bg-primary-100 text-primary-900 text-xs font-semibold px-3 py-2 rounded-xl text-center animate-fade-in">
-                  {enrichMsg}
-                </div>
-              )}
             </div>
 
-            {/* Mode 1: By Nutrition Category */}
+            {/* Mode 1: Grouped by Nutrition Macro Category */}
             {ingredientView === 'category' && (
               <div className="space-y-3">
                 {(['proteins', 'carbs', 'vegetables', 'fats', 'dairy', 'fruits', 'other'] as const).map(cat => {
@@ -310,17 +287,17 @@ export default function RecipeDetailPage() {
                             {label}
                           </h4>
                           <span className="text-[11px] text-gray-400">
-                            ({items.length} {items.length === 1 ? 'ingrediente' : 'ingredienti'})
+                            ({items.length} {items.length === 1 ? 'alimento' : 'alimenti'})
                           </span>
                         </div>
                         {cat === 'vegetables' && items.length > 1 && (
                           <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                            Ripartite al 50/50
+                            Ripartite equamente
                           </span>
                         )}
                         {cat === 'proteins' && items.length > 1 && (
                           <span className="text-[10px] font-semibold bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
-                            Bilanciate
+                            Bilanciate 50/50
                           </span>
                         )}
                       </div>
@@ -352,7 +329,7 @@ export default function RecipeDetailPage() {
               </div>
             )}
 
-            {/* Mode 2: By Culinary Component (Panino, Pulled Pork, Salsa...) */}
+            {/* Mode 2: Grouped by Culinary Component */}
             {ingredientView === 'component' && (
               <div className="space-y-3">
                 {Array.from(
@@ -399,9 +376,6 @@ export default function RecipeDetailPage() {
             {/* Mode 3: Standard Flat List */}
             {ingredientView === 'list' && (
               <div className="card p-4 space-y-2">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  ✅ Tutti gli ingredienti adattati
-                </h3>
                 <div className="space-y-2">
                   {recipe.adaptedIngredients.map((ing, i) => (
                     <div
@@ -429,7 +403,7 @@ export default function RecipeDetailPage() {
               </div>
             )}
 
-            {/* Original Recipe Comparison (if quantities changed) */}
+            {/* Original Recipe Comparison (if quantities were scaled) */}
             {recipe.originalIngredients.some(
               (ing, i) =>
                 ing.originalQuantity !== recipe.adaptedIngredients[i]?.adaptedQuantity
@@ -451,53 +425,23 @@ export default function RecipeDetailPage() {
           </div>
         )}
 
-        {/* Steps tab */}
+        {/* ── Tab: Preparation / Steps (Clean, Natural, No Banners) ── */}
         {tab === 'steps' && (
           <div className="space-y-3 mb-4">
-            {/* Quick Actions for Doses */}
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">⚖️</span>
-                <div>
-                  <p className="text-xs font-bold text-emerald-900">Dosi nei procedimenti</p>
-                  <p className="text-[11px] text-emerald-700">Le quantità adattate appaiono tra parentesi</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                <button
-                  onClick={handleEnrichSteps}
-                  className="flex-1 sm:flex-initial text-xs font-semibold bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1.5 rounded-xl shadow-xs transition-colors"
-                >
-                  🔄 Inserisci dosi
-                </button>
-                <button
-                  onClick={handleReformatWithAI}
-                  disabled={isReformatting}
-                  className="flex-1 sm:flex-initial text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-2.5 py-1.5 rounded-xl shadow-xs transition-colors"
-                >
-                  {isReformatting ? '⏳ Elaboro…' : '✨ Con AI'}
-                </button>
-              </div>
-            </div>
-
-            {enrichMsg && (
-              <div className="bg-primary-100 text-primary-900 text-xs font-semibold px-3 py-2 rounded-xl text-center animate-fade-in">
-                {enrichMsg}
-              </div>
-            )}
-
             {recipe.steps.map((step) => (
-              <div key={step.order} className="card p-4 flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+              <div key={step.order} className="card p-4 flex gap-3.5 items-start">
+                <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
                   {step.order}
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-800 leading-relaxed">{step.description}</p>
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm text-gray-800 leading-relaxed font-normal">
+                    {step.description}
+                  </p>
                   {step.duration && (
-                    <p className="text-xs text-gray-400 mt-1">⏱ {step.duration}</p>
+                    <p className="text-xs text-gray-400 pt-0.5">⏱ {step.duration}</p>
                   )}
                   {step.tip && (
-                    <p className="text-xs text-primary-600 mt-1 bg-primary-50 rounded-lg px-2 py-1">
+                    <p className="text-xs text-primary-700 bg-primary-50 rounded-lg px-2.5 py-1 mt-1 font-medium">
                       💡 {step.tip}
                     </p>
                   )}
@@ -507,7 +451,7 @@ export default function RecipeDetailPage() {
           </div>
         )}
 
-        {/* Notes tab */}
+        {/* ── Tab: Notes ──────────────────────────────────────────── */}
         {tab === 'notes' && (
           <div className="space-y-3 mb-4">
             <div className="card p-4">
@@ -552,23 +496,26 @@ export default function RecipeDetailPage() {
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* ── Action Buttons ──────────────────────────────────────── */}
         <div className="flex gap-3 pb-8">
-          <button onClick={deleteRecipe} className="btn-secondary text-red-500 border-red-200 flex-1">
+          <button
+            onClick={deleteRecipe}
+            className="btn-secondary text-red-500 border-red-200 flex-1 hover:bg-red-50 font-semibold"
+          >
             🗑 Elimina
           </button>
           <button
             onClick={openAddToPlanner}
-            className="btn-primary flex-1"
+            className="btn-primary flex-1 font-bold shadow-md"
           >
             📅 Aggiungi al piano
           </button>
         </div>
       </div>
 
-      {/* Add to planner modal */}
+      {/* ── Add to Planner Modal ────────────────────────────────────── */}
       {showAddToPlanner && (
-        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-end justify-center z-50">
           <div className="bg-white rounded-t-3xl p-6 w-full max-w-lg animate-slide-up">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Aggiungi al Meal Planner</h3>
             <div className="space-y-4">
@@ -600,9 +547,13 @@ export default function RecipeDetailPage() {
                   ))}
                 </div>
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => setShowAddToPlanner(false)} className="btn-secondary flex-1">Annulla</button>
-                <button onClick={addToPlanner} className="btn-primary flex-1">Conferma ✓</button>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setShowAddToPlanner(false)} className="btn-secondary flex-1">
+                  Annulla
+                </button>
+                <button onClick={addToPlanner} className="btn-primary flex-1">
+                  Conferma ✓
+                </button>
               </div>
             </div>
           </div>
