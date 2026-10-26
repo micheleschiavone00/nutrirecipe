@@ -211,11 +211,26 @@ REGOLE CRUCIALI DI ADATTAMENTO:
 
 4. DOSI OBBLIGATORIE NEI PASSAGGI / PROCEDIMENTO (STEPS):
    - In OGNI passaggio di 'steps', quando viene nominato o aggiunto un ingrediente, DEVI SEMPRE specificare tra parentesi tonde la quantità esatta adattata!
-   - Esempio di passaggio corretto: "In una ciotola unire le zucchine (200g) grattugiate, le uova (1 intero, 50g) e la feta (25g) sbriciolata."
+   - Esempio di passaggio corretto: "In una ciotola unire le zucchine (100g) grattugiate, i peperoni (100g), le uova (1 intero, 50g) e la feta (25g) sbriciolata."
    - Esempio di passaggio corretto: "Scaldare una padella con l'olio extravergine d'oliva (10g) e versare il composto cuocendo per 5 minuti a fuoco medio."
    - Questo permette a chi cucina di leggere direttamente il procedimento senza dover continuamente consultare la lista degli ingredienti.
 
-5. CATEGORIZZAZIONE "PRANZO E CENA" (se targetMeal è "lunch_dinner"):
+5. REGOLA TASSATIVA SULLE VERDURE (GRAMMI ESATTI E RIPARTIZIONE MULTI-VERDURA):
+   - Le verdure (categoria 'vegetables') sono a tutti gli effetti una categoria nutrizionale da pesare al grammo.
+   - NON USARE MAI indicazioni generiche o a pezzi per le verdure (VIETATO scrivere "1 zucchina", "2 pomodori" o "una carota"). Devi SEMPRE calcolare i grammi esatti (es. "200g").
+   - Se il piano nutrizionale prevede una quota di verdure (es. 200g):
+     * Con 1 sola verdura: assegna l'intera quota (es. 200g zucchine).
+     * Con 2 verdure: suddividi equamente al 50/50 (es. 100g zucchine e 100g peperoni -> totale 200g).
+     * Con 3 verdure: circa 65-70g per ciascuna verdura -> totale 200g.
+     * Con 4 verdure: 50g per ciascuna verdura -> totale 200g.
+   - La somma dei grammi di tutte le verdure DEVE corrispondere esattamente alla quota del piano nutrizionale (NON raddoppiare o quadruplicare la verdura).
+
+6. ORGANIZZAZIONE PER COMPONENTE / PREPARAZIONE (campo 'component'):
+   - Se la ricetta è composta da più preparazioni (es. panino con pulled pork e salsa, oppure impasto + farcitura, oppure base + crema):
+     * Assegna a ciascun ingrediente il campo 'component' specificando a cosa serve (es. "Per il panino", "Per il pulled pork", "Per la salsa", "Per la farcitura").
+     * Se la ricetta è a preparazione unica o semplice, usa "Principale" o "Base".
+
+7. CATEGORIZZAZIONE "PRANZO E CENA" (se targetMeal è "lunch_dinner"):
    - La ricetta deve poter essere consumata sia a pranzo che a cena. Calibra le grammature in modo che soddisfino entrambi i pasti. Se tra pranzo e cena ci sono differenze (es. quota carboidrati diversa), usa una dose equilibrata e specifica chiaramente in 'adaptationNotes' l'eventuale variazione raccomandata (es. "Se consumata a cena, ridurre la pasta a 50g").
 
 Restituisci SOLO un JSON con questa struttura:
@@ -224,10 +239,10 @@ Restituisci SOLO un JSON con questa struttura:
   "description": "Descrizione breve",
   "targetMeal": "${targetMeal}",
   "originalIngredients": [
-    { "name": "nome ingrediente", "originalQuantity": "200g", "adaptedQuantity": "200g", "unit": "g", "category": "proteins", "isOptional": false }
+    { "name": "nome ingrediente", "originalQuantity": "200g", "adaptedQuantity": "200g", "unit": "g", "category": "proteins", "component": "Per il pulled pork", "isOptional": false }
   ],
   "adaptedIngredients": [
-    { "name": "nome ingrediente", "originalQuantity": "200g", "adaptedQuantity": "150g", "unit": "g", "category": "proteins", "isOptional": false }
+    { "name": "nome ingrediente", "originalQuantity": "200g", "adaptedQuantity": "150g", "unit": "g", "category": "proteins", "component": "Per il pulled pork", "isOptional": false }
   ],
   "steps": [
     { "order": 1, "description": "Passaggio dettagliato con dosi tra parentesi tonde (es. zucchine (200g))", "duration": "5 minuti", "tip": "consiglio opzionale" }
@@ -347,4 +362,83 @@ ${stepsList}`
 
   const parsed = JSON.parse(result)
   return parsed.steps || currentSteps
+}
+
+// ─── Reorganize existing recipe with AI (Components, Vegetable Partition & Doses) ────
+
+export async function reorganizeRecipeWithAI(
+  recipe: Recipe,
+  profile: NutritionProfile
+): Promise<{
+  adaptedIngredients: RecipeIngredient[]
+  steps: RecipeStep[]
+  adaptationNotes?: string
+}> {
+  const targetMeal = recipe.targetMeal
+  const formatGroup = (g: any) => ({
+    gruppo: g.name,
+    categoria: g.category,
+    quantità: `${g.minQuantity ?? ''}–${g.maxQuantity ?? ''} ${g.unit}`,
+    opzioni: (g.options || []).map((o: any) => `${o.name} ${o.quantity}${o.unit}`),
+    note: g.notes || '',
+  })
+
+  let mealDescription = ''
+  if (targetMeal === 'lunch_dinner') {
+    const lunchMeal = profile.meals.find(m => m.mealType === 'lunch')
+    const dinnerMeal = profile.meals.find(m => m.mealType === 'dinner')
+    const parts: string[] = []
+    if (lunchMeal) parts.push(`PIANO PRANZO:\n${JSON.stringify(lunchMeal.groups.map(formatGroup), null, 2)}`)
+    if (dinnerMeal) parts.push(`PIANO CENA:\n${JSON.stringify(dinnerMeal.groups.map(formatGroup), null, 2)}`)
+    mealDescription = parts.join('\n\n') || 'Piano pranzo e cena'
+  } else {
+    const meal = profile.meals.find(m => m.mealType === targetMeal)
+    mealDescription = meal ? JSON.stringify(meal.groups.map(formatGroup), null, 2) : 'Piano pasto'
+  }
+
+  const systemPrompt = `Sei un nutrizionista e chef AI d'élite.
+Riorganizza e perfeziona gli ingredienti e i passaggi di questa ricetta già salvata:
+1. RAGGRUPPAMENTO PER COMPONENTE ('component'):
+   - Assegna ad ogni ingrediente il campo 'component' (es. "Per il panino", "Per il pulled pork", "Per la salsa", "Impasto", "Farcitura").
+2. DOSAGGIO DELLE VERDURE AL GRAMMO ESATTO:
+   - Se ci sono verdure, converti qualsiasi stima o pezzo in GRAMMI ESATTI (es. "100g zucchine").
+   - Se ci sono più verdure (es. 2 verdure), suddividi equamente la quota del piano (es. se la quota è 200g: 100g e 100g; se 4 verdure: 50g ciascuna).
+3. BILANCIAMENTO 50/50 MULTI-PROTEINA / MULTI-CARBOIDRATO:
+   - Mantieni entrambi gli alimenti della stessa categoria e suddividi la quota totale.
+4. DOSI NEI PASSAGGI (STEPS):
+   - Nei passaggi della preparazione indica SEMPRE tra parentesi tonde le quantità esatte (es. "unire zucchine (100g) e peperoni (100g)").
+
+Restituisci SOLO un JSON con:
+{
+  "adaptedIngredients": [
+    { "name": "nome", "originalQuantity": "...", "adaptedQuantity": "100g", "unit": "g", "category": "vegetables", "component": "Per la farcitura" }
+  ],
+  "steps": [
+    { "order": 1, "description": "Passaggio con dosi (100g)...", "duration": "5 min", "tip": "consiglio" }
+  ],
+  "adaptationNotes": "Spiegazione sintetica della ripartizione e dei componenti"
+}`
+
+  const userPrompt = `Piano nutrizionale:
+${mealDescription}
+
+Ricetta da riorganizzare:
+Titolo: ${recipe.title}
+Ingredienti attuali:
+${JSON.stringify(recipe.adaptedIngredients, null, 2)}
+
+Passaggi attuali:
+${recipe.steps.map(s => `${s.order}. ${s.description}`).join('\n')}`
+
+  const result = await chatCompletion([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ])
+
+  const parsed = JSON.parse(result)
+  return {
+    adaptedIngredients: parsed.adaptedIngredients || recipe.adaptedIngredients,
+    steps: parsed.steps || recipe.steps,
+    adaptationNotes: parsed.adaptationNotes || recipe.adaptationNotes,
+  }
 }

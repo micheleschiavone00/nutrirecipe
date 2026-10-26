@@ -34,6 +34,16 @@ export const CATEGORY_LABELS = {
   other: 'Altro',
 } as const
 
+export const CATEGORY_ICONS: Record<string, string> = {
+  proteins: '🥩',
+  carbs: '🌾',
+  vegetables: '🥦',
+  fruits: '🍎',
+  dairy: '🥛',
+  fats: '🥑',
+  other: '🍴',
+}
+
 export const CATEGORY_COLORS = {
   carbs: 'bg-amber-100 text-amber-800',
   proteins: 'bg-red-100 text-red-800',

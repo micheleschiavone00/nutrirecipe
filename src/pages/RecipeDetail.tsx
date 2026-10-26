@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db'
-import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, formatDate } from '@/lib/utils'
+import { db, getActiveProfile } from '@/lib/db'
+import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, CATEGORY_ICONS, formatDate } from '@/lib/utils'
 import { enrichRecipeStepsWithDoses } from '@/lib/recipeEnricher'
-import { reformatRecipeStepsWithAI } from '@/lib/ai'
+import { reformatRecipeStepsWithAI, reorganizeRecipeWithAI } from '@/lib/ai'
 import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
 import type { MealType, TargetMealType } from '@/types'
 
@@ -32,6 +32,7 @@ export default function RecipeDetailPage() {
   const [showAddToPlanner, setShowAddToPlanner] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedMeal, setSelectedMeal] = useState<MealType>('lunch')
+  const [ingredientView, setIngredientView] = useState<'category' | 'component' | 'list'>('category')
   const [isReformatting, setIsReformatting] = useState(false)
   const [enrichMsg, setEnrichMsg] = useState('')
 
@@ -110,6 +111,32 @@ export default function RecipeDetailPage() {
     } finally {
       setIsReformatting(false)
       setTimeout(() => setEnrichMsg(''), 3000)
+    }
+  }
+
+  const handleReorganizeWithAI = async () => {
+    if (!recipe) return
+    setIsReformatting(true)
+    setEnrichMsg("🤖 L'AI sta organizzando ingredienti per componente e ripartendo le verdure…")
+    try {
+      const profile = await getActiveProfile()
+      if (!profile) {
+        setEnrichMsg('⚠️ Nessun profilo nutrizionale attivo')
+        return
+      }
+      const reorganized = await reorganizeRecipeWithAI(recipe, profile)
+      await db.recipes.update(recipe.id, {
+        adaptedIngredients: reorganized.adaptedIngredients,
+        steps: reorganized.steps,
+        adaptationNotes: reorganized.adaptationNotes || recipe.adaptationNotes,
+        updatedAt: new Date(),
+      })
+      setEnrichMsg('✅ Ingredienti riorganizzati e verdure ripartite al grammo!')
+    } catch {
+      setEnrichMsg("❌ Errore durante la riorganizzazione AI")
+    } finally {
+      setIsReformatting(false)
+      setTimeout(() => setEnrichMsg(''), 4000)
     }
   }
 
@@ -210,28 +237,202 @@ export default function RecipeDetailPage() {
         {/* Ingredients tab */}
         {tab === 'ingredients' && (
           <div className="space-y-3 mb-4">
-            <div className="card p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                ✅ Ingredienti adattati al tuo piano
-              </h3>
-              <div className="space-y-2">
-                {recipe.adaptedIngredients.map((ing, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <div className="flex items-center gap-2 flex-1">
-                      <Badge variant={ing.category as any} className="text-xs">
-                        {CATEGORY_LABELS[ing.category]}
-                      </Badge>
-                      <span className="text-sm text-gray-800">{ing.name}</span>
-                      {ing.isOptional && <span className="text-xs text-gray-400">(opz.)</span>}
+            {/* View Mode Switcher & AI Reorganize Button */}
+            <div className="card p-3 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-gray-700">Visualizzazione:</span>
+                <button
+                  onClick={handleReorganizeWithAI}
+                  disabled={isReformatting}
+                  className="text-[11px] font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-2.5 py-1 rounded-xl transition-all shadow-xs flex items-center gap-1 disabled:opacity-50"
+                  title="Riorganizza componenti e ripartisce le verdure al grammo esatto"
+                >
+                  <span>✨</span>
+                  <span>{isReformatting ? 'Riorganizzo…' : 'Riorganizza con AI'}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 rounded-xl">
+                <button
+                  onClick={() => setIngredientView('category')}
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center ${
+                    ingredientView === 'category'
+                      ? 'bg-white text-gray-900 shadow-xs'
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  🥩 Per Macro
+                </button>
+                <button
+                  onClick={() => setIngredientView('component')}
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center ${
+                    ingredientView === 'component'
+                      ? 'bg-white text-gray-900 shadow-xs'
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  🥪 Componenti
+                </button>
+                <button
+                  onClick={() => setIngredientView('list')}
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center ${
+                    ingredientView === 'list'
+                      ? 'bg-white text-gray-900 shadow-xs'
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  📋 Lista
+                </button>
+              </div>
+
+              {enrichMsg && (
+                <div className="bg-primary-100 text-primary-900 text-xs font-semibold px-3 py-2 rounded-xl text-center animate-fade-in">
+                  {enrichMsg}
+                </div>
+              )}
+            </div>
+
+            {/* Mode 1: By Nutrition Category */}
+            {ingredientView === 'category' && (
+              <div className="space-y-3">
+                {(['proteins', 'carbs', 'vegetables', 'fats', 'dairy', 'fruits', 'other'] as const).map(cat => {
+                  const items = recipe.adaptedIngredients.filter(ing => ing.category === cat)
+                  if (items.length === 0) return null
+                  const label = CATEGORY_LABELS[cat] || cat
+                  const icon = CATEGORY_ICONS[cat] || '🍴'
+
+                  return (
+                    <div key={cat} className="card p-3.5 space-y-2">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-gray-100">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base">{icon}</span>
+                          <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+                            {label}
+                          </h4>
+                          <span className="text-[11px] text-gray-400">
+                            ({items.length} {items.length === 1 ? 'ingrediente' : 'ingredienti'})
+                          </span>
+                        </div>
+                        {cat === 'vegetables' && items.length > 1 && (
+                          <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                            Ripartite al 50/50
+                          </span>
+                        )}
+                        {cat === 'proteins' && items.length > 1 && (
+                          <span className="text-[10px] font-semibold bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
+                            Bilanciate
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        {items.map((ing, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0"
+                          >
+                            <div className="flex items-center gap-2 flex-1">
+                              <span className="text-sm text-gray-800 font-medium">{ing.name}</span>
+                              {ing.component && ing.component !== 'Principale' && (
+                                <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-md">
+                                  {ing.component}
+                                </span>
+                              )}
+                              {ing.isOptional && <span className="text-xs text-gray-400">(opz.)</span>}
+                            </div>
+                            <span className="font-bold text-primary-700 text-sm">
+                              {ing.adaptedQuantity}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <span className="font-bold text-primary-700 text-sm">{ing.adaptedQuantity}</span>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Mode 2: By Culinary Component (Panino, Pulled Pork, Salsa...) */}
+            {ingredientView === 'component' && (
+              <div className="space-y-3">
+                {Array.from(
+                  recipe.adaptedIngredients.reduce((map, ing) => {
+                    const comp = ing.component || 'Preparazione principale'
+                    if (!map.has(comp)) map.set(comp, [])
+                    map.get(comp)!.push(ing)
+                    return map
+                  }, new Map<string, typeof recipe.adaptedIngredients>())
+                ).map(([compName, items]) => (
+                  <div key={compName} className="card p-3.5 space-y-2">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-gray-100">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🥪</span>
+                        <h4 className="text-xs font-bold text-gray-900">{compName}</h4>
+                        <span className="text-[11px] text-gray-400">({items.length} alimenti)</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {items.map((ing, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0"
+                        >
+                          <div className="flex items-center gap-2 flex-1">
+                            <Badge variant={ing.category as any} className="text-[10px] py-0.5">
+                              {CATEGORY_LABELS[ing.category]}
+                            </Badge>
+                            <span className="text-sm text-gray-800 font-medium">{ing.name}</span>
+                            {ing.isOptional && <span className="text-xs text-gray-400">(opz.)</span>}
+                          </div>
+                          <span className="font-bold text-primary-700 text-sm">
+                            {ing.adaptedQuantity}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
+            )}
 
-            {recipe.originalIngredients.some((ing, i) =>
-              ing.originalQuantity !== recipe.adaptedIngredients[i]?.adaptedQuantity
+            {/* Mode 3: Standard Flat List */}
+            {ingredientView === 'list' && (
+              <div className="card p-4 space-y-2">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  ✅ Tutti gli ingredienti adattati
+                </h3>
+                <div className="space-y-2">
+                  {recipe.adaptedIngredients.map((ing, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <Badge variant={ing.category as any} className="text-xs">
+                          {CATEGORY_LABELS[ing.category]}
+                        </Badge>
+                        <span className="text-sm text-gray-800">{ing.name}</span>
+                        {ing.component && (
+                          <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                            {ing.component}
+                          </span>
+                        )}
+                        {ing.isOptional && <span className="text-xs text-gray-400">(opz.)</span>}
+                      </div>
+                      <span className="font-bold text-primary-700 text-sm">
+                        {ing.adaptedQuantity}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Original Recipe Comparison (if quantities changed) */}
+            {recipe.originalIngredients.some(
+              (ing, i) =>
+                ing.originalQuantity !== recipe.adaptedIngredients[i]?.adaptedQuantity
             ) && (
               <div className="card p-4 opacity-60">
                 <h3 className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">

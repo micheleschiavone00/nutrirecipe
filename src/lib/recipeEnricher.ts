@@ -110,7 +110,48 @@ export function enrichStepWithDoses(
 }
 
 /**
- * Checks and enriches all steps of a recipe with adapted ingredient doses.
+ * Normalizes vague vegetable quantities into exact grams and splits multi-vegetables equitably.
+ * E.g., if there are 2 vegetables, splits 200g into 100g each.
+ */
+export function normalizeVegetables(
+  ingredients: RecipeIngredient[],
+  totalVegQuota = 200
+): { ingredients: RecipeIngredient[]; changed: boolean } {
+  const vegIndices = ingredients
+    .map((ing, i) => (ing.category === 'vegetables' ? i : -1))
+    .filter(i => i !== -1)
+
+  if (vegIndices.length === 0) return { ingredients, changed: false }
+
+  let changed = false
+  const quotaPerVeg = Math.round(totalVegQuota / vegIndices.length)
+
+  const updatedIngredients = ingredients.map((ing) => {
+    if (ing.category !== 'vegetables') return ing
+
+    // Check if vague unit or pieces
+    const isVague =
+      ing.unit === 'pieces' ||
+      ing.unit === 'portions' ||
+      /\b(?:pezzo|pezzi|zucchina|zucchine|carota|carote|pomodoro|pomodori)\b/i.test(ing.adaptedQuantity)
+
+    if (isVague) {
+      changed = true
+      return {
+        ...ing,
+        adaptedQuantity: `${quotaPerVeg}g`,
+        unit: 'g',
+      }
+    }
+    return ing
+  })
+
+  return { ingredients: updatedIngredients, changed }
+}
+
+/**
+ * Checks and enriches all steps of a recipe with adapted ingredient doses
+ * and normalizes vegetables to exact grams.
  */
 export function enrichRecipeStepsWithDoses(recipe: Recipe): { recipe: Recipe; changed: boolean } {
   if (!recipe.steps || recipe.steps.length === 0 || !recipe.adaptedIngredients || recipe.adaptedIngredients.length === 0) {
@@ -118,8 +159,16 @@ export function enrichRecipeStepsWithDoses(recipe: Recipe): { recipe: Recipe; ch
   }
 
   let anyChange = false
+
+  // 1. Normalize vegetables if vague
+  const { ingredients: normalizedIngs, changed: vegChanged } = normalizeVegetables(recipe.adaptedIngredients)
+  if (vegChanged) {
+    anyChange = true
+  }
+
+  // 2. Enrich steps with doses
   const updatedSteps: RecipeStep[] = recipe.steps.map(step => {
-    const { text, changed } = enrichStepWithDoses(step.description, recipe.adaptedIngredients)
+    const { text, changed } = enrichStepWithDoses(step.description, normalizedIngs)
     if (changed) {
       anyChange = true
       return { ...step, description: text }
@@ -134,6 +183,7 @@ export function enrichRecipeStepsWithDoses(recipe: Recipe): { recipe: Recipe; ch
   return {
     recipe: {
       ...recipe,
+      adaptedIngredients: normalizedIngs,
       steps: updatedSteps,
       updatedAt: new Date(),
     },

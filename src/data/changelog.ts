@@ -16,14 +16,45 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.2.0'
+export const APP_VERSION = '1.3.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.3.0',
+    date: '26 Ottobre 2026',
+    title: 'Organizzazione Ingredienti (Macro/Componenti) & Verdure al Grammo',
+    isLatest: true,
+    summary:
+      'Nuova tripla modalità di visualizzazione ingredienti (per Macro Categoria, per Componente/Preparazione e Lista). Precisione al grammo per le verdure con ripartizione equa multi-verdura (es. 100g e 100g) e riorganizzazione retroattiva con AI per vecchie ricette.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Visualizzazione per Macro Categoria & per Componente',
+        description:
+          'Nel dettaglio ricetta puoi ora scegliere come consultare gli ingredienti: raggruppati per Macro (Proteine, Carboidrati, Verdure, Grassi), per Componente culinario (es. "Per il panino", "Per il pulled pork", "Per la salsa"), oppure in lista classica.',
+        howToUse: 'Apri una ricetta e usa i nuovi selettori "🥩 Per Macro" e "🥪 Componenti".',
+      },
+      {
+        type: 'ai',
+        title: 'Verdure al grammo esatto & Ripartizione Multi-Verdura',
+        description:
+          'Mai più dosi generiche a pezzi per le verdure. Se il piano prevede 200g e la ricetta include 2 verdure (es. zucchine e peperoni), vengono ripartite a 100g ciascuna (o 50g con 4 verdure), garantendo la quota totale esatta del tuo piano.',
+        howToUse: 'Le verdure vengono calcolate sempre in grammi esatti sia nelle nuove ricette che riadattando quelle esistenti.',
+      },
+      {
+        type: 'ai',
+        title: 'Pulsante "Riorganizza con AI" per ricette esistenti',
+        description:
+          'Anche per le ricette salvate in precedenza puoi cliccare "✨ Riorganizza con AI" per assegnare i componenti culinari, ricalibrare le verdure al grammo esatto e perfezionare i passaggi.',
+        howToUse: 'Nella scheda "🥗 Ingredienti" di qualsiasi ricetta salvata tocca "✨ Riorganizza con AI".',
+      },
+    ],
+  },
   {
     version: '1.2.0',
     date: '26 Ottobre 2026',
     title: 'Visualizzazione/Modifica Piano Nutrizionale & Dosi Retroattive',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Ora puoi visualizzare, personalizzare e modificare ogni singolo alimento e grammatura del tuo piano nutrizionale. Inoltre, tutte le ricette salvate in precedenza vengono aggiornate automaticamente integrando le dosi nei singoli passaggi.',
     changes: [

@@ -52,6 +52,7 @@ export interface RecipeIngredient {
   adaptedQuantity: string     // es. "150g (adattato al tuo piano)"
   unit: string
   category: FoodGroup['category']
+  component?: string          // es. "Per il panino", "Per il pulled pork", "Per la salsa", "Impasto"
   isOptional?: boolean
 }
 
