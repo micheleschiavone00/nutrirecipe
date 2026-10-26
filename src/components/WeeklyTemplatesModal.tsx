@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { generateId, MEAL_LABELS, MEAL_ICONS } from '@/lib/utils'
+import { generateId } from '@/lib/utils'
 import type { WeeklyTemplate, PlannedMeal, Recipe, WeeklyTemplateMeal } from '@/types'
 
 interface WeeklyTemplatesModalProps {
@@ -18,7 +18,6 @@ export default function WeeklyTemplatesModal({
   onClose,
   currentWeekDays,
   currentWeekMeals,
-  recipesMap,
   onApplied,
 }: WeeklyTemplatesModalProps) {
   const [tab, setTab] = useState<'saved' | 'save_current'>('saved')
@@ -29,6 +28,20 @@ export default function WeeklyTemplatesModal({
   const [applyMode, setApplyMode] = useState<'replace' | 'merge'>('replace')
 
   const templates = useLiveQuery(() => db.weeklyTemplates.orderBy('createdAt').reverse().toArray(), [])
+
+  // Prevent background scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return
+    const originalOverflow = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.touchAction = originalTouchAction
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -123,10 +136,16 @@ export default function WeeklyTemplatesModal({
   const DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4 max-h-[90vh] flex flex-col shadow-2xl animate-slide-up">
-        {/* Header */}
-        <div className="flex items-start justify-between pb-3 border-b border-gray-100 flex-shrink-0">
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in touch-none"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[88dvh] sm:max-h-[85dvh] overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Fixed Header */}
+        <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">📋</span>
             <div>
@@ -144,40 +163,42 @@ export default function WeeklyTemplatesModal({
           </button>
         </div>
 
-        {/* Tab switch */}
-        <div className="flex bg-gray-100 p-1 rounded-xl flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              setTab('saved')
-              setSelectedTemplateForApply(null)
-            }}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              tab === 'saved' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            📂 Modelli Salvati ({templates?.length ?? 0})
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTab('save_current')
-              setSelectedTemplateForApply(null)
-            }}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              tab === 'save_current' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            💾 Salva Questa Settimana
-          </button>
+        {/* Tab switch fixed */}
+        <div className="px-4 sm:px-5 pt-3 pb-2 flex-shrink-0 bg-white">
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => {
+                setTab('saved')
+                setSelectedTemplateForApply(null)
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                tab === 'saved' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              📂 Modelli Salvati ({templates?.length ?? 0})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTab('save_current')
+                setSelectedTemplateForApply(null)
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                tab === 'save_current' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              💾 Salva Questa Settimana
+            </button>
+          </div>
         </div>
 
         {/* Tab 1: Saved Templates */}
         {tab === 'saved' && (
-          <div className="flex-1 min-h-0 flex flex-col space-y-3">
-            {selectedTemplateForApply ? (
-              /* Confirmation / Apply Options */
-              <div className="space-y-4 py-2 flex-1 overflow-y-auto">
+          selectedTemplateForApply ? (
+            /* Confirmation / Apply Options */
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 [-webkit-overflow-scrolling:touch]">
                 <div className="bg-primary-50 border border-primary-200 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg">✨</span>
@@ -236,28 +257,31 @@ export default function WeeklyTemplatesModal({
                     </button>
                   </div>
                 </div>
-
-                <div className="flex gap-2.5 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTemplateForApply(null)}
-                    className="btn-secondary flex-1 py-2.5 text-xs font-bold"
-                  >
-                    Annulla
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleApply(selectedTemplateForApply)}
-                    disabled={saving}
-                    className="btn-primary flex-1 py-2.5 text-xs font-bold shadow-md"
-                  >
-                    {saving ? 'Applicando…' : 'Conferma ed Applica ✓'}
-                  </button>
-                </div>
               </div>
-            ) : (
-              /* Templates List */
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
+
+              {/* Pinned Action Buttons for Apply */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTemplateForApply(null)}
+                  className="btn-secondary flex-1 py-3 text-xs sm:text-sm font-bold"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleApply(selectedTemplateForApply)}
+                  disabled={saving}
+                  className="btn-primary flex-1 py-3 text-xs sm:text-sm font-bold shadow-md"
+                >
+                  {saving ? 'Applicando…' : 'Conferma ed Applica ✓'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Templates List */
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3 [-webkit-overflow-scrolling:touch]">
                 {(!templates || templates.length === 0) ? (
                   <div className="text-center py-10 px-4 bg-gray-50 rounded-2xl border border-gray-100">
                     <p className="text-3xl mb-2">📋</p>
@@ -329,7 +353,7 @@ export default function WeeklyTemplatesModal({
                           <button
                             type="button"
                             onClick={() => setSelectedTemplateForApply(tpl)}
-                            className="btn-primary text-xs py-1.5 px-3 font-bold flex items-center gap-1 shadow-xs"
+                            className="btn-primary text-xs py-2 px-3 font-bold flex items-center gap-1 shadow-xs"
                           >
                             <span>📅 Applica a questa settimana</span>
                           </button>
@@ -339,80 +363,102 @@ export default function WeeklyTemplatesModal({
                   })
                 )}
               </div>
-            )}
-          </div>
+
+              {/* Pinned Footer for Templates List */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+                <button
+                  type="button"
+                  onClick={() => setTab('save_current')}
+                  className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-primary-50 transition-colors"
+                >
+                  <span>💾</span>
+                  <span>Salva settimana corrente</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn-secondary py-2 px-4 text-xs font-bold"
+                >
+                  Chiudi
+                </button>
+              </div>
+            </div>
+          )
         )}
 
         {/* Tab 2: Save Current Week */}
         {tab === 'save_current' && (
-          <form onSubmit={handleSaveCurrent} className="space-y-4 py-1 flex-1 overflow-y-auto">
-            {/* Week Summary Box */}
-            <div className="bg-primary-50/80 border border-primary-200/80 rounded-2xl p-3.5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-xl flex-shrink-0">
-                📊
+          <form onSubmit={handleSaveCurrent} className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 [-webkit-overflow-scrolling:touch]">
+              {/* Week Summary Box */}
+              <div className="bg-primary-50/80 border border-primary-200/80 rounded-2xl p-3.5 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-xl flex-shrink-0">
+                  📊
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-primary-900">
+                    Settimana in corso: {currentWeekMeals.length} pasti pianificati
+                  </p>
+                  <p className="text-[11px] text-primary-700 mt-0.5">
+                    Salveremo i pasti di Lun-Dom con le loro rispettive ricette e porzioni.
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-primary-900">
-                  Settimana in corso: {currentWeekMeals.length} pasti pianificati
-                </p>
-                <p className="text-[11px] text-primary-700 mt-0.5">
-                  Salveremo i pasti di Lun-Dom con le loro rispettive ricette e porzioni.
-                </p>
-              </div>
+
+              {currentWeekMeals.length === 0 ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-800">
+                  ⚠️ Questa settimana non ha ancora pasti pianificati. Aggiungi prima le ricette ai giorni della settimana, poi salvala come modello standard.
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                      Nome del Modello *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={templateName}
+                      onChange={e => setTemplateName(e.target.value)}
+                      placeholder="es. Settimana Standard, Definizione Estiva, Pesce & Verdure..."
+                      className="input-field text-sm font-semibold"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                      Note / Descrizione (opzionale)
+                    </label>
+                    <input
+                      type="text"
+                      value={templateDesc}
+                      onChange={e => setTemplateDesc(e.target.value)}
+                      placeholder="es. Alto apporto proteico per giorni di allenamento"
+                      className="input-field text-xs"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
-            {currentWeekMeals.length === 0 ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-800">
-                ⚠️ Questa settimana non ha ancora pasti pianificati. Aggiungi prima le ricette ai giorni della settimana, poi salvala come modello standard.
-              </div>
-            ) : (
-              <>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-                    Nome del Modello *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={templateName}
-                    onChange={e => setTemplateName(e.target.value)}
-                    placeholder="es. Settimana Standard, Definizione Estiva, Pesce & Verdure..."
-                    className="input-field text-sm font-semibold"
-                    autoFocus
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-                    Note / Descrizione (opzionale)
-                  </label>
-                  <input
-                    type="text"
-                    value={templateDesc}
-                    onChange={e => setTemplateDesc(e.target.value)}
-                    placeholder="es. Alto apporto proteico per giorni di allenamento"
-                    className="input-field text-xs"
-                  />
-                </div>
-
-                <div className="flex gap-2.5 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setTab('saved')}
-                    className="btn-secondary flex-1 py-2.5 text-xs font-bold"
-                  >
-                    Annulla
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!templateName.trim() || saving}
-                    className="btn-primary flex-1 py-2.5 text-xs font-bold shadow-md"
-                  >
-                    {saving ? 'Salvataggio…' : 'Salva come Modello ✓'}
-                  </button>
-                </div>
-              </>
-            )}
+            {/* Pinned Action Buttons for Saving Current Week */}
+            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+              <button
+                type="button"
+                onClick={() => setTab('saved')}
+                className="btn-secondary flex-1 py-3 text-xs sm:text-sm font-bold"
+              >
+                Annulla
+              </button>
+              <button
+                type="submit"
+                disabled={!templateName.trim() || saving || currentWeekMeals.length === 0}
+                className="btn-primary flex-1 py-3 text-xs sm:text-sm font-bold shadow-md"
+              >
+                {saving ? 'Salvataggio…' : 'Salva come Modello ✓'}
+              </button>
+            </div>
           </form>
         )}
       </div>

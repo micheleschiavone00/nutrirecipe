@@ -16,14 +16,45 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.5.0'
+export const APP_VERSION = '1.5.1'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.5.1',
+    date: '26 Ottobre 2026',
+    title: 'Fix Cassetti Mobile: Blocco Scroll Sfondo, Layout dvh e Pulsanti Salva Sempre Visibili',
+    isLatest: true,
+    summary:
+      'Risolto il problema di scrolling e layout sui cassetti modali su smartphone: bloccato lo scroll della pagina di sfondo durante l\'apertura, layout dinamico a prova di Safari/iOS (dvh) e pulsanti Salva / Conferma sempre fissati in basso e mai tagliati fuori.',
+    changes: [
+      {
+        type: 'fix',
+        title: 'Blocco dello Scroll della Pagina di Sfondo',
+        description:
+          'Aperta una modale o un cassetto, lo scorrimento del touch non fa più muovere la pagina sottostante. Lo scroll è ora confinato esclusivamente all\'interno del cassetto con rimbalzo contenuto (overscroll-contain).',
+        howToUse: 'Apri qualsiasi cassetto (es. "Aggiungi al Piano" o "Piani Settimane Standard") e scorri liberamente su mobile.',
+      },
+      {
+        type: 'fix',
+        title: 'Pulsanti Salva e Conferma Sempre Fissi e Raggiungibili',
+        description:
+          'Il layout non nasconde più i pulsanti in basso oltre il bordo dello schermo. La barra inferiore delle azioni è ancorata al fondo (flex-shrink-0) e rispetta l\'area di sicurezza dei gesti di iOS (safe-area-inset-bottom).',
+        howToUse: 'I pulsanti di conferma sono subito visibili con un tocco senza dover forzare lo scorrimento.',
+      },
+      {
+        type: 'design',
+        title: 'Architettura Cassetto Unificata su Tutte le Schermate',
+        description:
+          'Applicata la stessa architettura a 3 sezioni (Header fisso, Contenuto scrollabile fluido, Footer fisso con ombra soft) a: "Aggiungi al Meal Planner" (dalla ricetta), "Scegli dal Ricettario / Pasto Libero" (dal calendario settimanale) e "Piani Settimane Standard".',
+        howToUse: 'Disponibile in tutto il Meal Planner e nei modelli di settimana.',
+      },
+    ],
+  },
   {
     version: '1.5.0',
     date: '26 Ottobre 2026',
     title: 'Multi-Variante Pranzo & Cena con Riquadri Separati e Alternative (es. Cena Post Workout)',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Risolto il bilanciamento per Pranzo e Cena con grammature differenti: nuova visualizzazione a riquadri separati ma mostrati insieme per ingredienti e preparazione. Supporto per pasti alternativi nel piano nutrizionale (es. Cena Post Workout con più proteine): importando la ricetta compaiono automaticamente tutte le varianti.',
     changes: [

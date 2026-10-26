@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, formatDayLabel } from '@/lib/utils'
@@ -30,6 +30,20 @@ export default function SelectRecipeModal({
   const [submitting, setSubmitting] = useState(false)
 
   const allRecipes = useLiveQuery(() => db.recipes.toArray(), [])
+
+  // Prevent background scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return
+    const originalOverflow = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.touchAction = originalTouchAction
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -71,8 +85,8 @@ export default function SelectRecipeModal({
     }
   }
 
-  const handleCustomSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCustomSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (!customText.trim()) return
     setSubmitting(true)
     try {
@@ -86,10 +100,16 @@ export default function SelectRecipeModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4 max-h-[90vh] flex flex-col shadow-2xl animate-slide-up">
-        {/* Header */}
-        <div className="flex items-start justify-between pb-3 border-b border-gray-100 flex-shrink-0">
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in touch-none"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[88dvh] sm:max-h-[85dvh] overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Fixed Header */}
+        <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl">{MEAL_ICONS[mealType]}</span>
@@ -110,69 +130,76 @@ export default function SelectRecipeModal({
         </div>
 
         {/* Tab switch: Scegli dal Ricettario vs Pasto Libero */}
-        <div className="flex bg-gray-100 p-1 rounded-xl flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsCustomMode(false)}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              !isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            📖 Dal Ricettario
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsCustomMode(true)}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            ✍️ Pasto Libero
-          </button>
+        <div className="px-4 sm:px-5 pt-3 pb-1 flex-shrink-0 bg-white">
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setIsCustomMode(false)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                !isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              📖 Dal Ricettario
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCustomMode(true)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              ✍️ Pasto Libero
+            </button>
+          </div>
         </div>
 
         {isCustomMode ? (
           /* Custom Meal Input Form */
-          <form onSubmit={handleCustomSubmit} className="space-y-4 py-2 flex-1">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                Nome o descrizione del pasto
-              </label>
-              <input
-                type="text"
-                value={customText}
-                onChange={e => setCustomText(e.target.value)}
-                placeholder="es. Riso basmati 80g + Salmone 150g e zucchine"
-                className="input-field text-sm"
-                autoFocus
-              />
-              <p className="text-[11px] text-gray-400">
-                Utile per pasti fuori casa o combinazioni veloci senza creare una ricetta completa.
-              </p>
-            </div>
+          <>
+            <form onSubmit={handleCustomSubmit} className="flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 [-webkit-overflow-scrolling:touch]">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                    Nome o descrizione del pasto
+                  </label>
+                  <input
+                    type="text"
+                    value={customText}
+                    onChange={e => setCustomText(e.target.value)}
+                    placeholder="es. Riso basmati 80g + Salmone 150g e zucchine"
+                    className="input-field text-sm font-medium"
+                    autoFocus
+                  />
+                  <p className="text-[11px] text-gray-400">
+                    Utile per pasti fuori casa o combinazioni veloci senza creare una ricetta completa.
+                  </p>
+                </div>
+              </div>
 
-            <div className="flex gap-2.5 pt-4">
-              <button
-                type="button"
-                onClick={() => setIsCustomMode(false)}
-                className="btn-secondary flex-1 py-2.5 text-xs font-bold"
-              >
-                Torna al ricettario
-              </button>
-              <button
-                type="submit"
-                disabled={!customText.trim() || submitting}
-                className="btn-primary flex-1 py-2.5 text-xs font-bold shadow-md"
-              >
-                {submitting ? 'Aggiunta…' : 'Salva Pasto ✓'}
-              </button>
-            </div>
-          </form>
+              {/* Fixed Footer for Custom Meal */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomMode(false)}
+                  className="btn-secondary flex-1 py-3 text-xs sm:text-sm font-bold"
+                >
+                  Torna al ricettario
+                </button>
+                <button
+                  type="submit"
+                  disabled={!customText.trim() || submitting}
+                  className="btn-primary flex-1 py-3 text-xs sm:text-sm font-bold shadow-md"
+                >
+                  {submitting ? 'Aggiunta…' : 'Salva Pasto ✓'}
+                </button>
+              </div>
+            </form>
+          </>
         ) : (
           /* Recipe Picker from Cookbook */
-          <div className="flex-1 min-h-0 flex flex-col space-y-3">
-            {/* Search & Filter bar */}
-            <div className="space-y-2 flex-shrink-0">
+          <>
+            {/* Search & Filter bar fixed */}
+            <div className="px-4 sm:px-5 py-2 space-y-2 flex-shrink-0 bg-white">
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
                 <input
@@ -231,7 +258,7 @@ export default function SelectRecipeModal({
             </div>
 
             {/* Recipes scrollable list */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 pt-1 space-y-2.5 [-webkit-overflow-scrolling:touch]">
               {filteredRecipes.length === 0 ? (
                 <div className="text-center py-8 px-4 bg-gray-50 rounded-2xl border border-gray-100">
                   <p className="text-2xl mb-1">🔍</p>
@@ -298,28 +325,28 @@ export default function SelectRecipeModal({
               )}
             </div>
 
-            {/* Quick Action Footer: Import New from Social */}
-            <div className="pt-2 border-t border-gray-100 flex items-center justify-between flex-shrink-0">
+            {/* Quick Action Footer: Import New from Social or Close */}
+            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
               <button
                 type="button"
                 onClick={() => {
                   onClose()
                   onImportNew()
                 }}
-                className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-primary-50 transition-colors"
               >
                 <span>➕</span>
-                <span>Importa nuova ricetta da social</span>
+                <span>Importa nuova da social</span>
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="text-xs font-medium text-gray-400 hover:text-gray-600"
+                className="btn-secondary py-2 px-4 text-xs font-bold"
               >
                 Chiudi
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
