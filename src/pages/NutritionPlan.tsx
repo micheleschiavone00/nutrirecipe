@@ -6,7 +6,8 @@ import { PageHeader, LoadingSpinner, EmptyState, Badge } from '@/components/ui'
 import { analyzePDFText } from '@/lib/ai'
 import { extractPDFText } from '@/lib/social'
 import { generateId, formatDate } from '@/lib/utils'
-import type { NutritionProfile, MealPlan, MealType, FoodGroup, FoodOption } from '@/types'
+import { DEFAULT_WEEKLY_RULES } from '@/lib/foodRules'
+import type { NutritionProfile, MealPlan, MealType, FoodGroup, FoodOption, WeeklyFrequencyRule } from '@/types'
 
 const MEAL_ORDER: MealType[] = ['breakfast', 'snack_am', 'lunch', 'snack_pm', 'dinner']
 
@@ -129,6 +130,8 @@ export default function NutritionPlanPage() {
   const [dailyFats, setDailyFats] = useState<number | ''>('')
   const [nutritionistNotes, setNutritionistNotes] = useState('')
   const [meals, setMeals] = useState<MealPlan[]>([])
+  const [weeklyFrequencies, setWeeklyFrequencies] = useState<WeeklyFrequencyRule[]>(DEFAULT_WEEKLY_RULES)
+  const [cheatMealsPerWeek, setCheatMealsPerWeek] = useState<number>(1)
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveToast, setSaveToast] = useState('')
@@ -203,6 +206,13 @@ export default function NutritionPlanPage() {
       })
 
       setMeals(completeMeals)
+
+      if (activeProfile.weeklyFrequencies && activeProfile.weeklyFrequencies.length > 0) {
+        setWeeklyFrequencies(activeProfile.weeklyFrequencies)
+      } else {
+        setWeeklyFrequencies(DEFAULT_WEEKLY_RULES)
+      }
+      setCheatMealsPerWeek(activeProfile.cheatMealsPerWeek ?? 1)
     }
   }, [activeProfile])
 
@@ -249,6 +259,8 @@ export default function NutritionPlanPage() {
         dailyCarbs: dailyCarbs !== '' ? Number(dailyCarbs) : undefined,
         dailyFats: dailyFats !== '' ? Number(dailyFats) : undefined,
         nutritionistNotes: nutritionistNotes.trim() || undefined,
+        weeklyFrequencies,
+        cheatMealsPerWeek,
         meals: meals.filter(m => m.groups && m.groups.length > 0),
         updatedAt: new Date(),
       }
@@ -559,6 +571,75 @@ export default function NutritionPlanPage() {
                 />
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Weekly Frequencies and Rules Card */}
+        <div className="card p-4 space-y-3 bg-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🎯</span>
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm">Frequenze Settimanali e Pasti Liberi</h3>
+                <p className="text-[11px] text-gray-400">Regole consigliate dal nutrizionista per la settimana</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-1">
+            {weeklyFrequencies.map((rule, rIdx) => {
+              const isMax = rule.maxPerWeek !== undefined
+              const val = rule.maxPerWeek ?? rule.targetPerWeek ?? 3
+
+              return (
+                <div
+                  key={rule.id}
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-gray-50/80 border border-gray-200/70 text-xs"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-gray-900 text-xs">
+                      {rule.label}
+                    </p>
+                    <p className="text-[10px] text-gray-500 truncate">
+                      {isMax ? `Massimo ${val} volte / sett.` : `Consigliato ${val} volte / sett.`}
+                      {rule.notes ? ` • ${rule.notes}` : ''}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = Math.max(0, val - 1)
+                        const copy = [...weeklyFrequencies]
+                        if (isMax) copy[rIdx] = { ...copy[rIdx], maxPerWeek: next }
+                        else copy[rIdx] = { ...copy[rIdx], targetPerWeek: next }
+                        setWeeklyFrequencies(copy)
+                      }}
+                      className="w-6 h-6 rounded-lg bg-gray-200 hover:bg-gray-300 active:scale-95 text-gray-700 font-extrabold flex items-center justify-center text-xs"
+                    >
+                      –
+                    </button>
+                    <span className="w-8 text-center font-extrabold text-primary-950 text-xs">
+                      {val}v
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = val + 1
+                        const copy = [...weeklyFrequencies]
+                        if (isMax) copy[rIdx] = { ...copy[rIdx], maxPerWeek: next }
+                        else copy[rIdx] = { ...copy[rIdx], targetPerWeek: next }
+                        setWeeklyFrequencies(copy)
+                      }}
+                      className="w-6 h-6 rounded-lg bg-primary-100 hover:bg-primary-200 active:scale-95 text-primary-800 font-extrabold flex items-center justify-center text-xs"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
 

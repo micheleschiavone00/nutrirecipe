@@ -10,6 +10,7 @@ import ShoppingPage from '@/pages/Shopping'
 import SettingsPage from '@/pages/Settings'
 import NutritionPlanPage from '@/pages/NutritionPlan'
 import ShareHandler from '@/pages/ShareHandler'
+import CreateTemplateWizardPage from '@/pages/CreateTemplateWizard'
 import ChangelogModal from '@/components/ChangelogModal'
 import { getSettings } from '@/lib/db'
 import { hasUnseenUpdate } from '@/data/changelog'
@@ -17,7 +18,7 @@ import { migrateAllRecipesSteps } from '@/lib/recipeEnricher'
 
 function AppContent() {
   const location = useLocation()
-  const noNavRoutes = ['/setup', '/share']
+  const noNavRoutes = ['/setup', '/share', '/planner/create-template']
   const showNav = !noNavRoutes.some(r => location.pathname.startsWith(r))
 
   return (
@@ -32,6 +33,7 @@ function AppContent() {
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/recipes/:id" element={<RecipeDetailPage />} />
           <Route path="/planner" element={<PlannerPage />} />
+          <Route path="/planner/create-template" element={<CreateTemplateWizardPage />} />
           <Route path="/shopping" element={<ShoppingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/share" element={<ShareHandler />} />

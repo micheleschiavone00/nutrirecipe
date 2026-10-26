@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.5.2'
+export const APP_VERSION = '1.6.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.6.0',
+    date: '27 Ottobre 2026',
+    title: 'Creazione Guidata Settimana Standard con Business Rules, Limiti Frequenze e Pasto Libero',
+    isLatest: true,
+    summary:
+      'Nuova schermata dedicata "Crea Settimana Standard" giorno per giorno (da Lunedì a Domenica) con domanda a fuoco "Cosa vuoi mangiare oggi?". Il sistema monitora le frequenze alimentari del tuo piano in tempo reale: ti avvisa quando raggiungi il limite (es. max 3 volte carne rossa), ti suggerisce cosa mangiare (es. pesce se mangiato solo 2/4 volte) e ti ricorda di posizionare il tuo pasto libero al sabato sera se non l\'hai ancora fatto.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Creazione Guidata Modello Settimana (Lunedì → Domenica)',
+        description:
+          'Nuovo wizard a tutto schermo che ti guida giorno dopo giorno con un layout ad alto focus: "Cosa vuoi mangiare Lunedì?", "Cosa vuoi mangiare Martedì?", ecc. Puoi scorrere i 7 giorni, selezionare ricette con varianti, inserire pasti veloci o impostare pasti liberi.',
+        howToUse: 'Dalla sezione Planner tocca "📋 Modelli" → "✨ Crea Settimana".',
+      },
+      {
+        type: 'ai',
+        title: 'Business Rules e Frequenze Nutrizionali in Tempo Reale',
+        description:
+          'Il sistema memorizza le frequenze alimentari del tuo piano (Carne Rossa, Pesce, Carne Bianca, Legumi, Uova, Latticini). Quando componi la settimana, un banner intelligente ti segnala se un alimento ha raggiunto il limite massimo e contrassegna le ricette nel selettore con badge "✨ Consigliato dal Piano" o "⚠️ Limite Raggiunto".',
+        howToUse: 'I suggerimenti e i conteggi compaiono in cima alla schermata di creazione e nel selettore ricette.',
+      },
+      {
+        type: 'feat',
+        title: 'Gestione Pasto Libero (Cheat Meal) e Promemoria Sabato',
+        description:
+          'Puoi contrassegnare qualsiasi pasto come "🍕 Pasto Libero / Sgarro". Se arrivi al Sabato (o Domenica) e non hai ancora posizionato il tuo pasto libero settimanale, il sistema ti mostra un promemoria e ti permette di impostarlo sulla cena di Sabato con un solo tocco.',
+        howToUse: 'Tocca il pulsante "🍕 Pasto Libero" su qualsiasi pasto o accetta il suggerimento al Sabato.',
+      },
+      {
+        type: 'feat',
+        title: 'Frequenze e Regole Settimanali Modificabili nel Profilo',
+        description:
+          'In "Visualizza e Modifica Piano" è presente una nuova scheda per consultare e personalizzare le frequenze settimanali consigliate dal nutrizionista per ogni gruppo alimentare.',
+        howToUse: 'Vai in Impostazioni ⚙️ → "Visualizza e Modifica Piano" → "🎯 Frequenze Settimanali e Pasti Liberi".',
+      },
+    ],
+  },
   {
     version: '1.5.2',
     date: '26 Ottobre 2026',
     title: 'Tasto Aggiungi Ricetta al Giorno, Spazio Navbar su Cassetti e Stepper Dosi (+ a sinistra, - a destra)',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Introdotto il pulsante esplicito "+ Aggiungi" nel selettore ricette del giorno, aggiunto padding per distanziare i cassetti dalla navbar inferiore, ottimizzato il cassetto "Aggiorna con AI" con scrolling fluido, e inseriti i tasti stepper + / - con risoluzione del blocco dello zero durante la digitazione delle dosi.',
     changes: [

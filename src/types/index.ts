@@ -34,6 +34,16 @@ export interface MealPlan {
   notes?: string
 }
 
+export interface WeeklyFrequencyRule {
+  id: string
+  category: 'red_meat' | 'white_meat' | 'fish' | 'legumes' | 'eggs' | 'dairy' | 'cheat' | 'other'
+  label: string               // es. "Carne Rossa", "Pesce", "Legumi", "Uova", "Pasto Libero"
+  maxPerWeek?: number         // es. max 3 volte a settimana
+  minPerWeek?: number         // es. min 2 volte
+  targetPerWeek?: number      // es. 3 volte
+  notes?: string              // es. "Massimo 3 volte a settimana"
+}
+
 export interface NutritionProfile {
   id: string
   name: string
@@ -45,6 +55,8 @@ export interface NutritionProfile {
   dailyCarbs?: number
   dailyFats?: number
   nutritionistNotes?: string
+  weeklyFrequencies?: WeeklyFrequencyRule[]
+  cheatMealsPerWeek?: number  // es. 1 pasto libero a settimana (default: 1)
 }
 
 // ─── Recipe Types ─────────────────────────────────────────────────────────────
@@ -122,6 +134,7 @@ export interface PlannedMeal {
   variantId?: string          // id della variante scelta (es. "lunch", "dinner", "dinner_post_workout")
   variantLabel?: string       // etichetta della variante
   customLabel?: string        // se non è una ricetta salvata
+  isCheatMeal?: boolean       // pasto libero / sgarro
   isCompleted: boolean
 }
 
@@ -134,7 +147,10 @@ export interface WeeklyTemplateMeal {
   dayOffset: number           // 0 = Lunedì, 1 = Martedì, ..., 6 = Domenica
   mealType: MealType
   recipeId?: string
+  variantId?: string
+  variantLabel?: string
   customLabel?: string
+  isCheatMeal?: boolean       // pasto libero / sgarro
 }
 
 export interface WeeklyTemplate {

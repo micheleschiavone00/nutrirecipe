@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { generateId } from '@/lib/utils'
@@ -20,6 +21,7 @@ export default function WeeklyTemplatesModal({
   currentWeekMeals,
   onApplied,
 }: WeeklyTemplatesModalProps) {
+  const navigate = useNavigate()
   const [tab, setTab] = useState<'saved' | 'save_current'>('saved')
   const [templateName, setTemplateName] = useState('')
   const [templateDesc, setTemplateDesc] = useState('')
@@ -145,7 +147,7 @@ export default function WeeklyTemplatesModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Fixed Header */}
-        <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
+        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">📋</span>
             <div>
@@ -155,12 +157,24 @@ export default function WeeklyTemplatesModal({
               <p className="text-xs text-gray-400">Salva e riutilizza schemi settimanali fissi</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                onClose()
+                navigate('/planner/create-template')
+              }}
+              className="btn-primary text-xs py-1.5 px-3 font-bold shadow-xs flex items-center gap-1"
+            >
+              <span>✨ Crea Settimana</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Tab switch fixed */}
@@ -282,6 +296,28 @@ export default function WeeklyTemplatesModal({
             /* Templates List */
             <div className="flex-1 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3 [-webkit-overflow-scrolling:touch]">
+                {/* Create Custom Template Shortcut Card */}
+                <div className="bg-gradient-to-r from-primary-50 to-emerald-50 border border-primary-200/80 rounded-2xl p-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold text-primary-950">
+                      Crea un modello da zero
+                    </p>
+                    <p className="text-[11px] text-primary-700">
+                      Pianifica Lun-Dom giorno per giorno con guida alle frequenze
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose()
+                      navigate('/planner/create-template')
+                    }}
+                    className="btn-primary text-xs py-2 px-3 font-bold shadow-xs whitespace-nowrap flex-shrink-0"
+                  >
+                    ✨ Crea Settimana
+                  </button>
+                </div>
+
                 {(!templates || templates.length === 0) ? (
                   <div className="text-center py-10 px-4 bg-gray-50 rounded-2xl border border-gray-100">
                     <p className="text-3xl mb-2">📋</p>
@@ -365,19 +401,32 @@ export default function WeeklyTemplatesModal({
               </div>
 
               {/* Pinned Footer for Templates List */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
-                <button
-                  type="button"
-                  onClick={() => setTab('save_current')}
-                  className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-primary-50 transition-colors"
-                >
-                  <span>💾</span>
-                  <span>Salva settimana corrente</span>
-                </button>
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-[0_-4px_16px_rgba(0,0,0,0.04)] gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose()
+                      navigate('/planner/create-template')
+                    }}
+                    className="text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>✨</span>
+                    <span>Crea Settimana</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTab('save_current')}
+                    className="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1 py-1.5 px-2 rounded-lg hover:bg-gray-100 transition-colors hidden sm:flex"
+                  >
+                    <span>💾</span>
+                    <span>Salva settimana</span>
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="btn-secondary py-2 px-4 text-xs font-bold"
+                  className="btn-secondary py-1.5 px-4 text-xs font-bold"
                 >
                   Chiudi
                 </button>
