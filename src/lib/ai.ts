@@ -1,5 +1,6 @@
-import type { NutritionProfile, Recipe, MealType, TargetMealType, FoodGroup, RecipeIngredient, RecipeStep } from '@/types'
+import type { NutritionProfile, Recipe, MealType, TargetMealType, FoodGroup, RecipeIngredient, RecipeStep, RecipeMealVariant } from '@/types'
 import { CONFIG } from '@/config'
+import { getApplicableMealsForTarget, getRecipeVariants } from './recipeVariants'
 
 async function chatCompletion(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
@@ -172,23 +173,22 @@ export async function adaptRecipeToProfile(
     note: g.notes || '',
   })
 
+  const applicableMeals = getApplicableMealsForTarget(profile, targetMeal)
+
   let mealDescription = ''
-  if (targetMeal === 'lunch_dinner') {
-    const lunchMeal = profile.meals.find(m => m.mealType === 'lunch')
-    const dinnerMeal = profile.meals.find(m => m.mealType === 'dinner')
-    const parts: string[] = []
-    if (lunchMeal) {
-      parts.push(`PIANO PRANZO:\n${JSON.stringify(lunchMeal.groups.map(formatGroup), null, 2)}`)
-    }
-    if (dinnerMeal) {
-      parts.push(`PIANO CENA:\n${JSON.stringify(dinnerMeal.groups.map(formatGroup), null, 2)}`)
-    }
-    mealDescription = parts.join('\n\n') || 'Piano per pranzo e cena non specificato'
+  if (applicableMeals.length > 0) {
+    mealDescription = applicableMeals
+      .map(
+        (m, idx) =>
+          `OPZIONE ${idx + 1}: ${m.label.toUpperCase()} (Pasto: ${m.mealType}${m.isVariant ? ', Variante alternativa' : ''}):\n${JSON.stringify(
+            m.groups.map(formatGroup),
+            null,
+            2
+          )}`
+      )
+      .join('\n\n')
   } else {
-    const meal = profile.meals.find(m => m.mealType === targetMeal)
-    mealDescription = meal
-      ? JSON.stringify(meal.groups.map(formatGroup), null, 2)
-      : 'Piano non specificato per questo pasto'
+    mealDescription = 'Piano non specificato per questo pasto'
   }
 
   const systemPrompt = `Sei un nutrizionista e chef AI d'élite. Il tuo compito è adattare le ricette social al piano nutrizionale personale dell'utente in modo intelligente, scientificamente corretto e rispettoso della ricetta originale.
@@ -230,8 +230,11 @@ REGOLE CRUCIALI DI ADATTAMENTO:
      * Assegna a ciascun ingrediente il campo 'component' specificando a cosa serve (es. "Per il panino", "Per il pulled pork", "Per la salsa", "Per la farcitura").
      * Se la ricetta è a preparazione unica o semplice, usa "Principale" o "Base".
 
-7. CATEGORIZZAZIONE "PRANZO E CENA" (se targetMeal è "lunch_dinner"):
-   - La ricetta deve poter essere consumata sia a pranzo che a cena. Calibra le grammature in modo che soddisfino entrambi i pasti. Se tra pranzo e cena ci sono differenze (es. quota carboidrati diversa), usa una dose equilibrata e specifica chiaramente in 'adaptationNotes' l'eventuale variazione raccomandata (es. "Se consumata a cena, ridurre la pasta a 50g").
+7. GESTIONE MULTI-VARIANTE (PRANZO E CENA / CENA POST WORKOUT):
+   - Se ci sono più opzioni nel piano (es. Pranzo e Cena con grammature diverse, o Cena standard e Cena Post Workout):
+     * Calibra 'adaptedIngredients' e 'steps' principali per la prima opzione.
+     * DEVI INOLTRE generare l'array 'variants', con un elemento dedicato per CIASCUNA opzione (${applicableMeals.map(m => m.label).join(', ')}).
+     * Ciascuna variante deve avere ingredienti con le dosi ESATTE per quel pasto, passaggi con dosi tra parentesi tonde e valori nutrizionali dedicati.
 
 Restituisci SOLO un JSON con questa struttura:
 {
@@ -248,7 +251,19 @@ Restituisci SOLO un JSON con questa struttura:
     { "order": 1, "description": "Passaggio dettagliato con dosi tra parentesi tonde (es. zucchine (200g))", "duration": "5 minuti", "tip": "consiglio opzionale" }
   ],
   "nutritionalValues": { "calories": 450, "proteins": 35, "carbs": 40, "fats": 12, "fiber": 5 },
-  "adaptationNotes": "Spiegazione chiara di come sono state bilanciate le quantità (soprattutto se ci sono più ingredienti della stessa categoria o per la consistenza dell'impasto)",
+  "adaptationNotes": "Spiegazione chiara di come sono state bilanciate le quantità",
+  "variants": [
+    {
+      "id": "lunch",
+      "label": "☀️ Pranzo",
+      "mealType": "lunch",
+      "isVariant": false,
+      "adaptedIngredients": [ ... ],
+      "steps": [ ... ],
+      "nutritionalValues": { "calories": 520, "proteins": 38, "carbs": 55, "fats": 12 },
+      "adaptationNotes": "Calibrato per il Pranzo"
+    }
+  ],
   "tags": ["proteico", "facile", "veloce"],
   "prepTime": 10,
   "cookTime": 20,
@@ -257,7 +272,7 @@ Restituisci SOLO un JSON con questa struttura:
 
 Categorie disponibili: carbs, proteins, vegetables, fruits, dairy, fats, other`
 
-  const userPrompt = `Piano nutrizionale per ${targetMeal === 'lunch_dinner' ? 'Pranzo e Cena' : targetMeal}:
+  const userPrompt = `Piani nutrizionali applicabili:
 ${mealDescription}
 
 Ricetta originale da adattare:
@@ -275,13 +290,20 @@ ${rawRecipe.steps.join('\n')}`
 
   const parsed = JSON.parse(result)
 
-  return {
+  const finalRecipe: Recipe = {
     ...parsed,
     targetMeal,
     source: rawRecipe.source as Recipe['source'],
     sourceUrl: rawRecipe.sourceUrl,
     thumbnailUrl: rawRecipe.thumbnailUrl,
   }
+
+  // Ensure variants are always present and synchronized with user's profile
+  if (!finalRecipe.variants || finalRecipe.variants.length === 0) {
+    finalRecipe.variants = getRecipeVariants(finalRecipe, profile)
+  }
+
+  return finalRecipe
 }
 
 // ─── Recipe from text/transcript ─────────────────────────────────────────────

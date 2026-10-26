@@ -25,8 +25,11 @@ export interface FoodOption {
 }
 
 export interface MealPlan {
+  id?: string
   mealType: MealType
   label: string
+  isVariant?: boolean
+  variantName?: string        // es. "Post Workout", "Giorni Riposo"
   groups: FoodGroup[]
   notes?: string
 }
@@ -73,6 +76,17 @@ export interface NutritionalValues {
 
 export type RecipeSource = 'tiktok' | 'instagram' | 'youtube' | 'manual'
 
+export interface RecipeMealVariant {
+  id: string                  // es. "lunch", "dinner", "dinner_post_workout"
+  label: string               // es. "☀️ Pranzo", "🌙 Cena", "💪 Cena Post Workout"
+  mealType: MealType
+  isVariant?: boolean
+  adaptedIngredients: RecipeIngredient[]
+  steps: RecipeStep[]
+  nutritionalValues?: NutritionalValues
+  adaptationNotes?: string
+}
+
 export interface Recipe {
   id: string
   title: string
@@ -86,6 +100,7 @@ export interface Recipe {
   steps: RecipeStep[]
   nutritionalValues?: NutritionalValues
   adaptationNotes?: string    // spiegazione AI di come è stato adattato
+  variants?: RecipeMealVariant[] // Varianti separate (es. Pranzo, Cena, Cena Post Workout)
   tags: string[]
   rating?: number             // 1-5
   personalNotes?: string
@@ -104,6 +119,8 @@ export interface PlannedMeal {
   date: string                // ISO date string YYYY-MM-DD
   mealType: MealType
   recipeId?: string
+  variantId?: string          // id della variante scelta (es. "lunch", "dinner", "dinner_post_workout")
+  variantLabel?: string       // etichetta della variante
   customLabel?: string        // se non è una ricetta salvata
   isCompleted: boolean
 }

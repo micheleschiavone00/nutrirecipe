@@ -249,9 +249,16 @@ function DayCard({
                           className="flex-1 cursor-pointer"
                           onClick={() => recipe && onRecipeClick(recipe.id)}
                         >
-                          <p className={cn('text-sm font-medium', slot.isCompleted && 'line-through text-gray-400')}>
-                            {recipe?.title ?? slot.customLabel ?? 'Pasto personalizzato'}
-                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className={cn('text-sm font-medium', slot.isCompleted && 'line-through text-gray-400')}>
+                              {recipe?.title ?? slot.customLabel ?? 'Pasto personalizzato'}
+                            </p>
+                            {slot.variantLabel && (
+                              <span className="text-[10px] font-semibold bg-primary-100 text-primary-800 px-1.5 py-0.5 rounded-md border border-primary-200/60">
+                                {slot.variantLabel}
+                              </span>
+                            )}
+                          </div>
                           {recipe?.nutritionalValues && (
                             <p className="text-xs text-gray-400">{recipe.nutritionalValues.calories} kcal</p>
                           )}

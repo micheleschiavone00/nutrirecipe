@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.4.0'
+export const APP_VERSION = '1.5.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.5.0',
+    date: '26 Ottobre 2026',
+    title: 'Multi-Variante Pranzo & Cena con Riquadri Separati e Alternative (es. Cena Post Workout)',
+    isLatest: true,
+    summary:
+      'Risolto il bilanciamento per Pranzo e Cena con grammature differenti: nuova visualizzazione a riquadri separati ma mostrati insieme per ingredienti e preparazione. Supporto per pasti alternativi nel piano nutrizionale (es. Cena Post Workout con più proteine): importando la ricetta compaiono automaticamente tutte le varianti.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Riquadri Separati Mostrati Insieme per Pranzo e Cena',
+        description:
+          'Se una ricetta è per "Pranzo e Cena" e nel tuo piano i due pasti hanno grammature diverse, la ricetta mostra ora riquadri distinti affiancati: uno per il Pranzo (con le sue dosi e calorie) e uno per la Cena. La stessa separazione per riquadri è applicata alla Preparazione con le dosi tra parentesi.',
+        howToUse: 'Apri una ricetta con target "Pranzo e Cena" per vedere i riquadri affiancati o passare alla vista singola.',
+      },
+      {
+        type: 'feat',
+        title: 'Alternative Pasti nel Piano Nutrizionale (es. Cena Post Workout)',
+        description:
+          'Nel Piano Nutrizionale puoi ora aggiungere varianti personalizzate sia per il Pranzo che per la Cena (es. "Cena Post Workout" con quota proteica aumentata o "Pranzo Riposo"). Puoi regolare i gruppi e le dosi al grammo per ogni variante.',
+        howToUse: 'Vai in Impostazioni ⚙️ → "Visualizza e Modifica Piano" e tocca "+ Aggiungi alternativa a Cena" o Pranzo.',
+      },
+      {
+        type: 'ai',
+        title: 'Adattamento Automatico delle Varianti all\'Importazione',
+        description:
+          'Quando importi una ricetta per Cena (e hai anche Cena Post Workout), vedrai comparire entrambe le opzioni calibrate. Se importi per Pranzo e Cena, vedrai contemporaneamente Pranzo, Cena e Cena Post Workout, potendo scegliere quando gustarla senza creare categorie separate.',
+        howToUse: 'Incolla qualsiasi link e scegli "Cena" o "Pranzo e Cena": l\'AI calibrerà automaticamente tutte le tue varianti.',
+      },
+      {
+        type: 'feat',
+        title: 'Selezione Variante nel Meal Planner',
+        description:
+          'Quando aggiungi una ricetta con varianti al Meal Planner, puoi scegliere esattamente quale grammatura pianificare (es. Pranzo, Cena Standard o Cena Post Workout). Il planner mostrerà l\'etichetta specifica del pasto.',
+        howToUse: 'Tocca "📅 Aggiungi al piano" da qualsiasi ricetta multi-variante.',
+      },
+    ],
+  },
   {
     version: '1.4.0',
     date: '26 Ottobre 2026',
     title: 'Icona Burger su Bilancia, Dark Mode, Modelli Settimana & Aggiunta Pasti Diretta',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Nuova icona con hamburger gourmet su bilancia digitale (Liquid Glass 3D, Material Design e Dark Mode adattiva di sistema). Ridisegnata la modale di aggiunta al planner senza sovrapposizioni, salvataggio di modelli per settimane standard e aggiunta diretta delle ricette dai singoli giorni del Meal Planner.',
     changes: [

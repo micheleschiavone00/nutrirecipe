@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, generateId } from '@/lib/utils'
-import type { Recipe, MealType } from '@/types'
+import type { Recipe, MealType, RecipeMealVariant } from '@/types'
 
 interface AddToPlannerModalProps {
   isOpen: boolean
   onClose: () => void
   recipe: Recipe
+  variants?: RecipeMealVariant[]
   defaultMeal?: MealType
   onSuccess?: () => void
 }
@@ -23,9 +24,12 @@ export default function AddToPlannerModal({
   isOpen,
   onClose,
   recipe,
+  variants,
   defaultMeal,
   onSuccess,
 }: AddToPlannerModalProps) {
+  const recipeVariants = variants || recipe.variants || []
+
   // Generate next 14 days starting today
   const today = new Date()
   const daysList = Array.from({ length: 14 }, (_, i) => {
@@ -50,6 +54,22 @@ export default function AddToPlannerModal({
     if (recipe.targetMeal === 'snack_pm') return 'snack_pm'
     return 'lunch'
   })
+
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(() => {
+    if (recipeVariants.length > 0) {
+      const match = recipeVariants.find(v => v.mealType === selectedMeal)
+      return match ? match.id : recipeVariants[0].id
+    }
+    return ''
+  })
+
+  useEffect(() => {
+    if (recipeVariants.length > 0) {
+      const match = recipeVariants.find(v => v.mealType === selectedMeal)
+      if (match) setSelectedVariantId(match.id)
+    }
+  }, [selectedMeal, recipeVariants])
+
   const [customDate, setCustomDate] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -58,11 +78,14 @@ export default function AddToPlannerModal({
   const handleConfirm = async () => {
     setSaving(true)
     try {
+      const chosenVariant = recipeVariants.find(v => v.id === selectedVariantId)
       await db.plannedMeals.add({
         id: generateId(),
         date: selectedDate,
         mealType: selectedMeal,
         recipeId: recipe.id,
+        variantId: chosenVariant?.id,
+        variantLabel: chosenVariant?.label,
         isCompleted: false,
       })
       onClose()
@@ -204,6 +227,49 @@ export default function AddToPlannerModal({
             })}
           </div>
         </div>
+
+        {/* Step 3: Variant Selection (if recipe has variants) */}
+        {recipeVariants.length > 1 && (
+          <div className="space-y-2 pt-1 border-t border-gray-100">
+            <label className="text-xs font-bold text-gray-800 uppercase tracking-wide block">
+              3. Grammatura / Variante
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {recipeVariants.map(v => {
+                const isSelected = selectedVariantId === v.id
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedVariantId(v.id)
+                      if (v.mealType) setSelectedMeal(v.mealType)
+                    }}
+                    className={`p-2.5 rounded-2xl border text-left flex items-center justify-between transition-all ${
+                      isSelected
+                        ? 'bg-primary-50 border-primary-500 ring-2 ring-primary-500/20'
+                        : 'bg-white hover:bg-gray-50 border-gray-200/80'
+                    }`}
+                  >
+                    <div>
+                      <p className={`text-xs font-bold ${isSelected ? 'text-primary-950' : 'text-gray-900'}`}>
+                        {v.label}
+                      </p>
+                      {v.nutritionalValues && (
+                        <p className="text-[10px] text-gray-500 mt-0.5">
+                          {v.nutritionalValues.calories} kcal • {v.nutritionalValues.proteins}g P • {v.nutritionalValues.carbs}g C
+                        </p>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <span className="text-primary-600 font-bold text-xs ml-2">✓</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex gap-2.5 pt-3 border-t border-gray-100">

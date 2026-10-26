@@ -151,6 +151,11 @@ function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }
         </h3>
         <div className="flex items-center gap-1 mt-1.5">
           <span className="text-xs text-gray-400">{MEAL_LABELS[recipe.targetMeal]}</span>
+          {recipe.variants && recipe.variants.length > 1 && (
+            <span className="bg-primary-50 text-primary-700 text-[10px] font-bold px-1.5 py-0.2 rounded border border-primary-200/60 ml-auto">
+              {recipe.variants.length} opzioni
+            </span>
+          )}
         </div>
         {recipe.nutritionalValues && (
           <div className="flex items-center gap-2 mt-2 text-xs">
