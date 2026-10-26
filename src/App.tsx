@@ -9,7 +9,9 @@ import PlannerPage from '@/pages/Planner'
 import ShoppingPage from '@/pages/Shopping'
 import SettingsPage from '@/pages/Settings'
 import ShareHandler from '@/pages/ShareHandler'
+import ChangelogModal from '@/components/ChangelogModal'
 import { getSettings } from '@/lib/db'
+import { hasUnseenUpdate } from '@/data/changelog'
 
 function AppContent() {
   const location = useLocation()
@@ -38,10 +40,14 @@ function AppContent() {
 
 export default function App() {
   const [initialRoute, setInitialRoute] = useState<string | null>(null)
+  const [showChangelog, setShowChangelog] = useState(false)
 
   useEffect(() => {
     getSettings().then(s => {
       setInitialRoute(s.activeProfileId ? '/recipes' : '/setup')
+      if (s.activeProfileId && hasUnseenUpdate()) {
+        setShowChangelog(true)
+      }
     })
   }, [])
 
@@ -61,6 +67,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppContent />
+      <ChangelogModal
+        isOpen={showChangelog}
+        onClose={() => setShowChangelog(false)}
+      />
     </BrowserRouter>
   )
 }

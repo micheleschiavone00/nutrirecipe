@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { getSettings, db } from '@/lib/db'
 import { PageHeader } from '@/components/ui'
 import { isOpenAIConfigured, isRapidAPIConfigured } from '@/config'
+import ChangelogModal from '@/components/ChangelogModal'
+import { APP_VERSION } from '@/data/changelog'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
+  const [showChangelog, setShowChangelog] = useState(false)
 
   useEffect(() => {
     getSettings().then(() => {
@@ -99,13 +102,36 @@ export default function SettingsPage() {
           </button>
         </div>
 
+        {/* Novità & Changelog */}
+        <div className="card p-4 space-y-3 bg-gradient-to-br from-white to-primary-50/40 border-primary-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🚀</span>
+              <h2 className="font-semibold text-gray-900">Novità & Aggiornamenti</h2>
+            </div>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary-100 text-primary-800 border border-primary-200">
+              v{APP_VERSION}
+            </span>
+          </div>
+          <p className="text-xs text-gray-600 leading-relaxed">
+            Scopri tutte le novità introdotte, come sono state migliorate le funzioni dell'app e cosa è cambiato.
+          </p>
+          <button
+            onClick={() => setShowChangelog(true)}
+            className="btn-secondary w-full flex items-center justify-center gap-2 text-primary-700 border-primary-200 bg-white hover:bg-primary-50 transition-colors font-medium text-sm"
+          >
+            <span>📜</span>
+            <span>Cosa c'è di nuovo in v{APP_VERSION}</span>
+          </button>
+        </div>
+
         {/* About */}
         <div className="card p-4 space-y-3">
           <h2 className="font-semibold text-gray-900">ℹ️ Informazioni</h2>
           <div className="space-y-2 text-sm text-gray-600">
-            <div className="flex justify-between">
-              <span>Versione</span>
-              <span className="font-medium">1.0.0</span>
+            <div className="flex justify-between items-center">
+              <span>Versione installata</span>
+              <span className="font-medium bg-gray-100 px-2 py-0.5 rounded text-xs">v{APP_VERSION}</span>
             </div>
             <div className="flex justify-between">
               <span>I tuoi dati</span>
@@ -149,6 +175,11 @@ export default function SettingsPage() {
 
         <div className="h-4" />
       </div>
+
+      <ChangelogModal
+        isOpen={showChangelog}
+        onClose={() => setShowChangelog(false)}
+      />
     </div>
   )
 }
