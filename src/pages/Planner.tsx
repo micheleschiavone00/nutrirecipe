@@ -137,12 +137,14 @@ export default function PlannerPage() {
           onClose={() => setSlotToSelect(null)}
           date={slotToSelect.date}
           mealType={slotToSelect.mealType}
-          onSelectRecipe={async (recipeId) => {
+          onSelectRecipe={async (recipeId, variantId, variantLabel) => {
             await db.plannedMeals.add({
               id: generateId(),
               date: slotToSelect.date,
               mealType: slotToSelect.mealType,
               recipeId,
+              variantId,
+              variantLabel,
               isCompleted: false,
             })
           }}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
-import { MEAL_LABELS, MEAL_ICONS, formatDayLabel } from '@/lib/utils'
+import { MEAL_LABELS, MEAL_ICONS, formatDayLabel, cn } from '@/lib/utils'
 import type { MealType, Recipe } from '@/types'
 
 interface SelectRecipeModalProps {
@@ -9,7 +9,7 @@ interface SelectRecipeModalProps {
   onClose: () => void
   date: string
   mealType: MealType
-  onSelectRecipe: (recipeId: string) => Promise<void> | void
+  onSelectRecipe: (recipeId: string, variantId?: string, variantLabel?: string) => Promise<void> | void
   onAddCustomMeal: (customLabel: string) => Promise<void> | void
   onImportNew: () => void
 }
@@ -28,6 +28,8 @@ export default function SelectRecipeModal({
   const [customText, setCustomText] = useState('')
   const [isCustomMode, setIsCustomMode] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null)
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
 
   const allRecipes = useLiveQuery(() => db.recipes.toArray(), [])
 
@@ -45,11 +47,19 @@ export default function SelectRecipeModal({
     }
   }, [isOpen])
 
+  // Reset selected recipe when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedRecipeId(null)
+      setSelectedVariantId(null)
+      setSearch('')
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   // Filter recipes
   const filteredRecipes = (allRecipes ?? []).filter(recipe => {
-    // Search query filter
     const matchesSearch =
       search.trim() === '' ||
       recipe.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -58,12 +68,10 @@ export default function SelectRecipeModal({
 
     if (!matchesSearch) return false
 
-    // Filter mode
     if (filterMode === 'favorites') {
       return recipe.isFavorite
     }
     if (filterMode === 'recommended') {
-      // Recommend matching targetMeal
       if (mealType === 'lunch' || mealType === 'dinner') {
         return (
           recipe.targetMeal === mealType ||
@@ -75,10 +83,30 @@ export default function SelectRecipeModal({
     return true
   })
 
-  const handleSelect = async (recipe: Recipe) => {
+  const selectedRecipe = (allRecipes ?? []).find(r => r.id === selectedRecipeId) || null
+  const selectedRecipeVariants = selectedRecipe?.variants || []
+
+  // Auto-select variant matching mealType if available
+  const handleSelectCard = (recipe: Recipe) => {
+    if (selectedRecipeId === recipe.id) {
+      // Toggle selection or keep it
+      return
+    }
+    setSelectedRecipeId(recipe.id)
+    if (recipe.variants && recipe.variants.length > 0) {
+      const match = recipe.variants.find(v => v.mealType === mealType)
+      setSelectedVariantId(match ? match.id : recipe.variants[0].id)
+    } else {
+      setSelectedVariantId(null)
+    }
+  }
+
+  const handleConfirmRecipe = async (recipe: Recipe, variantIdOverride?: string) => {
     setSubmitting(true)
     try {
-      await onSelectRecipe(recipe.id)
+      const vId = variantIdOverride ?? selectedVariantId
+      const chosenVariant = recipe.variants?.find(v => v.id === vId)
+      await onSelectRecipe(recipe.id, chosenVariant?.id, chosenVariant?.label)
       onClose()
     } finally {
       setSubmitting(false)
@@ -101,11 +129,11 @@ export default function SelectRecipeModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in touch-none"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-4 animate-fade-in touch-none"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[88dvh] sm:max-h-[85dvh] overflow-hidden"
+        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Fixed Header */}
@@ -190,7 +218,7 @@ export default function SelectRecipeModal({
                   disabled={!customText.trim() || submitting}
                   className="btn-primary flex-1 py-3 text-xs sm:text-sm font-bold shadow-md"
                 >
-                  {submitting ? 'Aggiunta…' : 'Salva Pasto ✓'}
+                  {submitting ? 'Aggiunta…' : 'Aggiungi Pasto ✓'}
                 </button>
               </div>
             </form>
@@ -278,73 +306,166 @@ export default function SelectRecipeModal({
                   )}
                 </div>
               ) : (
-                filteredRecipes.map(recipe => (
-                  <button
-                    key={recipe.id}
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => handleSelect(recipe)}
-                    className="w-full text-left bg-gray-50 hover:bg-primary-50/70 border border-gray-200/80 hover:border-primary-300 rounded-2xl p-2.5 flex items-center gap-3 transition-all group active:scale-[0.99]"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-primary-100 border border-primary-200/60 overflow-hidden flex items-center justify-center flex-shrink-0">
-                      {recipe.thumbnailUrl ? (
-                        <img
-                          src={recipe.thumbnailUrl}
-                          alt={recipe.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <span className="text-2xl">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+                filteredRecipes.map(recipe => {
+                  const isSelected = selectedRecipeId === recipe.id
+                  const hasVariants = recipe.variants && recipe.variants.length > 1
+
+                  return (
+                    <div
+                      key={recipe.id}
+                      onClick={() => handleSelectCard(recipe)}
+                      className={cn(
+                        'w-full text-left rounded-2xl p-3 flex flex-col gap-2 transition-all cursor-pointer border',
+                        isSelected
+                          ? 'bg-primary-50/90 border-primary-500 ring-2 ring-primary-500/20 shadow-sm'
+                          : 'bg-gray-50 hover:bg-gray-100/80 border-gray-200/80'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-primary-100 border border-primary-200/60 overflow-hidden flex items-center justify-center flex-shrink-0">
+                          {recipe.thumbnailUrl ? (
+                            <img
+                              src={recipe.thumbnailUrl}
+                              alt={recipe.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-2xl">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-bold text-gray-900 text-xs sm:text-sm truncate leading-tight">
+                              {recipe.title}
+                            </h4>
+                            {recipe.isFavorite && <span className="text-[10px] text-red-500">❤️</span>}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
+                            <span className="bg-white px-1.5 py-0.5 rounded border border-gray-200/70 font-semibold text-gray-600">
+                              {MEAL_LABELS[recipe.targetMeal]}
+                            </span>
+                            {recipe.nutritionalValues && (
+                              <span className="font-medium">
+                                {recipe.nutritionalValues.calories} kcal • {recipe.nutritionalValues.proteins}g P
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Direct "+ Aggiungi" button on card */}
+                        <div className="flex-shrink-0">
+                          <button
+                            type="button"
+                            disabled={submitting}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleConfirmRecipe(recipe)
+                            }}
+                            className={cn(
+                              'px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs transition-all active:scale-95',
+                              isSelected
+                                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-md'
+                                : 'bg-primary-50 hover:bg-primary-600 hover:text-white text-primary-700 border border-primary-200'
+                            )}
+                          >
+                            <span>+ Aggiungi</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Variant selector if recipe has variants and is selected */}
+                      {isSelected && hasVariants && (
+                        <div className="pt-2 border-t border-primary-200/60 flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold text-primary-950 uppercase tracking-wide">
+                            Variante:
+                          </span>
+                          {recipe.variants!.map(v => {
+                            const isVSelected = selectedVariantId === v.id
+                            return (
+                              <button
+                                key={v.id}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedVariantId(v.id)
+                                }}
+                                className={cn(
+                                  'px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all',
+                                  isVSelected
+                                    ? 'bg-primary-600 text-white shadow-xs'
+                                    : 'bg-white hover:bg-primary-100 text-gray-700 border border-gray-200'
+                                )}
+                              >
+                                {v.label} {isVSelected && '✓'}
+                              </button>
+                            )
+                          })}
+                        </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h4 className="font-bold text-gray-900 text-xs sm:text-sm truncate leading-tight group-hover:text-primary-700">
-                          {recipe.title}
-                        </h4>
-                        {recipe.isFavorite && <span className="text-[10px] text-red-500">❤️</span>}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
-                        <span className="bg-white px-1.5 py-0.5 rounded border border-gray-200/70 font-semibold text-gray-600">
-                          {MEAL_LABELS[recipe.targetMeal]}
-                        </span>
-                        {recipe.nutritionalValues && (
-                          <span className="font-medium">
-                            {recipe.nutritionalValues.calories} kcal • {recipe.nutritionalValues.proteins}g P
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-white group-hover:bg-primary-600 group-hover:text-white border border-gray-200 group-hover:border-primary-600 text-gray-400 font-bold text-xs transition-colors shadow-xs">
-                        +
-                      </span>
-                    </div>
-                  </button>
-                ))
+                  )
+                })
               )}
             </div>
 
-            {/* Quick Action Footer: Import New from Social or Close */}
-            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
-              <button
-                type="button"
-                onClick={() => {
-                  onClose()
-                  onImportNew()
-                }}
-                className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-primary-50 transition-colors"
-              >
-                <span>➕</span>
-                <span>Importa nuova da social</span>
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-secondary py-2 px-4 text-xs font-bold"
-              >
-                Chiudi
-              </button>
+            {/* Quick Action Footer: Big "Aggiungi" Confirmation or Social Import */}
+            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex flex-col gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+              {selectedRecipe ? (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => handleConfirmRecipe(selectedRecipe)}
+                    className="btn-primary w-full py-3 text-xs sm:text-sm font-extrabold shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <span>➕</span>
+                    <span>
+                      {submitting
+                        ? 'Aggiunta in corso…'
+                        : `Aggiungi "${selectedRecipe.title}" a ${MEAL_LABELS[mealType]} ✓`}
+                    </span>
+                  </button>
+
+                  <div className="flex items-center justify-between text-xs px-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRecipeId(null)}
+                      className="text-gray-400 hover:text-gray-600 text-[11px]"
+                    >
+                      Deseleziona
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="text-gray-500 font-semibold text-xs hover:text-gray-700"
+                    >
+                      Chiudi
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose()
+                      onImportNew()
+                    }}
+                    className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-primary-50 transition-colors"
+                  >
+                    <span>➕</span>
+                    <span>Importa nuova da social</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="btn-secondary py-2 px-4 text-xs font-bold"
+                  >
+                    Chiudi
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}

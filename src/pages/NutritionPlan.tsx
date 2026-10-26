@@ -28,6 +28,95 @@ const CATEGORY_MAP: Record<string, { label: string; color: string }> = {
   other: { label: '🍴 Altro', color: 'bg-gray-100 text-gray-800 border-gray-200' },
 }
 
+interface QuantityStepperProps {
+  quantity: number | undefined
+  unit?: string
+  onChange: (qty: number) => void
+}
+
+function QuantityStepper({ quantity, unit = 'g', onChange }: QuantityStepperProps) {
+  const [val, setVal] = useState<string>(() =>
+    quantity === undefined || quantity === 0 ? '' : String(quantity)
+  )
+
+  useEffect(() => {
+    const qStr = quantity === undefined || quantity === 0 ? '' : String(quantity)
+    setVal(prev => {
+      if (prev === '' && (quantity === 0 || quantity === undefined)) return prev
+      if (Number(prev) === quantity) return prev
+      return qStr
+    })
+  }, [quantity])
+
+  const step = unit === 'pieces' || unit === 'portions' ? 1 : 5
+
+  const handlePlus = () => {
+    const current = Number(val) || 0
+    const next = current + step
+    setVal(String(next))
+    onChange(next)
+  }
+
+  const handleMinus = () => {
+    const current = Number(val) || 0
+    const next = Math.max(0, current - step)
+    setVal(next === 0 ? '' : String(next))
+    onChange(next)
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value
+    if (text === '') {
+      setVal('')
+      onChange(0)
+      return
+    }
+    const num = parseFloat(text)
+    if (!isNaN(num) && num >= 0) {
+      setVal(text)
+      onChange(num)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1 flex-shrink-0">
+      {/* Plus button on the LEFT (un più a sinistra) */}
+      <button
+        type="button"
+        onClick={handlePlus}
+        className="w-6 h-6 rounded-lg bg-primary-100 hover:bg-primary-200 active:scale-95 text-primary-800 font-extrabold text-xs flex items-center justify-center transition-all select-none border border-primary-200/60"
+        title={`Aumenta (+${step}${unit})`}
+      >
+        +
+      </button>
+
+      {/* Input in the center */}
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={val}
+        onChange={handleChange}
+        placeholder="0"
+        className="w-12 text-center input-field text-xs py-1 px-0.5 font-extrabold text-primary-950 bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+      />
+
+      {/* Minus button on the RIGHT (un meno a destra) */}
+      <button
+        type="button"
+        onClick={handleMinus}
+        className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-extrabold text-xs flex items-center justify-center transition-all select-none border border-gray-200"
+        title={`Diminuisci (-${step}${unit})`}
+      >
+        –
+      </button>
+
+      {/* Unit */}
+      <span className="text-gray-500 font-semibold text-xs min-w-[1.2rem] text-left">{unit}</span>
+    </div>
+  )
+}
+
 export default function NutritionPlanPage() {
   const navigate = useNavigate()
   const activeProfile = useLiveQuery(() => getActiveProfile(), [])
@@ -50,6 +139,20 @@ export default function NutritionPlanPage() {
   const [aiText, setAiText] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+
+  // Prevent background scroll while AI modal is open
+  useEffect(() => {
+    if (!showAiModal) return
+    const originalOverflow = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.touchAction = originalTouchAction
+    }
+  }, [showAiModal])
 
   useEffect(() => {
     if (activeProfile) {
@@ -685,22 +788,18 @@ export default function NutritionPlanPage() {
                                     })
                                   }
                                   placeholder="Nome alimento (es. Petto di pollo)"
-                                  className="flex-1 input-field text-xs py-1 px-2"
+                                  className="flex-1 input-field text-xs py-1 px-2 min-w-0"
                                 />
 
-                                <input
-                                  type="number"
-                                  value={opt.quantity}
-                                  onChange={e =>
+                                <QuantityStepper
+                                  quantity={opt.quantity}
+                                  unit={opt.unit || group.unit}
+                                  onChange={qty =>
                                     updateOptionInGroup(mealId, group.id, optIdx, {
-                                      quantity: Number(e.target.value),
+                                      quantity: qty,
                                     })
                                   }
-                                  placeholder="Dose"
-                                  className="w-16 input-field text-xs py-1 px-2 text-center font-bold text-primary-700"
                                 />
-
-                                <span className="text-gray-500 text-xs w-6">{opt.unit || group.unit}</span>
 
                                 <button
                                   onClick={() =>
@@ -768,92 +867,133 @@ export default function NutritionPlanPage() {
 
       {/* AI Re-Analyze Modal */}
       {showAiModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto animate-slide-up">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-              <div className="flex items-center gap-2">
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-4 animate-fade-in touch-none"
+          onClick={() => setShowAiModal(false)}
+        >
+          <div
+            className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Fixed Header */}
+            <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-2.5">
                 <span className="text-2xl">🤖</span>
-                <h3 className="font-bold text-gray-900 text-base">Aggiorna con AI</h3>
+                <div>
+                  <h3 className="font-extrabold text-gray-900 text-base leading-tight">
+                    Aggiorna con AI
+                  </h3>
+                  <p className="text-xs text-gray-400">Estrai alimenti e dosi da nuova scheda</p>
+                </div>
               </div>
               <button
                 onClick={() => setShowAiModal(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500"
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-gray-600">
-              Hai una nuova scheda della nutrizionista? Carica il PDF o incolla il testo: l'AI
-              estrarrà automaticamente pasti e dosi per aggiornare il tuo piano.
-            </p>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setAiMethod('text')}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold ${
-                  aiMethod === 'text' ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                📝 Incolla Testo
-              </button>
-              <button
-                onClick={() => setAiMethod('pdf')}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold ${
-                  aiMethod === 'pdf' ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                📄 Carica PDF
-              </button>
-            </div>
-
-            {aiMethod === 'text' ? (
-              <div className="space-y-3">
-                <textarea
-                  rows={6}
-                  value={aiText}
-                  onChange={e => setAiText(e.target.value)}
-                  placeholder="Incolla qui il testo del tuo piano nutrizionale (es. Colazione: 40g avena, 150g albume...)"
-                  className="input-field text-xs font-mono resize-none"
-                />
+            {/* Method switcher */}
+            <div className="px-4 sm:px-5 pt-3 pb-2 flex-shrink-0 bg-white">
+              <div className="flex bg-gray-100 p-1 rounded-xl">
                 <button
-                  onClick={() => handleAiAnalyzeText(aiText)}
-                  disabled={aiLoading}
-                  className="btn-primary w-full py-2.5 text-xs font-semibold"
+                  type="button"
+                  onClick={() => setAiMethod('text')}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    aiMethod === 'text' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  {aiLoading ? 'Analizzo con GPT-4o…' : 'Analizza ed estrai pasti ✨'}
+                  📝 Incolla Testo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAiMethod('pdf')}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    aiMethod === 'pdf' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  📄 Carica PDF
                 </button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <label className="border-2 border-dashed border-gray-300 hover:border-primary-400 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors">
-                  <span className="text-4xl mb-2">📑</span>
-                  <span className="text-xs font-semibold text-gray-700">Seleziona file PDF</span>
-                  <span className="text-[10px] text-gray-400 mt-1">PDF del piano nutrizionale</span>
-                  <input
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0]
-                      if (file) handleAiPDF(file)
-                    }}
-                  />
-                </label>
-                {aiLoading && (
-                  <div className="flex items-center justify-center gap-2 py-3 text-xs text-primary-700 font-semibold">
-                    <LoadingSpinner size="sm" />
-                    <span>Estrazione ed analisi PDF in corso…</span>
-                  </div>
-                )}
-              </div>
-            )}
+            </div>
 
-            {aiError && (
-              <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-3 text-xs">
-                {aiError}
-              </div>
-            )}
+            {/* Scrollable Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3.5 [-webkit-overflow-scrolling:touch]">
+              <p className="text-xs text-gray-600 bg-gray-50 p-3 rounded-2xl border border-gray-200/80">
+                Hai una nuova scheda della nutrizionista? Carica il PDF o incolla il testo: l&apos;AI
+                estrarrà automaticamente tutti i pasti e dosi per aggiornare il tuo piano nutrizionale.
+              </p>
+
+              {aiMethod === 'text' ? (
+                <div className="space-y-2">
+                  <textarea
+                    rows={5}
+                    value={aiText}
+                    onChange={e => setAiText(e.target.value)}
+                    placeholder="Incolla qui il testo del tuo piano nutrizionale (es. Colazione: 40g avena, 150g albume...)"
+                    className="input-field text-xs font-mono resize-none w-full"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="border-2 border-dashed border-gray-300 hover:border-primary-400 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-gray-50/50">
+                    <span className="text-4xl mb-2">📑</span>
+                    <span className="text-xs font-semibold text-gray-700">Seleziona file PDF</span>
+                    <span className="text-[10px] text-gray-400 mt-1">PDF del piano nutrizionale</span>
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0]
+                        if (file) handleAiPDF(file)
+                      }}
+                    />
+                  </label>
+                  {aiLoading && (
+                    <div className="flex items-center justify-center gap-2 py-3 text-xs text-primary-700 font-semibold bg-primary-50 rounded-xl border border-primary-200">
+                      <LoadingSpinner size="sm" />
+                      <span>Estrazione ed analisi PDF in corso…</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {aiError && (
+                <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-3 text-xs">
+                  {aiError}
+                </div>
+              )}
+            </div>
+
+            {/* Pinned Action Footer */}
+            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+              <button
+                type="button"
+                onClick={() => setShowAiModal(false)}
+                className="btn-secondary flex-1 py-3 text-xs sm:text-sm font-bold"
+              >
+                Annulla
+              </button>
+              {aiMethod === 'text' && (
+                <button
+                  type="button"
+                  onClick={() => handleAiAnalyzeText(aiText)}
+                  disabled={aiLoading || !aiText.trim()}
+                  className="btn-primary flex-1 py-3 text-xs sm:text-sm font-bold shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {aiLoading ? (
+                    <>
+                      <LoadingSpinner size="sm" />
+                      <span>Analizzo…</span>
+                    </>
+                  ) : (
+                    <span>Analizza ed Estrai ✨</span>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -28,6 +28,91 @@ const CATEGORY_OPTIONS = [
   { value: 'other', label: '🍴 Altro' },
 ] as const
 
+interface QuantityStepperProps {
+  quantity: number | undefined
+  unit?: string
+  onChange: (qty: number) => void
+}
+
+function QuantityStepper({ quantity, unit = 'g', onChange }: QuantityStepperProps) {
+  const [val, setVal] = useState<string>(() =>
+    quantity === undefined || quantity === 0 ? '' : String(quantity)
+  )
+
+  useEffect(() => {
+    const qStr = quantity === undefined || quantity === 0 ? '' : String(quantity)
+    setVal(prev => {
+      if (prev === '' && (quantity === 0 || quantity === undefined)) return prev
+      if (Number(prev) === quantity) return prev
+      return qStr
+    })
+  }, [quantity])
+
+  const step = unit === 'pieces' || unit === 'portions' ? 1 : 5
+
+  const handlePlus = () => {
+    const current = Number(val) || 0
+    const next = current + step
+    setVal(String(next))
+    onChange(next)
+  }
+
+  const handleMinus = () => {
+    const current = Number(val) || 0
+    const next = Math.max(0, current - step)
+    setVal(next === 0 ? '' : String(next))
+    onChange(next)
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value
+    if (text === '') {
+      setVal('')
+      onChange(0)
+      return
+    }
+    const num = parseFloat(text)
+    if (!isNaN(num) && num >= 0) {
+      setVal(text)
+      onChange(num)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1 flex-shrink-0">
+      <button
+        type="button"
+        onClick={handlePlus}
+        className="w-7 h-7 rounded-lg bg-primary-100 hover:bg-primary-200 active:scale-95 text-primary-800 font-extrabold text-sm flex items-center justify-center transition-all select-none border border-primary-200/60"
+        title={`Aumenta (+${step}${unit})`}
+      >
+        +
+      </button>
+
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={val}
+        onChange={handleChange}
+        placeholder="0"
+        className="w-14 text-center input-field text-xs py-1 px-1 font-extrabold text-primary-950 bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+      />
+
+      <button
+        type="button"
+        onClick={handleMinus}
+        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-extrabold text-sm flex items-center justify-center transition-all select-none border border-gray-200"
+        title={`Diminuisci (-${step}${unit})`}
+      >
+        –
+      </button>
+
+      <span className="text-gray-500 font-semibold text-xs min-w-[1.2rem] text-left">{unit}</span>
+    </div>
+  )
+}
+
 export default function SetupPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
@@ -406,20 +491,17 @@ export default function SetupPage() {
                                   placeholder="es. Yogurt greco"
                                   value={opt.name}
                                   onChange={e => updateOption(mealIdx, groupIdx, optIdx, { name: e.target.value })}
-                                  className="input-field flex-1 text-sm py-2"
+                                  className="input-field flex-1 text-sm py-2 min-w-0"
                                 />
-                                <input
-                                  type="number"
-                                  placeholder="g"
-                                  value={opt.quantity}
-                                  onChange={e =>
+                                <QuantityStepper
+                                  quantity={opt.quantity}
+                                  unit={opt.unit || 'g'}
+                                  onChange={qty =>
                                     updateOption(mealIdx, groupIdx, optIdx, {
-                                      quantity: parseFloat(e.target.value) || 0,
+                                      quantity: qty,
                                     })
                                   }
-                                  className="input-field w-20 text-sm py-2 text-center"
                                 />
-                                <span className="text-xs text-gray-400 w-4">{opt.unit || 'g'}</span>
                               </div>
                             ))}
                             <button

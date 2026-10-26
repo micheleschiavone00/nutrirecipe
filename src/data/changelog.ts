@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.5.1'
+export const APP_VERSION = '1.5.2'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.5.2',
+    date: '26 Ottobre 2026',
+    title: 'Tasto Aggiungi Ricetta al Giorno, Spazio Navbar su Cassetti e Stepper Dosi (+ a sinistra, - a destra)',
+    isLatest: true,
+    summary:
+      'Introdotto il pulsante esplicito "+ Aggiungi" nel selettore ricette del giorno, aggiunto padding per distanziare i cassetti dalla navbar inferiore, ottimizzato il cassetto "Aggiorna con AI" con scrolling fluido, e inseriti i tasti stepper + / - con risoluzione del blocco dello zero durante la digitazione delle dosi.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Tasto "+ Aggiungi" Chiaramente Visibile per Aggiungere Piatti al Giorno',
+        description:
+          'Nel cassetto per scegliere una ricetta dal ricettario ora ogni scheda presenta un tasto verde "+ Aggiungi", e toccando la ricetta compare in basso un grande pulsante verde di conferma: "Aggiungi [Nome Ricetta] a [Pasto] ✓". Se la ricetta ha alternative o varianti (es. Cena o Cena Post Workout), puoi selezionare la variante al volo.',
+        howToUse: 'Dalla schermata del Meal Planner tocca "+ Aggiungi" su qualsiasi pasto: tocca la ricetta e premi il tasto verde.',
+      },
+      {
+        type: 'design',
+        title: 'Spazio e Padding tra la Navbar e la Fine del Cassetto',
+        description:
+          'Il cassetto non è più appiccicato al fondo dello schermo o a filo con la barra di navigazione. È stato aggiunto padding sul fondo e bordi arrotondati su tutti i lati (rounded-3xl) in modo da lasciare respiro visivo sopra la navbar.',
+        howToUse: 'I cassetti ora fluttuano elegantemente sopra la barra senza sovrapposizioni o sensazione di oppressione.',
+      },
+      {
+        type: 'fix',
+        title: 'Cassetto "Aggiorna con AI" con Scroll Fluido e Padding',
+        description:
+          'Risolto il blocco del cassetto per aggiornare il piano nutrizionale con AI (da testo o PDF): ora scorre fluidamente, rispetta il padding sopra la navbar e blocca lo scroll della pagina di sfondo.',
+        howToUse: 'Vai in Impostazioni ⚙️ → "Visualizza e Modifica Piano" → "Ricarica con AI".',
+      },
+      {
+        type: 'feat',
+        title: 'Stepper Quantità (+ a sinistra, - a destra) e Rimozione Blocco Zero',
+        description:
+          'Risolto il problema per cui cancellando il numero rimaneva lo 0 impedendo di digitare subito valori come "70". Aggiunti pratici tasti touch stepper: un "+" a sinistra per aumentare e un "-" a destra per diminuire comodamente di 5g (o 1 porzione).',
+        howToUse: 'Nella modifica del piano nutrizionale o delle varianti, usa i tasti + e - oppure cancella e scrivi la cifra direttamente.',
+      },
+    ],
+  },
   {
     version: '1.5.1',
     date: '26 Ottobre 2026',
     title: 'Fix Cassetti Mobile: Blocco Scroll Sfondo, Layout dvh e Pulsanti Salva Sempre Visibili',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Risolto il problema di scrolling e layout sui cassetti modali su smartphone: bloccato lo scroll della pagina di sfondo durante l\'apertura, layout dinamico a prova di Safari/iOS (dvh) e pulsanti Salva / Conferma sempre fissati in basso e mai tagliati fuori.',
     changes: [

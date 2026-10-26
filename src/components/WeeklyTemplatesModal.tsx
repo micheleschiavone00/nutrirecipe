@@ -137,11 +137,11 @@ export default function WeeklyTemplatesModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in touch-none"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-4 animate-fade-in touch-none"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[88dvh] sm:max-h-[85dvh] overflow-hidden"
+        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Fixed Header */}
