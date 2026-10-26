@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db'
-import { getMonday, getWeekDays, formatDayLabel, MEAL_LABELS, MEAL_ICONS, cn } from '@/lib/utils'
-import { PageHeader, EmptyState } from '@/components/ui'
+import { db, generateShoppingList as createShoppingList } from '@/lib/db'
+import { getMonday, getWeekDays, formatDayLabel, MEAL_LABELS, MEAL_ICONS, generateId, cn } from '@/lib/utils'
+import { PageHeader } from '@/components/ui'
+import SelectRecipeModal from '@/components/SelectRecipeModal'
+import WeeklyTemplatesModal from '@/components/WeeklyTemplatesModal'
 import type { MealType, PlannedMeal, Recipe } from '@/types'
 
 const MEAL_ORDER: MealType[] = ['breakfast', 'snack_am', 'lunch', 'snack_pm', 'dinner']
@@ -12,6 +14,8 @@ export default function PlannerPage() {
   const navigate = useNavigate()
   const [weekStart, setWeekStart] = useState(getMonday())
   const weekDays = getWeekDays(weekStart)
+  const [slotToSelect, setSlotToSelect] = useState<{ date: string; mealType: MealType } | null>(null)
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false)
 
   const plannedMeals = useLiveQuery(
     () => db.plannedMeals.where('date').between(weekDays[0], weekDays[6], true, true).toArray(),
@@ -47,12 +51,8 @@ export default function PlannerPage() {
   const toggleComplete = (meal: PlannedMeal) =>
     db.plannedMeals.update(meal.id, { isCompleted: !meal.isCompleted })
 
-  const getMealsForSlot = (date: string, mealType: MealType) =>
-    (plannedMeals ?? []).filter(m => m.date === date && m.mealType === mealType)
-
-  const generateShoppingList = async () => {
-    const { generateShoppingList: gen } = await import('../lib/db')
-    await gen(weekStart)
+  const handleGenerateShoppingList = async () => {
+    await createShoppingList(weekStart)
     navigate('/shopping')
   }
 
@@ -63,19 +63,27 @@ export default function PlannerPage() {
       <PageHeader
         title="Meal Planner"
         action={
-          <button
-            onClick={generateShoppingList}
-            className="flex items-center gap-1 bg-primary-500 text-white text-sm font-medium px-3 py-1.5 rounded-xl"
-          >
-            🛒 Spesa
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowTemplatesModal(true)}
+              className="flex items-center gap-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors"
+            >
+              📋 Modelli
+            </button>
+            <button
+              onClick={handleGenerateShoppingList}
+              className="flex items-center gap-1 bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors"
+            >
+              🛒 Spesa
+            </button>
+          </div>
         }
       />
 
       {/* Week navigation */}
       <div className="bg-white border-b border-gray-100 px-4 py-3">
         <div className="flex items-center justify-between">
-          <button onClick={prevWeek} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+          <button onClick={prevWeek} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
             ←
           </button>
           <div className="text-center">
@@ -83,7 +91,7 @@ export default function PlannerPage() {
               {formatDayLabel(weekDays[0], true)} – {formatDayLabel(weekDays[6], true)}
             </p>
           </div>
-          <button onClick={nextWeek} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+          <button onClick={nextWeek} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
             →
           </button>
         </div>
@@ -116,13 +124,56 @@ export default function PlannerPage() {
             recipesMap={recipesMap ?? {}}
             onRemove={removeMeal}
             onToggle={toggleComplete}
-            onAdd={(mealType) => navigate(`/import?date=${day}&meal=${mealType}`)}
+            onAdd={(mealType) => setSlotToSelect({ date: day, mealType })}
             onRecipeClick={(recipeId) => navigate(`/recipes/${recipeId}`)}
           />
         ))}
       </div>
 
-      <div className="h-4" />
+      {/* Direct Recipe Add Modal */}
+      {slotToSelect && (
+        <SelectRecipeModal
+          isOpen={Boolean(slotToSelect)}
+          onClose={() => setSlotToSelect(null)}
+          date={slotToSelect.date}
+          mealType={slotToSelect.mealType}
+          onSelectRecipe={async (recipeId) => {
+            await db.plannedMeals.add({
+              id: generateId(),
+              date: slotToSelect.date,
+              mealType: slotToSelect.mealType,
+              recipeId,
+              isCompleted: false,
+            })
+          }}
+          onAddCustomMeal={async (customLabel) => {
+            await db.plannedMeals.add({
+              id: generateId(),
+              date: slotToSelect.date,
+              mealType: slotToSelect.mealType,
+              customLabel,
+              isCompleted: false,
+            })
+          }}
+          onImportNew={() => {
+            navigate(`/import?date=${slotToSelect.date}&meal=${slotToSelect.mealType}`)
+          }}
+        />
+      )}
+
+      {/* Weekly Standard Templates Modal */}
+      <WeeklyTemplatesModal
+        isOpen={showTemplatesModal}
+        onClose={() => setShowTemplatesModal(false)}
+        currentWeekDays={weekDays}
+        currentWeekMeals={plannedMeals ?? []}
+        recipesMap={recipesMap ?? {}}
+        onApplied={() => {
+          // Live query auto refreshes
+        }}
+      />
+
+      <div className="h-6" />
     </div>
   )
 }

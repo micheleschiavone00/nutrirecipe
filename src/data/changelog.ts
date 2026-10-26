@@ -16,14 +16,59 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.3.0'
+export const APP_VERSION = '1.4.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.4.0',
+    date: '26 Ottobre 2026',
+    title: 'Icona Burger su Bilancia, Dark Mode, Modelli Settimana & Aggiunta Pasti Diretta',
+    isLatest: true,
+    summary:
+      'Nuova icona con hamburger gourmet su bilancia digitale (Liquid Glass 3D, Material Design e Dark Mode adattiva di sistema). Ridisegnata la modale di aggiunta al planner senza sovrapposizioni, salvataggio di modelli per settimane standard e aggiunta diretta delle ricette dai singoli giorni del Meal Planner.',
+    changes: [
+      {
+        type: 'design',
+        title: 'Nuova Icona Burger su Bilancia & Confronto Stili',
+        description:
+          'Sostituita la precedente insalata con un sontuoso hamburger gourmet artigianale appoggiato su bilancia digitale da cucina con display LCD verde (180g). Nella sezione Impostazioni puoi ora visualizzare e confrontare gli stili Liquid Glass 3D, Material Design e Dark Mode.',
+        howToUse: 'Vai in Impostazioni ⚙️ → "Icona App & Stili a Confronto" per ammirare i diversi stili grafici.',
+      },
+      {
+        type: 'design',
+        title: 'Icona Dark Mode Adattiva di Sistema',
+        description:
+          'Aggiunta la variante Dark Mode su sfondo lussuoso grafite/ossidiana con bilancia titanio e display verde neon brillante. L\'icona del browser e dell\'app si adatta automaticamente quando il tuo telefono entra in modalità scura.',
+        howToUse: 'Si attiva in automatico in base al tema scuro del tuo smartphone.',
+      },
+      {
+        type: 'feat',
+        title: 'Nuova Modale "Aggiungi al Meal Planner" Senza Sovrapposizioni',
+        description:
+          'Completamente ridisegnata l\'interfaccia per inserire una ricetta nel piano settimanale: layout fluido ed ergonomico, carosello dei prossimi 14 giorni (Oggi, Domani, ecc.) e selezione istantanea del pasto senza sovrapposizioni visive su mobile.',
+        howToUse: 'Nel dettaglio di qualsiasi ricetta, tocca il pulsante verde "📅 Aggiungi al piano".',
+      },
+      {
+        type: 'feat',
+        title: 'Modelli per Settimane Standard (Salva & Applica)',
+        description:
+          'Possibilità di salvare la settimana corrente come modello standard riutilizzabile (es. "Settimana Standard", "Definizione", "Pasti Veloci") e applicarla alle settimane future con un tocco, scegliendo se sostituire o aggiungere ai pasti esistenti.',
+        howToUse: 'Dalla schermata Meal Planner, tocca "📋 Modelli" in alto a destra.',
+      },
+      {
+        type: 'feat',
+        title: 'Aggiunta Ricette Diretta dai Giorni del Planner',
+        description:
+          'Ora puoi aggiungere un piatto direttamente dal giorno e dal pasto desiderato nel Meal Planner: tocca "+ Aggiungi" per aprire il selettore istantaneo con ricerca nel ricettario, filtri per pasto consigliato, o inserisci un pasto libero.',
+        howToUse: 'Nel Meal Planner tocca "+ Aggiungi" su qualsiasi pasto (Colazione, Pranzo, Cena, Merenda).',
+      },
+    ],
+  },
   {
     version: '1.3.0',
     date: '26 Ottobre 2026',
     title: 'Organizzazione Ingredienti (Macro/Componenti) & Verdure al Grammo',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Nuova tripla modalità di visualizzazione ingredienti (per Macro Categoria, per Componente/Preparazione e Lista). Precisione al grammo per le verdure con ripartizione equa multi-verdura (es. 100g e 100g) e riorganizzazione retroattiva con AI per vecchie ricette.',
     changes: [
@@ -40,14 +85,7 @@ export const CHANGELOG: Release[] = [
         description:
           'Mai più dosi generiche a pezzi per le verdure. Se il piano prevede 200g e la ricetta include 2 verdure (es. zucchine e peperoni), vengono ripartite a 100g ciascuna (o 50g con 4 verdure), garantendo la quota totale esatta del tuo piano.',
         howToUse: 'Le verdure vengono calcolate sempre in grammi esatti sia nelle nuove ricette che riadattando quelle esistenti.',
-      },
-      {
-        type: 'ai',
-        title: 'Pulsante "Riorganizza con AI" per ricette esistenti',
-        description:
-          'Anche per le ricette salvate in precedenza puoi cliccare "✨ Riorganizza con AI" per assegnare i componenti culinari, ricalibrare le verdure al grammo esatto e perfezionare i passaggi.',
-        howToUse: 'Nella scheda "🥗 Ingredienti" di qualsiasi ricetta salvata tocca "✨ Riorganizza con AI".',
-      },
+      }
     ],
   },
   {

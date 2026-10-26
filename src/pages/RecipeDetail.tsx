@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, CATEGORY_ICONS, formatDate } from '@/lib/utils'
 import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
+import AddToPlannerModal from '@/components/AddToPlannerModal'
 import type { MealType, TargetMealType } from '@/types'
 
 const MEAL_OPTIONS: { value: MealType; label: string }[] = [
@@ -514,51 +515,12 @@ export default function RecipeDetailPage() {
       </div>
 
       {/* ── Add to Planner Modal ────────────────────────────────────── */}
-      {showAddToPlanner && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-3xl p-6 w-full max-w-lg animate-slide-up">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Aggiungi al Meal Planner</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Data</label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={e => setSelectedDate(e.target.value)}
-                  className="input-field"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Pasto</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {MEAL_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSelectedMeal(opt.value)}
-                      className={`py-2 px-3 rounded-xl text-sm font-medium transition-all ${
-                        selectedMeal === opt.value
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowAddToPlanner(false)} className="btn-secondary flex-1">
-                  Annulla
-                </button>
-                <button onClick={addToPlanner} className="btn-primary flex-1">
-                  Conferma ✓
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddToPlannerModal
+        isOpen={showAddToPlanner}
+        onClose={() => setShowAddToPlanner(false)}
+        recipe={recipe}
+        onSuccess={() => navigate('/planner')}
+      />
     </div>
   )
 }

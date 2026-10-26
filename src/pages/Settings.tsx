@@ -115,6 +115,73 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Icone App & Stili a Confronto */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🎨</span>
+              <h2 className="font-semibold text-gray-900">Icona App & Stili a Confronto</h2>
+            </div>
+            <span className="text-xs bg-primary-50 text-primary-700 font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+              Novità v1.4
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Abbiamo sostituito la precedente insalata con un sontuoso <strong>hamburger gourmet su bilancia digitale</strong> (180g). Confronta gli stili realizzati:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* 1. Liquid Glass 3D */}
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-200 mb-2">
+                <img src="/icons/icon-liquidglass.png" alt="Liquid Glass 3D" className="w-full h-full object-cover" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary-700 bg-primary-100 px-2 py-0.5 rounded-md mb-1">
+                Liquid Glass 3D
+              </span>
+              <h3 className="text-xs font-bold text-gray-900">Predefinita</h3>
+              <p className="text-[10px] text-gray-500 mt-1">
+                Effetto vetro smerigliato con riflessi liquidi e illuminazione studio su sfondo smeraldo.
+              </p>
+            </div>
+
+            {/* 2. Material Design */}
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-200 mb-2">
+                <img src="/icons/icon-material.png" alt="Material Design" className="w-full h-full object-cover" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md mb-1">
+                Material 3
+              </span>
+              <h3 className="text-xs font-bold text-gray-900">Grafica Vettoriale</h3>
+              <p className="text-[10px] text-gray-500 mt-1">
+                Design piatto geometrico con ombre di elevazione e colori saturi in stile Google Material.
+              </p>
+            </div>
+
+            {/* 3. Dark Mode */}
+            <div className="bg-gray-900 text-white border border-gray-800 rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-700 mb-2">
+                <img src="/icons/icon-dark.png" alt="Dark Mode" className="w-full h-full object-cover" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-md mb-1">
+                Dark Mode
+              </span>
+              <h3 className="text-xs font-bold text-gray-100">Adattiva Sistema</h3>
+              <p className="text-[10px] text-gray-400 mt-1">
+                Fondo grafite/ossidiana con bilancia titanio e display verde neon brillante. Si attiva col tema scuro.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-start gap-2.5">
+            <span className="text-base">🌗</span>
+            <p className="text-[11px] text-emerald-900 leading-relaxed">
+              <strong>Adattamento Automatico:</strong> NutriRecipe rileva le impostazioni del tuo telefono (iOS / Android / Mac) e serve automaticamente l&apos;icona Dark Mode quando il dispositivo è in modalità scura.
+            </p>
+          </div>
+        </div>
+
         {/* Nutrition Profile */}
         <div className="card p-4 space-y-3">
           <div className="flex items-center justify-between">

@@ -6,6 +6,7 @@ import type {
   ShoppingList,
   AppSettings,
   ImportJob,
+  WeeklyTemplate,
 } from '@/types'
 
 export class NutriRecipeDB extends Dexie {
@@ -15,6 +16,7 @@ export class NutriRecipeDB extends Dexie {
   shoppingLists!: Table<ShoppingList>
   settings!: Table<AppSettings & { id: 1 }>
   importJobs!: Table<ImportJob>
+  weeklyTemplates!: Table<WeeklyTemplate>
 
   constructor() {
     super('NutriRecipeDB')
@@ -25,6 +27,9 @@ export class NutriRecipeDB extends Dexie {
       shoppingLists: 'id, weekStart',
       settings: 'id',
       importJobs: 'id, status, createdAt',
+    })
+    this.version(2).stores({
+      weeklyTemplates: 'id, name, createdAt',
     })
   }
 }

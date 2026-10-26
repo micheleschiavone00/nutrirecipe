@@ -113,6 +113,21 @@ export interface WeekPlan {
   plannedMeals: PlannedMeal[]
 }
 
+export interface WeeklyTemplateMeal {
+  dayOffset: number           // 0 = Lunedì, 1 = Martedì, ..., 6 = Domenica
+  mealType: MealType
+  recipeId?: string
+  customLabel?: string
+}
+
+export interface WeeklyTemplate {
+  id: string
+  name: string
+  description?: string
+  meals: WeeklyTemplateMeal[]
+  createdAt: Date
+}
+
 // ─── Shopping List Types ──────────────────────────────────────────────────────
 
 export interface ShoppingItem {

@@ -1,53 +1,79 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <linearGradient id="favBg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Background Emerald Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#10b981"/>
       <stop offset="100%" stop-color="#047857"/>
     </linearGradient>
-    <linearGradient id="favScale" x1="0%" y1="0%" x2="0%" y2="100%">
+
+    <!-- Scale Metallic Plate Gradient -->
+    <linearGradient id="plateGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff"/>
       <stop offset="100%" stop-color="#e2e8f0"/>
     </linearGradient>
-    <linearGradient id="favAvo" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#bef264"/>
-      <stop offset="100%" stop-color="#65a30d"/>
+
+    <!-- Bun Top Gradient -->
+    <linearGradient id="bunGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+
+    <!-- Patty Gradient -->
+    <linearGradient id="pattyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#451a03"/>
     </linearGradient>
   </defs>
 
   <!-- Squircle Base -->
-  <rect width="128" height="128" rx="28" fill="url(#favBg)"/>
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)"/>
 
-  <!-- Scale Shadow -->
-  <ellipse cx="64" cy="104" rx="42" ry="7" fill="#022c22" opacity="0.35"/>
+  <!-- Subtle Scale Shadow -->
+  <ellipse cx="64" cy="106" rx="42" ry="6" fill="#022c22" opacity="0.35"/>
 
-  <!-- Kitchen Scale Base -->
-  <rect x="26" y="80" width="76" height="24" rx="8" fill="url(#favScale)" stroke="#cbd5e1" stroke-width="1.2"/>
+  <!-- Scale Body -->
+  <rect x="24" y="82" width="80" height="22" rx="8" fill="url(#plateGrad)" stroke="#cbd5e1" stroke-width="1.2"/>
   
-  <!-- Scale LCD Screen -->
+  <!-- Scale LCD Display -->
   <rect x="46" y="88" width="36" height="11" rx="3" fill="#064e3b"/>
-  <text x="64" y="96.5" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="6.5" font-weight="900" fill="#34d399" text-anchor="middle">200g</text>
+  <text x="64" y="96.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="7" font-weight="900" fill="#34d399" text-anchor="middle" letter-spacing="0.5">180g</text>
 
-  <!-- Scale Weighing Plate -->
-  <ellipse cx="64" cy="72" rx="40" ry="7" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <!-- Scale Weighing Glass/Steel Surface -->
+  <ellipse cx="64" cy="74" rx="42" ry="7" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.2"/>
 
-  <!-- Food: Bowl with Avocado & Tomato -->
-  <!-- White Ceramic Bowl -->
-  <path d="M 36 58 C 36 80 92 80 92 58 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
-  <ellipse cx="64" cy="58" rx="28" ry="6" fill="#f1f5f9"/>
+  <!-- Burger Shadow on Scale -->
+  <ellipse cx="64" cy="74" rx="30" ry="4.5" fill="#0f172a" opacity="0.25"/>
 
-  <!-- Fresh Greens -->
-  <path d="M 46 56 C 40 45 52 36 60 44 C 64 48 60 55 46 56 Z" fill="#22c55e"/>
-  <path d="M 70 56 C 68 38 85 34 88 44 C 90 50 82 56 70 56 Z" fill="#4ade80"/>
+  <!-- BURGER LAYERS -->
+  <!-- 1. Bottom Bun -->
+  <rect x="36" y="66" width="56" height="8" rx="4" fill="#d97706"/>
+  <rect x="37" y="67" width="54" height="6" rx="3" fill="#f59e0b" opacity="0.4"/>
 
-  <!-- Avocado Half -->
-  <g transform="translate(52, 42) rotate(-8)">
-    <ellipse cx="10" cy="13" rx="10" ry="14" fill="#14532d"/>
-    <ellipse cx="10" cy="13" rx="8.5" ry="12.5" fill="url(#favAvo)"/>
-    <ellipse cx="10" cy="15" rx="4.5" ry="6" fill="#78350f"/>
-  </g>
+  <!-- 2. Grilled Patty -->
+  <rect x="33" y="58" width="62" height="9" rx="4.5" fill="url(#pattyGrad)"/>
+  
+  <!-- 3. Melted Cheddar Cheese -->
+  <path d="M 33 59 L 95 59 L 91 64 L 78 63 L 74 67 L 66 63 L 56 67 L 50 63 L 37 65 Z" fill="#fbbf24"/>
 
-  <!-- Cherry Tomato -->
-  <circle cx="78" cy="56" r="6.5" fill="#ef4444"/>
-  <circle cx="76" cy="54" r="1.5" fill="#ffffff" opacity="0.6"/>
-  <path d="M 78 49 L 78 51 M 76 50 L 80 50" stroke="#15803d" stroke-width="1" stroke-linecap="round"/>
+  <!-- 4. Fresh Sliced Tomato -->
+  <rect x="35" y="52" width="58" height="6.5" rx="3" fill="#ef4444"/>
+  <rect x="37" y="53" width="26" height="4" rx="2" fill="#f87171"/>
+  <rect x="65" y="53" width="26" height="4" rx="2" fill="#f87171"/>
+
+  <!-- 5. Crisp Wavy Lettuce -->
+  <path d="M 31 51 C 35 47, 41 53, 47 49 C 53 45, 59 53, 65 48 C 71 44, 77 52, 83 48 C 89 44, 93 51, 97 50 C 97 53, 31 54, 31 51 Z" fill="#22c55e"/>
+
+  <!-- 6. Top Gourmet Bun (Glossy Dome) -->
+  <path d="M 34 49 C 34 26, 94 26, 94 49 Z" fill="url(#bunGrad)"/>
+  <!-- Highlight shine on bun -->
+  <ellipse cx="50" cy="35" rx="10" ry="3.5" transform="rotate(-15, 50, 35)" fill="#fef3c7" opacity="0.5"/>
+
+  <!-- Sesame Seeds -->
+  <ellipse cx="52" cy="38" rx="1" ry="2" transform="rotate(25, 52, 38)" fill="#fef3c7"/>
+  <ellipse cx="64" cy="33" rx="1" ry="2" transform="rotate(-10, 64, 33)" fill="#fef3c7"/>
+  <ellipse cx="76" cy="37" rx="1" ry="2" transform="rotate(-30, 76, 37)" fill="#fef3c7"/>
+  <ellipse cx="60" cy="42" rx="1" ry="2" transform="rotate(15, 60, 42)" fill="#fef3c7"/>
+  <ellipse cx="72" cy="43" rx="1" ry="2" transform="rotate(40, 72, 43)" fill="#fef3c7"/>
+  <ellipse cx="45" cy="43" rx="1" ry="2" transform="rotate(-20, 45, 43)" fill="#fef3c7"/>
+  <ellipse cx="82" cy="43" rx="1" ry="2" transform="rotate(10, 82, 43)" fill="#fef3c7"/>
 </svg>
