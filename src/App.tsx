@@ -8,10 +8,12 @@ import RecipeDetailPage from '@/pages/RecipeDetail'
 import PlannerPage from '@/pages/Planner'
 import ShoppingPage from '@/pages/Shopping'
 import SettingsPage from '@/pages/Settings'
+import NutritionPlanPage from '@/pages/NutritionPlan'
 import ShareHandler from '@/pages/ShareHandler'
 import ChangelogModal from '@/components/ChangelogModal'
 import { getSettings } from '@/lib/db'
 import { hasUnseenUpdate } from '@/data/changelog'
+import { migrateAllRecipesSteps } from '@/lib/recipeEnricher'
 
 function AppContent() {
   const location = useLocation()
@@ -24,6 +26,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Navigate to="/recipes" replace />} />
           <Route path="/setup" element={<SetupPage />} />
+          <Route path="/profile" element={<NutritionPlanPage />} />
+          <Route path="/nutrition-plan" element={<Navigate to="/profile" replace />} />
           <Route path="/import" element={<ImportPage />} />
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/recipes/:id" element={<RecipeDetailPage />} />
@@ -43,6 +47,11 @@ export default function App() {
   const [showChangelog, setShowChangelog] = useState(false)
 
   useEffect(() => {
+    // Run retroactive migration for existing recipe steps once
+    if (!localStorage.getItem('nutrirecipe_steps_migrated_v1.2.0')) {
+      migrateAllRecipesSteps().catch(console.error)
+    }
+
     getSettings().then(s => {
       setInitialRoute(s.activeProfileId ? '/recipes' : '/setup')
       if (s.activeProfileId && hasUnseenUpdate()) {

@@ -1,0 +1,168 @@
+import type { Recipe, RecipeIngredient, RecipeStep } from '@/types'
+import { db } from './db'
+
+/**
+ * Normalizes food names for fuzzy matching in step descriptions.
+ * e.g., "olio extravergine d'oliva" -> matches "olio", "olio evo", "olio extravergine"
+ */
+function getMatchKeywords(name: string): string[] {
+  const clean = name.toLowerCase().trim()
+  const words = clean
+    .split(/[\s,()\/]+/)
+    .map(w => w.replace(/[^\wàèéìòù]/gi, ''))
+    .filter(w => w.length > 2)
+
+  const keywords = new Set<string>()
+  keywords.add(clean)
+
+  // Add specific synonyms or stems
+  if (clean.includes('uov') || clean.includes('uovo') || clean.includes('uova')) {
+    keywords.add('uova')
+    keywords.add('uovo')
+    keywords.add('albume')
+    keywords.add('albumi')
+  }
+  if (clean.includes('olio')) {
+    keywords.add('olio')
+    keywords.add('olio evo')
+    keywords.add('olio extravergine')
+  }
+  if (clean.includes('feta')) {
+    keywords.add('feta')
+  }
+  if (clean.includes('zucch')) {
+    keywords.add('zucchine')
+    keywords.add('zucchina')
+    keywords.add('zucchine grattugiate')
+  }
+  if (clean.includes('avena')) {
+    keywords.add('avena')
+    keywords.add('fiocchi d\'avena')
+    keywords.add('farina d\'avena')
+  }
+  if (clean.includes('pollo')) {
+    keywords.add('pollo')
+    keywords.add('petto di pollo')
+  }
+  if (clean.includes('tonno')) {
+    keywords.add('tonno')
+  }
+  if (clean.includes('riso')) {
+    keywords.add('riso')
+  }
+  if (clean.includes('pasta')) {
+    keywords.add('pasta')
+  }
+  if (clean.includes('yogurt')) {
+    keywords.add('yogurt')
+  }
+  if (clean.includes('ricotta')) {
+    keywords.add('ricotta')
+  }
+
+  // Add significant individual words
+  for (const w of words) {
+    if (!['con', 'del', 'della', 'delle', 'dei', 'degli', 'per', 'senza', 'tipo', 'fresco', 'fresca'].includes(w)) {
+      keywords.add(w)
+    }
+  }
+
+  // Sort descending by length so longer phrases match first
+  return Array.from(keywords).sort((a, b) => b.length - a.length)
+}
+
+/**
+ * Enriches a single step's text with ingredient doses if missing.
+ */
+export function enrichStepWithDoses(
+  stepDescription: string,
+  ingredients: RecipeIngredient[]
+): { text: string; changed: boolean } {
+  let updated = stepDescription
+  let changed = false
+
+  for (const ing of ingredients) {
+    if (!ing.adaptedQuantity || !ing.name) continue
+
+    const qtyString = `(${ing.adaptedQuantity})`
+    // If the step already has this exact dose or similar, skip
+    if (updated.includes(qtyString)) continue
+
+    const keywords = getMatchKeywords(ing.name)
+
+    for (const kw of keywords) {
+      if (!kw || kw.length < 3) continue
+
+      // Regex matching keyword, not preceded by already formatted bracket
+      // and not immediately followed by '('
+      const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(`\\b(${escaped})\\b(?!\\s*\\()`, 'i')
+
+      if (regex.test(updated)) {
+        updated = updated.replace(regex, `$1 ${qtyString}`)
+        changed = true
+        break // matched this ingredient, move to next
+      }
+    }
+  }
+
+  return { text: updated, changed }
+}
+
+/**
+ * Checks and enriches all steps of a recipe with adapted ingredient doses.
+ */
+export function enrichRecipeStepsWithDoses(recipe: Recipe): { recipe: Recipe; changed: boolean } {
+  if (!recipe.steps || recipe.steps.length === 0 || !recipe.adaptedIngredients || recipe.adaptedIngredients.length === 0) {
+    return { recipe, changed: false }
+  }
+
+  let anyChange = false
+  const updatedSteps: RecipeStep[] = recipe.steps.map(step => {
+    const { text, changed } = enrichStepWithDoses(step.description, recipe.adaptedIngredients)
+    if (changed) {
+      anyChange = true
+      return { ...step, description: text }
+    }
+    return step
+  })
+
+  if (!anyChange) {
+    return { recipe, changed: false }
+  }
+
+  return {
+    recipe: {
+      ...recipe,
+      steps: updatedSteps,
+      updatedAt: new Date(),
+    },
+    changed: true,
+  }
+}
+
+/**
+ * Migrates all recipes in IndexedDB, updating their steps with doses.
+ * Safe and idempotent: will only update recipes where doses were actually added.
+ */
+export async function migrateAllRecipesSteps(): Promise<{ total: number; updated: number }> {
+  try {
+    const allRecipes = await db.recipes.toArray()
+    let updatedCount = 0
+
+    for (const r of allRecipes) {
+      const { recipe: enriched, changed } = enrichRecipeStepsWithDoses(r)
+      if (changed) {
+        await db.recipes.put(enriched)
+        updatedCount++
+      }
+    }
+
+    // Mark migration as completed in localStorage
+    localStorage.setItem('nutrirecipe_steps_migrated_v1.2.0', 'true')
+    return { total: allRecipes.length, updated: updatedCount }
+  } catch (error) {
+    console.error('Error migrating recipe steps:', error)
+    return { total: 0, updated: 0 }
+  }
+}

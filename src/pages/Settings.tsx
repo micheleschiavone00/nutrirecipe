@@ -1,21 +1,42 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getSettings, db } from '@/lib/db'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { getSettings, getActiveProfile, db } from '@/lib/db'
 import { PageHeader } from '@/components/ui'
 import { isOpenAIConfigured, isRapidAPIConfigured } from '@/config'
 import ChangelogModal from '@/components/ChangelogModal'
 import { APP_VERSION } from '@/data/changelog'
+import { migrateAllRecipesSteps } from '@/lib/recipeEnricher'
+import { formatDate } from '@/lib/utils'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [showChangelog, setShowChangelog] = useState(false)
+  const [migrating, setMigrating] = useState(false)
+  const [migrateStatus, setMigrateStatus] = useState('')
+
+  const activeProfile = useLiveQuery(() => getActiveProfile(), [])
 
   useEffect(() => {
     getSettings().then(() => {
       setLoading(false)
     })
   }, [])
+
+  const handleMigrateRecipes = async () => {
+    setMigrating(true)
+    setMigrateStatus('Aggiornamento ricette in corso…')
+    try {
+      const res = await migrateAllRecipesSteps()
+      setMigrateStatus(`✅ ${res.updated} ricette su ${res.total} aggiornate con dosi!`)
+    } catch {
+      setMigrateStatus("❌ Errore durante l'aggiornamento")
+    } finally {
+      setMigrating(false)
+      setTimeout(() => setMigrateStatus(''), 4500)
+    }
+  }
 
   const resetApp = async () => {
     if (confirm("Eliminare tutti i dati? Quest'operazione non è reversibile.")) {
@@ -96,10 +117,76 @@ export default function SettingsPage() {
 
         {/* Nutrition Profile */}
         <div className="card p-4 space-y-3">
-          <h2 className="font-semibold text-gray-900">🥗 Piano Nutrizionale</h2>
-          <button onClick={() => navigate('/setup')} className="btn-secondary w-full">
-            Modifica piano nutrizionale
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>🥗</span>
+              <span>Piano Nutrizionale</span>
+            </h2>
+            {activeProfile && (
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Attivo
+              </span>
+            )}
+          </div>
+
+          {activeProfile ? (
+            <div className="space-y-2">
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-1">
+                <p className="text-sm font-bold text-gray-900">{activeProfile.name}</p>
+                <p className="text-xs text-gray-500">
+                  {activeProfile.meals?.length || 0} pasti configurati • Aggiornato il{' '}
+                  {formatDate(activeProfile.updatedAt || activeProfile.createdAt)}
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/profile')}
+                className="btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span>👁️</span>
+                <span>Visualizza e Modifica Piano</span>
+              </button>
+              <button
+                onClick={() => navigate('/setup')}
+                className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                + Crea un nuovo piano da zero
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">Nessun piano nutrizionale attualmente configurato.</p>
+              <button onClick={() => navigate('/setup')} className="btn-primary w-full text-xs">
+                Crea piano nutrizionale
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Ricettario & Dosi retroattive */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>⚖️</span>
+              <span>Dosi nei Procedimenti</span>
+            </h2>
+            <span className="text-xs text-emerald-700 bg-emerald-50 font-semibold px-2 py-0.5 rounded-md border border-emerald-200">
+              Automatico
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Inserisci retroattivamente le dosi esatte tra parentesi nei passaggi di tutte le ricette salvate in precedenza.
+          </p>
+          <button
+            onClick={handleMigrateRecipes}
+            disabled={migrating}
+            className="btn-secondary w-full flex items-center justify-center gap-2 text-xs font-semibold"
+          >
+            <span>🔄</span>
+            <span>{migrating ? 'Aggiornamento in corso…' : 'Aggiorna dosi in tutte le ricette precedenti'}</span>
           </button>
+          {migrateStatus && (
+            <p className="text-xs font-semibold text-center text-primary-700 animate-fade-in">{migrateStatus}</p>
+          )}
         </div>
 
         {/* Novità & Changelog */}

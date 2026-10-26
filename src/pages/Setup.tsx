@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db, saveSettings } from '@/lib/db'
+import { db, saveSettings, getActiveProfile } from '@/lib/db'
 import { analyzePDFText } from '@/lib/ai'
 import { extractPDFText } from '@/lib/social'
 import { generateId } from '@/lib/utils'
@@ -32,7 +32,14 @@ export default function SetupPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
+  const [existingProfile, setExistingProfile] = useState<NutritionProfile | null>(null)
   const [method, setMethod] = useState<'pdf' | 'text' | 'manual' | null>(null)
+
+  useEffect(() => {
+    getActiveProfile().then(p => {
+      if (p) setExistingProfile(p)
+    })
+  }, [])
   const [pastedText, setPastedText] = useState('')
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
@@ -219,6 +226,20 @@ export default function SetupPage() {
         {/* Step 0 — Nome */}
         {step === 0 && (
           <div className="px-6 pt-4 animate-slide-up">
+            {existingProfile && (
+              <div className="bg-primary-50 border border-primary-200 rounded-2xl p-3.5 mb-5 flex items-center justify-between gap-3">
+                <div className="text-xs text-primary-900">
+                  <p className="font-bold">Hai già un piano nutrizionale attivo</p>
+                  <p className="text-primary-700">Vuoi visualizzare o modificare quello esistente ({existingProfile.name})?</p>
+                </div>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="text-xs font-bold text-white bg-primary-600 px-3 py-1.5 rounded-xl flex-shrink-0 shadow-sm"
+                >
+                  Vai al Piano ➔
+                </button>
+              </div>
+            )}
             <h2 className="text-xl font-bold text-gray-900 mb-1">Ciao! Come ti chiami?</h2>
             <p className="text-gray-500 text-sm mb-6">Personalizziamo l'app per te.</p>
             <input

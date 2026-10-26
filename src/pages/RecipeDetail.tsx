@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, formatDate } from '@/lib/utils'
+import { enrichRecipeStepsWithDoses } from '@/lib/recipeEnricher'
+import { reformatRecipeStepsWithAI } from '@/lib/ai'
 import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
 import type { MealType, TargetMealType } from '@/types'
 
@@ -30,6 +32,8 @@ export default function RecipeDetailPage() {
   const [showAddToPlanner, setShowAddToPlanner] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedMeal, setSelectedMeal] = useState<MealType>('lunch')
+  const [isReformatting, setIsReformatting] = useState(false)
+  const [enrichMsg, setEnrichMsg] = useState('')
 
   const recipe = useLiveQuery(() => id ? db.recipes.get(id) : undefined, [id])
 
@@ -79,6 +83,34 @@ export default function RecipeDetailPage() {
     })
     setShowAddToPlanner(false)
     navigate('/planner')
+  }
+
+  const handleEnrichSteps = async () => {
+    if (!recipe) return
+    const { recipe: enriched, changed } = enrichRecipeStepsWithDoses(recipe)
+    if (changed) {
+      await db.recipes.put(enriched)
+      setEnrichMsg('✅ Dosi aggiunte ai passaggi!')
+    } else {
+      setEnrichMsg('ℹ️ Le dosi sono già presenti nei passaggi')
+    }
+    setTimeout(() => setEnrichMsg(''), 3000)
+  }
+
+  const handleReformatWithAI = async () => {
+    if (!recipe) return
+    setIsReformatting(true)
+    setEnrichMsg("🤖 L'AI sta integrando le dosi nei passaggi…")
+    try {
+      const updatedSteps = await reformatRecipeStepsWithAI(recipe.title, recipe.adaptedIngredients, recipe.steps)
+      await db.recipes.update(recipe.id, { steps: updatedSteps, updatedAt: new Date() })
+      setEnrichMsg('✅ Passaggi riformulati con successo!')
+    } catch {
+      setEnrichMsg('❌ Errore durante la riformulazione AI')
+    } finally {
+      setIsReformatting(false)
+      setTimeout(() => setEnrichMsg(''), 3000)
+    }
   }
 
   return (
@@ -221,6 +253,38 @@ export default function RecipeDetailPage() {
         {/* Steps tab */}
         {tab === 'steps' && (
           <div className="space-y-3 mb-4">
+            {/* Quick Actions for Doses */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚖️</span>
+                <div>
+                  <p className="text-xs font-bold text-emerald-900">Dosi nei procedimenti</p>
+                  <p className="text-[11px] text-emerald-700">Le quantità adattate appaiono tra parentesi</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <button
+                  onClick={handleEnrichSteps}
+                  className="flex-1 sm:flex-initial text-xs font-semibold bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1.5 rounded-xl shadow-xs transition-colors"
+                >
+                  🔄 Inserisci dosi
+                </button>
+                <button
+                  onClick={handleReformatWithAI}
+                  disabled={isReformatting}
+                  className="flex-1 sm:flex-initial text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-2.5 py-1.5 rounded-xl shadow-xs transition-colors"
+                >
+                  {isReformatting ? '⏳ Elaboro…' : '✨ Con AI'}
+                </button>
+              </div>
+            </div>
+
+            {enrichMsg && (
+              <div className="bg-primary-100 text-primary-900 text-xs font-semibold px-3 py-2 rounded-xl text-center animate-fade-in">
+                {enrichMsg}
+              </div>
+            )}
+
             {recipe.steps.map((step) => (
               <div key={step.order} className="card p-4 flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">

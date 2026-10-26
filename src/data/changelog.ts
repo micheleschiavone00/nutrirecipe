@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.1.0'
+export const APP_VERSION = '1.2.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.2.0',
+    date: '26 Ottobre 2026',
+    title: 'Visualizzazione/Modifica Piano Nutrizionale & Dosi Retroattive',
+    isLatest: true,
+    summary:
+      'Ora puoi visualizzare, personalizzare e modificare ogni singolo alimento e grammatura del tuo piano nutrizionale. Inoltre, tutte le ricette salvate in precedenza vengono aggiornate automaticamente integrando le dosi nei singoli passaggi.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Visualizza e Modifica Piano Nutrizionale',
+        description:
+          'Nuova schermata dedicata per consultare il tuo piano suddiviso per pasti (Colazione, Spuntino, Pranzo, Merenda, Cena), modificare i grammi, aggiungere nuovi alimenti, personalizzare i macro e inserire note.',
+        howToUse: 'Vai in Impostazioni ⚙️ → "Visualizza e Modifica Piano" per gestire liberamente la tua dieta.',
+      },
+      {
+        type: 'feat',
+        title: 'Dosi nei procedimenti per tutte le ricette precedenti',
+        description:
+          'Migrazione automatica all\'avvio: tutte le ricette già salvate nel tuo ricettario ricevono le dosi esatte tra parentesi tonde in ciascun passaggio sequenziale, senza doverle rifare da capo.',
+        howToUse: 'Le tue ricette salvate mostrano già le quantità nei passaggi. Puoi anche usare il pulsante in Impostazioni o in "Preparazione" di qualsiasi ricetta.',
+      },
+      {
+        type: 'ai',
+        title: 'Ricarica e Aggiorna Piano con AI',
+        description:
+          'Se ricevi una nuova dieta dalla nutrizionista, puoi caricarla direttamente dalla schermata del Piano con PDF o Incolla Testo per aggiornare istantaneamente tutti i pasti tramite GPT-4o.',
+        howToUse: 'Dalla pagina del tuo Piano, tocca "📄 Ricarica con AI" in alto a destra.',
+      },
+      {
+        type: 'ai',
+        title: 'Riformulazione passaggi con AI nel ricettario',
+        description:
+          'Nel dettaglio ricetta puoi cliccare "✨ Con AI" per far riscrivere i procedimenti all\'intelligenza artificiale con dosi, tempi e consigli da chef.',
+        howToUse: 'Apri una ricetta → scheda "👨‍🍳 Preparazione" → "✨ Con AI".',
+      },
+    ],
+  },
   {
     version: '1.1.0',
     date: '26 Ottobre 2026',
     title: 'AI Più Intelligente, Pranzo & Cena e Dosi nei Procedimenti',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Algoritmo di adattamento radicalmente perfezionato: bilanciamento multi-ingrediente della stessa categoria, rispetto rigoroso della ricetta originale, supporto per ricette "Pranzo e Cena" e dosi leggibili direttamente nei passaggi.',
     changes: [

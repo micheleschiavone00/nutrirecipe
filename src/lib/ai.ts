@@ -1,4 +1,4 @@
-import type { NutritionProfile, Recipe, MealType, TargetMealType, FoodGroup } from '@/types'
+import type { NutritionProfile, Recipe, MealType, TargetMealType, FoodGroup, RecipeIngredient, RecipeStep } from '@/types'
 import { CONFIG } from '@/config'
 
 async function chatCompletion(
@@ -299,4 +299,52 @@ Traduci tutto in italiano.`
   ])
 
   return JSON.parse(result)
+}
+
+// ─── Reformat steps with doses using AI ──────────────────────────────────────
+
+export async function reformatRecipeStepsWithAI(
+  recipeTitle: string,
+  adaptedIngredients: RecipeIngredient[],
+  currentSteps: RecipeStep[]
+): Promise<RecipeStep[]> {
+  const ingredientsList = adaptedIngredients
+    .map(i => `- ${i.name}: ${i.adaptedQuantity}`)
+    .join('\n')
+
+  const stepsList = currentSteps
+    .map(s => `${s.order}. ${s.description}`)
+    .join('\n')
+
+  const systemPrompt = `Sei uno chef e nutrizionista AI d'élite.
+Il tuo compito è riscrivere i passaggi (steps) della ricetta inserendo OBBLIGATORIAMENTE tra parentesi tonde le dosi esatte degli ingredienti nominati in ciascun passaggio (es. "zucchine (200g)", "feta (25g)", "uova (1 intero, 50g)").
+Non alterare l'ordine logico della preparazione, ma rendi i passaggi chiarissimi e facili da seguire mentre si cucina.
+
+Restituisci SOLO un oggetto JSON con il campo "steps":
+{
+  "steps": [
+    {
+      "order": 1,
+      "description": "In una ciotola unire le zucchine (200g) grattugiate e la feta (25g) sbriciolata...",
+      "duration": "5 min",
+      "tip": "Consiglio utile facoltativo"
+    }
+  ]
+}`
+
+  const userPrompt = `Ricetta: ${recipeTitle}
+
+Ingredienti con dosi adattate:
+${ingredientsList}
+
+Passaggi originali da riscrivere:
+${stepsList}`
+
+  const result = await chatCompletion([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ])
+
+  const parsed = JSON.parse(result)
+  return parsed.steps || currentSteps
 }
