@@ -274,12 +274,181 @@ export function parseFoodQuantityAndUnit(
   }
 }
 
+// ─── Direct Nutrition Plan Food Matcher (User's Exact Plan Search) ─────────────
+
+export interface MatchedFoodInPlan {
+  category: RecipeIngredient['category']
+  quantity: number
+  unit: string
+  optionName: string
+  groupName: string
+  isEgg: boolean
+  isFromActiveMeal: boolean
+}
+
+/**
+ * Normalizes food string by stripping accents, punctuation and multiple spaces.
+ */
+export function normalizeFoodSearchTerm(term: string): string {
+  return (term || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * Robust comparison between two food names (handles couscous/cous cous, plurals, adjectives).
+ */
+export function matchFoodNames(queryName: string, targetName: string): boolean {
+  const q = normalizeFoodSearchTerm(queryName)
+  const t = normalizeFoodSearchTerm(targetName)
+  if (!q || !t) return false
+  if (q === t) return true
+
+  // Handle couscous / cous cous / cuscus variants
+  const qCous = q.replace(/\s+/g, '')
+  const tCous = t.replace(/\s+/g, '')
+  if (
+    (qCous.includes('couscous') || qCous.includes('cuscus')) &&
+    (tCous.includes('couscous') || tCous.includes('cuscus'))
+  ) {
+    return true
+  }
+
+  // Exact substring match
+  if (t.includes(q) || q.includes(t)) return true
+
+  // Stop-word filtered token comparison
+  const stopWords = new Set(['di', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra', 'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'uno', 'una', 'al', 'allo', 'alla', 'ai', 'agli', 'alle', 'e', 'o'])
+  const qTokens = q.split(' ').filter(w => w.length > 2 && !stopWords.has(w))
+  const tTokens = t.split(' ').filter(w => w.length > 2 && !stopWords.has(w))
+
+  for (const qt of qTokens) {
+    for (const tt of tTokens) {
+      if (qt === tt) return true
+      // Singular/plural check (e.g. patata/patate, zucchina/zucchine, uovo/uova)
+      if (qt.length >= 4 && tt.length >= 4) {
+        if (qt.slice(0, -1) === tt.slice(0, -1)) return true
+      }
+    }
+  }
+
+  return false
+}
+
+/**
+ * Directly looks up a food item in the user's active MealPlan (or entire NutritionProfile).
+ * Accurately extracts the category and exact maximum grammage defined by the nutritionist.
+ */
+export function findFoodInNutritionPlan(
+  ingredientName: string,
+  mealPlan?: MealPlan,
+  profile?: NutritionProfile | null
+): MatchedFoodInPlan | null {
+  if (!ingredientName || !ingredientName.trim()) return null
+  const cleanQuery = ingredientName.trim()
+
+  // 1. Search in the active mealPlan first (highest priority)
+  if (mealPlan && Array.isArray(mealPlan.groups)) {
+    for (const group of mealPlan.groups) {
+      if (!group.options || group.options.length === 0) {
+        if (matchFoodNames(cleanQuery, group.name)) {
+          const qty = group.maxQuantity || group.minQuantity || 100
+          return {
+            category: group.category,
+            quantity: qty,
+            unit: group.unit || 'g',
+            optionName: group.name,
+            groupName: group.name,
+            isEgg: false,
+            isFromActiveMeal: true,
+          }
+        }
+        continue
+      }
+
+      for (const opt of group.options) {
+        if (matchFoodNames(cleanQuery, opt.name)) {
+          const isFoodEgg = isEgg(opt.name) || isEgg(cleanQuery) || opt.unit === 'pieces' || opt.name.toLowerCase().includes('uov')
+          return {
+            category: group.category,
+            quantity: opt.quantity,
+            unit: opt.unit || (isFoodEgg ? 'uova' : 'g'),
+            optionName: opt.name,
+            groupName: group.name,
+            isEgg: isFoodEgg,
+            isFromActiveMeal: true,
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Search across ALL meals in profile if not found in active mealPlan
+  if (profile && Array.isArray(profile.meals)) {
+    for (const otherMeal of profile.meals) {
+      if (otherMeal === mealPlan) continue
+      for (const group of otherMeal.groups || []) {
+        for (const opt of group.options || []) {
+          if (matchFoodNames(cleanQuery, opt.name)) {
+            const isFoodEgg = isEgg(opt.name) || isEgg(cleanQuery) || opt.unit === 'pieces' || opt.name.toLowerCase().includes('uov')
+            
+            let targetQty = opt.quantity
+            let targetUnit = opt.unit || (isFoodEgg ? 'uova' : 'g')
+            
+            if (mealPlan && Array.isArray(mealPlan.groups)) {
+              const activeGroup = mealPlan.groups.find(g => g.category === group.category)
+              if (activeGroup) {
+                const exactActiveOpt = activeGroup.options?.find(o => matchFoodNames(cleanQuery, o.name))
+                if (exactActiveOpt) {
+                  targetQty = exactActiveOpt.quantity
+                  targetUnit = exactActiveOpt.unit || targetUnit
+                } else if (activeGroup.maxQuantity) {
+                  targetQty = activeGroup.maxQuantity
+                } else if (activeGroup.minQuantity) {
+                  targetQty = activeGroup.minQuantity
+                }
+              }
+            }
+
+            return {
+              category: group.category,
+              quantity: targetQty,
+              unit: targetUnit,
+              optionName: opt.name,
+              groupName: group.name,
+              isEgg: isFoodEgg,
+              isFromActiveMeal: false,
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return null
+}
+
 export function findMatchingFoodOption(
   mealPlan: MealPlan | undefined,
   ingredientName: string,
   category: RecipeIngredient['category']
 ): MatchedFoodResult | null {
   if (!mealPlan || !mealPlan.groups) return null
+
+  // Check direct nutrition plan lookup first
+  const planMatch = findFoodInNutritionPlan(ingredientName, mealPlan)
+  if (planMatch) {
+    return {
+      quantity: planMatch.quantity,
+      unit: planMatch.unit,
+      optionName: planMatch.optionName,
+      isEgg: planMatch.isEgg,
+    }
+  }
 
   const ingLower = ingredientName.toLowerCase().trim()
   const relevantGroups = mealPlan.groups.filter(g => {
@@ -568,7 +737,8 @@ export function adaptIngredientsDeterministically(
 
   // 1. Classify all ingredients
   const classified = ingredients.map(ing => {
-    let cat = ing.category || classifyIngredientCategory(ing.name)
+    const planMatch = findFoodInNutritionPlan(ing.name, mealPlan)
+    let cat = ing.category || planMatch?.category || classifyIngredientCategory(ing.name)
     // Se è formaggio, uova, legumi, carne, pesce -> consideriamo sempre proteins per il bilanciamento pasto
     if (isCheeseProtein(ing.name) || isLegume(ing.name) || isEgg(ing.name) || isFish(ing.name) || isMeat(ing.name)) {
       cat = 'proteins'
@@ -1083,6 +1253,7 @@ export interface GroupCapacityInfo {
   currentTotalGrams: number
   percentUsed: number
   isExceeded: boolean
+  isAlternativeVariant?: boolean
   hintText: string
   items: GroupCapacityItem[]
   getItemCapacity: (name: string) => GroupCapacityItem | undefined
@@ -1091,7 +1262,11 @@ export interface GroupCapacityInfo {
 export function getGroupAllowanceAndUsage(
   mealPlan: MealPlan | undefined,
   category: RecipeIngredient['category'],
-  ingredients: { name: string; adaptedQuantity?: string; category?: RecipeIngredient['category'] }[]
+  ingredients: { name: string; adaptedQuantity?: string; category?: RecipeIngredient['category'] }[],
+  options?: {
+    isVariantOrAlternative?: boolean
+    suppressExceededBanner?: boolean
+  }
 ): GroupCapacityInfo {
   const CATEGORY_NAMES: Record<string, { label: string; icon: string }> = {
     carbs: { label: 'Carboidrati', icon: '🥔' },
@@ -1111,12 +1286,22 @@ export function getGroupAllowanceAndUsage(
 
   // Filter current ingredients belonging to this category
   const groupItems = ingredients.filter(ing => {
-    const c = ing.category || classifyIngredientCategory(ing.name)
+    const planMatch = findFoodInNutritionPlan(ing.name, mealPlan)
+    const c = ing.category || planMatch?.category || classifyIngredientCategory(ing.name)
     if (category === 'proteins') {
       return c === 'proteins' || isCheeseProtein(ing.name) || isLegume(ing.name) || isEgg(ing.name) || isFish(ing.name) || isMeat(ing.name)
     }
     return c === category
   })
+
+  // Check if this meal is a designated alternative (e.g. Cena Post Workout)
+  const isAlternativeVariant = Boolean(
+    mealPlan?.isVariant ||
+    options?.isVariantOrAlternative ||
+    options?.suppressExceededBanner ||
+    mealPlan?.label?.toLowerCase().includes('post workout') ||
+    mealPlan?.label?.toLowerCase().includes('riposo')
+  )
 
   // Group default max allowance (fallback)
   let maxAllowanceGrams = relevantGroup?.maxQuantity || relevantGroup?.minQuantity || 100
@@ -1188,7 +1373,8 @@ export function getGroupAllowanceAndUsage(
   // 2. Sum of group percentage
   const totalExactPercent = analyzedItems.reduce((acc, it) => acc + it.exactPercent, 0)
   const percentUsed = Math.round(totalExactPercent)
-  const isExceeded = percentUsed > 105
+  // Non trattare mai le varianti/alternative (es. Cena Post Workout) come errore di superamento!
+  const isExceeded = !isAlternativeVariant && percentUsed > 105
 
   // 3. For each item, compute max allowed quantity accounting for the other items in this group
   const items: GroupCapacityItem[] = analyzedItems.map(it => {
@@ -1204,10 +1390,12 @@ export function getGroupAllowanceAndUsage(
 
     const baselineLabel = `${it.baselineQuantity}${it.baselineUnit === 'g' ? 'g' : ' ' + it.baselineUnit}`
     const maxAllowedLabel = `${maxAllowed}${it.unit === 'g' ? 'g' : ' ' + (maxAllowed === 1 ? 'uovo' : 'uova')}`
-    const itemIsExceeded = isExceeded && it.numericQuantity > maxAllowed
+    const itemIsExceeded = !isAlternativeVariant && isExceeded && it.numericQuantity > maxAllowed
 
     let statusText = ''
-    if (otherItemsPercent > 0) {
+    if (isAlternativeVariant) {
+      statusText = `Alternativa ${mealPlan?.label || 'post workout'}: max ${baselineLabel}`
+    } else if (otherItemsPercent > 0) {
       if (remainingQuotaPercent === 0) {
         statusText = `Quota coperta al 100% dagli altri alimenti`
       } else {
@@ -1240,7 +1428,9 @@ export function getGroupAllowanceAndUsage(
 
   // 4. Group Hint Text
   let hintText = `Limite piano: ${maxAllowanceGrams}g`
-  if (items.length === 1) {
+  if (isAlternativeVariant) {
+    hintText = `💪 Calibrato per ${mealPlan?.label || 'alternativa pasto'} (${percentUsed}% quota)`
+  } else if (items.length === 1) {
     const single = items[0]
     hintText = `${single.name}: ${single.rawQuantity} su max ${single.baselineLabel} (${single.percentUsed}% quota)`
   } else if (items.length > 1) {
@@ -1261,6 +1451,7 @@ export function getGroupAllowanceAndUsage(
     currentTotalGrams,
     percentUsed,
     isExceeded,
+    isAlternativeVariant,
     hintText,
     items,
     getItemCapacity: (name: string) =>

@@ -8,6 +8,7 @@ import type {
   NutritionalValues,
   TargetMealType,
 } from '@/types'
+import { adaptIngredientsDeterministically } from './deterministicRecipeAdapter'
 
 /**
  * Returns all profile meals matching a given targetMeal.
@@ -113,63 +114,26 @@ export function estimateVariantMacros(
 
 /**
  * Scales a list of ingredients according to a specific profile meal (e.g. Lunch vs Dinner vs Post Workout).
+ * Uses clinical deterministic adapter so that specific meal targets
+ * (e.g. 250g salmon for Cena Post Workout, 50g feta, 70g couscous) are accurately honored
+ * instead of arbitrary averages.
  */
 export function scaleIngredientsForMeal(
   baseIngredients: RecipeIngredient[],
   targetMealPlan: MealPlan,
   referenceMealPlan?: MealPlan
 ): RecipeIngredient[] {
-  // Extract target quantities per category from meal plan
-  const targetCategoryGrams: Record<string, number> = {}
-
-  for (const group of targetMealPlan.groups || []) {
-    // Average or primary option quantity in this group
-    const avgQty =
-      group.options && group.options.length > 0
-        ? group.options.reduce((sum, o) => sum + (o.quantity || 100), 0) / group.options.length
-        : group.minQuantity || 100
-
-    targetCategoryGrams[group.category] = avgQty
-  }
-
-  // Count items per category to split multi-ingredient categories equitably
-  const categoryCounts: Record<string, number> = {}
-  for (const ing of baseIngredients) {
-    categoryCounts[ing.category] = (categoryCounts[ing.category] || 0) + 1
-  }
-
-  return baseIngredients.map(ing => {
-    const cat = ing.category
-    const targetTotal = targetCategoryGrams[cat]
-    const count = categoryCounts[cat] || 1
-
-    // If the meal plan specifies an amount for this category
-    if (targetTotal !== undefined && targetTotal > 0) {
-      let portionGrams: number
-
-      if (cat === 'vegetables') {
-        // Equal split for vegetables
-        portionGrams = Math.round(targetTotal / count)
-      } else if (cat === 'proteins' || cat === 'carbs') {
-        if (count > 1) {
-          // Proportionate split among items
-          portionGrams = Math.round((targetTotal / count) / 5) * 5
-        } else {
-          portionGrams = Math.round(targetTotal)
-        }
-      } else {
-        portionGrams = Math.round(targetTotal / count)
-      }
-
-      return {
-        ...ing,
-        adaptedQuantity: `${portionGrams}g`,
-      }
-    }
-
-    // Default fallback: keep existing adaptedQuantity or originalQuantity
-    return { ...ing }
-  })
+  return adaptIngredientsDeterministically(
+    baseIngredients.map(ing => ({
+      name: ing.name,
+      category: ing.category,
+      originalQuantity: ing.originalQuantity || ing.adaptedQuantity,
+      unit: ing.unit,
+      component: ing.component,
+      isOptional: ing.isOptional,
+    })),
+    targetMealPlan
+  )
 }
 
 /**

@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.1.1'
+export const APP_VERSION = '2.1.2'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.1.2',
+    date: '27 Ottobre 2026',
+    title: 'Ricerca Cibo nel Piano Nutrizionale, Supporto Post-Workout & Chiavi AI Personali (Gemini BYOK)',
+    isLatest: true,
+    summary:
+      'Versione 2.1.2: ricerca automatica e istantanea di ogni pietanza direttamente all\'interno del tuo piano nutrizionale personale con estrazione fedele di categoria e grammatura massima esatta (es. cous cous cerca nel piano e propone 70g max anziché 100g); supporto nativo per alternative pasto e Cena Post Workout con quote proteiche aumentate rispettate fedelmente e soppressione dei banner di superamento fabbisogno per le varianti pianificate; integrazione del modello Google Gemini personale con API Key (gratuita per chiunque con account Google tramite Google AI Studio a 15 req/min, 0€ di costi centralizzati); e nuovo sistema completo di esportazione/ripristino backup JSON anti-perdita dati e guida architetturale cloud per Google Login.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Ricerca Pietanze Direttamente nel Piano Nutrizionale (Cous Cous 70g)',
+        description:
+          'Quando aggiungi una pietanza ad-hoc (digitandola o dai suggerimenti), l\'algoritmo cerca direttamente all\'interno delle opzioni del tuo piano nutrizionale personale. Riconosce la categoria esatta e imposta come limite la grammatura massima prevista (es. se scrivi "couscous", trova "Cous cous" nei Carboidrati a 70g e propone 70g e non 100g).',
+        howToUse: 'Digita il nome di qualsiasi alimento presente nella tua dieta: l\'app compilerà all\'istante categoria e dosaggio esatto.',
+      },
+      {
+        type: 'fix',
+        title: 'Cena Post Workout & Alternative Pasto Senza Falsi Allarmi',
+        description:
+          'Se nel piano nutrizionale hai configurato una variante come "Cena Post Workout" con quote proteiche più elevate (es. 250g di salmone), le quantità vengono mantenute al 100% senza essere appiattite a medie arbitrarie. Inoltre, i banner di allarme per superamento fabbisogno vengono disattivati per le alternative pasto, mostrando invece il badge verde dedicato.',
+        howToUse: 'In fase di aggiunta ricetta o visualizzazione dettaglio, seleziona la variante "Cena Post Workout" per vedere le grammature calibrate.',
+      },
+      {
+        type: 'feat',
+        title: 'Motore AI Personale: Google Gemini Gratuito (BYOK) & Deterministico Offline',
+        description:
+          'Per evitare costi centralizzati per lo sviluppatore, ogni utente può ora scegliere il proprio motore AI preferito in Impostazioni > Servizi & API: Algoritmo Deterministico Locale (100% offline e gratuito a 0€), Google Gemini (con chiave gratuita personale da Google AI Studio fino a 15 req/min) oppure OpenAI.',
+        howToUse: 'Vai in Impostazioni > Servizi & API, seleziona Google Gemini, inserisci la tua chiave gratuita e tocca "Verifica Chiave".',
+      },
+      {
+        type: 'feat',
+        title: 'Anti-Perdita Dati: Esportazione e Ripristino Backup JSON & Guida Google Cloud',
+        description:
+          'Aggiunta in Impostazioni > Privacy & Dati la possibilità di scaricare con un tocco un backup completo in formato JSON di tutte le ricette, piani, liste spesa e impostazioni, e di ripristinarlo su qualsiasi nuovo telefono o computer per non perdere mai nulla.',
+        howToUse: 'Tocca "Esporta Backup Completo" per scaricare il file salvavita delle tue ricette sul tuo telefono o PC.',
+      },
+    ],
+  },
   {
     version: '2.1.1',
     date: '27 Ottobre 2026',
     title: 'Riconoscimento Cous Cous, Modifica Categoria/Quantità Ad-Hoc & Icone Cibo Dedicate',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.1.1: potenziato il riconoscimento dei carboidrati includendo cous cous, couscous, cuscus, farro, quinoa, bulgur e cereali; introdotta nella creazione ricette ad-hoc la possibilità di modificare sia la categoria (tramite selettore dropdown immediato) sia la quantità di ciascun ingrediente con pulsanti +/-; integrato il rilevamento automatico intelligente dell\'icona del piatto (es. Salmone → 🐟, Pollo → 🍗, Bistecca → 🥩, Pasta → 🍝) al posto delle sole icone del pasto; e aggiunta la possibilità di personalizzare e cambiare l\'icona sia in fase di creazione sia per tutte le ricette precedenti salvate nel ricettario.',
     changes: [

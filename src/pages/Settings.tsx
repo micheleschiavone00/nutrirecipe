@@ -9,6 +9,13 @@ import { APP_VERSION } from '@/data/changelog'
 import { reAdaptAllRecipes, type ReAdaptProgress } from '@/lib/recipeEnricher'
 import { useTheme } from '@/lib/theme'
 import { formatDate } from '@/lib/utils'
+import {
+  getUserAiConfig,
+  saveUserAiConfig,
+  testGeminiConnection,
+  type AiProvider,
+} from '@/lib/userAiSettings'
+import { exportFullBackup, importFullBackup } from '@/lib/backup'
 
 type SettingsSection =
   | 'main'
@@ -35,6 +42,17 @@ export default function SettingsPage() {
   const [voucherEnabled, setVoucherEnabled] = useState(false)
   const [voucherVal, setVoucherVal] = useState('8.00')
 
+  // AI Configuration State (BYOK)
+  const [aiConfig, setAiConfig] = useState(getUserAiConfig())
+  const [testingGemini, setTestingGemini] = useState(false)
+  const [geminiTestStatus, setGeminiTestStatus] = useState<{ success?: boolean; message?: string } | null>(null)
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+  const [showOpenAiKey, setShowOpenAiKey] = useState(false)
+
+  // Backup & Restore State
+  const [backupStatus, setBackupStatus] = useState<string>('')
+  const [isImporting, setIsImporting] = useState(false)
+
   const activeProfile = useLiveQuery(() => getActiveProfile(), [])
 
   useEffect(() => {
@@ -44,6 +62,69 @@ export default function SettingsPage() {
       setVoucherVal(String(s.mealVoucherValue ?? 8.00))
     })
   }, [])
+
+  const handleUpdateAiProvider = (provider: AiProvider) => {
+    const updated = saveUserAiConfig({ provider })
+    setAiConfig(updated)
+  }
+
+  const handleUpdateGeminiKey = (key: string) => {
+    const updated = saveUserAiConfig({ geminiApiKey: key.trim() })
+    setAiConfig(updated)
+    setGeminiTestStatus(null)
+  }
+
+  const handleUpdateGeminiModel = (model: string) => {
+    const updated = saveUserAiConfig({ geminiModel: model })
+    setAiConfig(updated)
+  }
+
+  const handleUpdateOpenAiKey = (key: string) => {
+    const updated = saveUserAiConfig({ openaiApiKey: key.trim() })
+    setAiConfig(updated)
+  }
+
+  const handleUpdateOpenAiModel = (model: string) => {
+    const updated = saveUserAiConfig({ openaiModel: model })
+    setAiConfig(updated)
+  }
+
+  const handleTestGemini = async () => {
+    if (!aiConfig.geminiApiKey) {
+      setGeminiTestStatus({ success: false, message: 'Inserisci prima la tua chiave API Gemini' })
+      return
+    }
+    setTestingGemini(true)
+    setGeminiTestStatus(null)
+    const res = await testGeminiConnection(aiConfig.geminiApiKey, aiConfig.geminiModel)
+    setTestingGemini(false)
+    setGeminiTestStatus(res)
+  }
+
+  const handleExportBackup = async () => {
+    try {
+      await exportFullBackup()
+      setBackupStatus('✅ Backup scaricato con successo!')
+      setTimeout(() => setBackupStatus(''), 5000)
+    } catch {
+      setBackupStatus('❌ Errore durante il salvataggio del backup')
+    }
+  }
+
+  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsImporting(true)
+    setBackupStatus('')
+    const res = await importFullBackup(file)
+    setIsImporting(false)
+    if (res.success) {
+      setBackupStatus(`✅ ${res.message}`)
+      setTimeout(() => window.location.reload(), 1500)
+    } else {
+      setBackupStatus(`❌ ${res.message}`)
+    }
+  }
 
   const handleToggleVouchers = async (checked: boolean) => {
     setVoucherEnabled(checked)
@@ -789,6 +870,102 @@ export default function SettingsPage() {
            ═════════════════════════════════════════════════════════════════════ */}
         {currentSection === 'privacy' && (
           <div className="space-y-4 animate-fade-in">
+            {/* 1. Salvataggio & Backup Anti-Perdita Dati */}
+            <div className="card p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xl">
+                  💾
+                </div>
+                <div>
+                  <h2 className="font-extrabold text-base text-gray-900 dark:text-gray-100">
+                    Backup &amp; Anti-Perdita Dati
+                  </h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Esporta e ripristina le tue ricette e il piano su qualsiasi dispositivo
+                  </p>
+                </div>
+              </div>
+
+              {backupStatus && (
+                <div className={`p-3 rounded-xl text-xs font-bold border ${
+                  backupStatus.startsWith('✅')
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                    : 'bg-red-50 dark:bg-red-950/60 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
+                }`}>
+                  {backupStatus}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={handleExportBackup}
+                  className="btn-primary py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-2"
+                >
+                  <span>📥</span>
+                  <span>Esporta Backup Completo (JSON)</span>
+                </button>
+
+                <label className="btn-secondary py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+                  <span>📤</span>
+                  <span>{isImporting ? 'Ripristino in corso…' : 'Ripristina da File Backup'}</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportBackup}
+                    className="hidden"
+                    disabled={isImporting}
+                  />
+                </label>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-xl border border-gray-100 dark:border-gray-800 text-[11px] text-gray-600 dark:text-gray-400 space-y-1">
+                <p className="font-bold text-gray-900 dark:text-gray-200">
+                  🛡️ Protezione garantita:
+                </p>
+                <p>
+                  Il file JSON scaricato contiene tutti i tuoi dati: ricette salvate, piano nutrizionale completo, meal planner settimanale, lista spesa e dispensa.
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Login con Google & Cloud Sync (Guida e Architettura) */}
+            <div className="card p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">
+                  ☁️
+                </div>
+                <div>
+                  <h2 className="font-extrabold text-base text-gray-900 dark:text-gray-100">
+                    Sincronizzazione Cloud &amp; Google
+                  </h2>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">
+                    Opzioni Cloud per non perdere mai i dati
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p>
+                  Attualmente NutriRecipe funziona in <strong>modalità 100% locale (offline-first)</strong> tramite IndexedDB, garantendo la massima velocità e totale privacy senza intermediari.
+                </p>
+                <div className="bg-blue-50/70 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-200/60 dark:border-blue-900/50 space-y-1.5">
+                  <p className="font-bold text-blue-950 dark:text-blue-200">
+                    🔑 Due modalità possibili per il Login Google:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 text-[11.5px]">
+                    <li>
+                      <strong>Google Drive AppData (Consigliato, 0€ Server):</strong> L&apos;app si collega al tuo account Google e sincronizza il database nella cartella invisibile del tuo Google Drive personale, senza bisogno di server remoti a pagamento.
+                    </li>
+                    <li>
+                      <strong>Firebase / Supabase Auth con Google:</strong> Accesso istantaneo con Google e sincronizzazione su database Firestore / Postgres con backup multi-dispositivo automatico.
+                    </li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Architettura e Privacy */}
             <div className="card p-5 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl">
@@ -820,15 +997,6 @@ export default function SettingsPage() {
                   </p>
                   <p>
                     Non esistono server proprietari di tracciamento o database remoti. Nessuno all&apos;infuori di te ha accesso ai tuoi dati sanitari o alimentari.
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-800/60 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-1.5">
-                  <p className="font-bold text-gray-900 dark:text-gray-100 text-xs">
-                    🤖 Utilizzo dell&apos;AI:
-                  </p>
-                  <p>
-                    Quando importi un video social o un testo, le chiamate a OpenAI GPT-4o avvengono direttamente dal tuo browser senza salvare la cronologia su server intermedi.
                   </p>
                 </div>
               </div>
@@ -941,53 +1109,249 @@ export default function SettingsPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════════════
-            10. SCHERMATA: SERVIZI & API
+            10. SCHERMATA: SERVIZI & API (GESTIONE AI PERSONALE / BYOK)
            ═════════════════════════════════════════════════════════════════════ */}
         {currentSection === 'api' && (
           <div className="space-y-4 animate-fade-in">
+            {/* 1. Centro di Controllo AI Personale (Zero Costi per lo Sviluppatore) */}
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🔑</span>
+                  <span className="text-xl">🤖</span>
                   <h2 className="font-extrabold text-base text-gray-900 dark:text-gray-100">
-                    Servizi &amp; API Connesse
+                    Motore AI &amp; Chiavi Personali
                   </h2>
                 </div>
                 <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-extrabold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
-                  Pronte
+                  BYOK
                 </span>
               </div>
 
-              <div className="space-y-2.5 pt-1">
+              <div className="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/60 p-3 rounded-xl border border-gray-100 dark:border-gray-800 space-y-1">
+                <p className="font-bold text-gray-900 dark:text-gray-200">
+                  💡 Autonomia &amp; Zero Costi Centralizzati:
+                </p>
+                <p>
+                  Per non sostenere spese di API per tutti gli utenti dell&apos;app, puoi usare l&apos;algoritmo deterministico integrato a 0€, oppure collegare il tuo account <strong>Google Gemini (gratuito)</strong> o OpenAI.
+                </p>
+              </div>
+
+              {/* Provider Selection */}
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide block">
+                  Seleziona Provider AI
+                </label>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {/* Option 1: Deterministico Locale */}
+                  <div
+                    onClick={() => handleUpdateAiProvider('deterministic')}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      aiConfig.provider === 'deterministic'
+                        ? 'bg-primary-50/70 dark:bg-primary-950/40 border-primary-500 ring-1 ring-primary-500'
+                        : 'bg-white dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">⚡</span>
+                        <span className="font-bold text-xs text-gray-900 dark:text-gray-100">
+                          Algoritmo Deterministico Locale (Consigliato)
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                        100% Gratis &amp; Offline
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 pl-6">
+                      Elaborazione istantanea sul dispositivo, 0€ di costi, zero dipendenza da server esterni o chiavi API.
+                    </p>
+                  </div>
+
+                  {/* Option 2: Google Gemini (Account Personale) */}
+                  <div
+                    onClick={() => handleUpdateAiProvider('gemini')}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      aiConfig.provider === 'gemini'
+                        ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 ring-1 ring-blue-500'
+                        : 'bg-white dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">✨</span>
+                        <span className="font-bold text-xs text-gray-900 dark:text-gray-100">
+                          Google Gemini (Chiave Personale Gratuita)
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-extrabold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                        15 req/min Gratis
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 pl-6">
+                      Utilizza il tuo account Google tramite Google AI Studio. 0€ di costi per lo sviluppatore.
+                    </p>
+                  </div>
+
+                  {/* Option 3: OpenAI ChatGPT */}
+                  <div
+                    onClick={() => handleUpdateAiProvider('openai')}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      aiConfig.provider === 'openai'
+                        ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 ring-1 ring-emerald-500'
+                        : 'bg-white dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🤖</span>
+                        <span className="font-bold text-xs text-gray-900 dark:text-gray-100">
+                          OpenAI ChatGPT (GPT-4o)
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                        Chiave Utente
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 pl-6">
+                      Inserisci la tua chiave API personale OpenAI per consumare il tuo credito.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gemini Configuration Panel */}
+              {aiConfig.provider === 'gemini' && (
+                <div className="p-3.5 bg-blue-50/50 dark:bg-blue-950/30 rounded-2xl border border-blue-200/80 dark:border-blue-800/60 space-y-3 animate-fade-in">
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide block mb-1">
+                      Chiave API Google Gemini personale
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showGeminiKey ? 'text' : 'password'}
+                        value={aiConfig.geminiApiKey}
+                        onChange={e => handleUpdateGeminiKey(e.target.value)}
+                        placeholder="AIzaSy..."
+                        className="w-full text-xs font-mono bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowGeminiKey(!showGeminiKey)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                      >
+                        {showGeminiKey ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Modello:</label>
+                      <select
+                        value={aiConfig.geminiModel}
+                        onChange={e => handleUpdateGeminiModel(e.target.value)}
+                        className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1 text-gray-800 dark:text-gray-200"
+                      >
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Gratuito &amp; Ultra-rapido)</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Massima precisione)</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleTestGemini}
+                      disabled={testingGemini || !aiConfig.geminiApiKey}
+                      className="text-xs font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-xs"
+                    >
+                      {testingGemini ? 'Verifica in corso…' : '⚡ Verifica Chiave'}
+                    </button>
+                  </div>
+
+                  {geminiTestStatus && (
+                    <div className={`p-2.5 rounded-xl text-xs font-bold border ${
+                      geminiTestStatus.success
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                        : 'bg-red-50 dark:bg-red-950/60 border-red-300 dark:border-red-800 text-red-800 dark:text-red-300'
+                    }`}>
+                      {geminiTestStatus.message}
+                    </div>
+                  )}
+
+                  <div className="bg-white/80 dark:bg-gray-900/60 p-3 rounded-xl border border-blue-200/60 dark:border-blue-900/40 text-[11px] text-gray-700 dark:text-gray-300 space-y-1">
+                    <p className="font-bold text-blue-900 dark:text-blue-300">
+                      🚀 Come ottenere la chiave Gemini 100% GRATIS (nessuna carta richiesta):
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 pl-1">
+                      <li>Apri <strong>aistudio.google.com</strong> con il tuo account Google normale.</li>
+                      <li>Fai clic sul pulsante azzurro <strong>"Get API key"</strong> in alto a sinistra.</li>
+                      <li>Clicca su <strong>"Create API key"</strong> e copiala.</li>
+                      <li>Incolla la chiave nella casella qui sopra: Google ti riserva <strong>15 richieste al minuto gratuite per sempre</strong>!</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* OpenAI Configuration Panel */}
+              {aiConfig.provider === 'openai' && (
+                <div className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 space-y-3 animate-fade-in">
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide block mb-1">
+                      Chiave API OpenAI personale
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showOpenAiKey ? 'text' : 'password'}
+                        value={aiConfig.openaiApiKey}
+                        onChange={e => handleUpdateOpenAiKey(e.target.value)}
+                        placeholder="sk-..."
+                        className="w-full text-xs font-mono bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl px-3 py-2 pr-10 focus:ring-2 focus:ring-emerald-500 text-gray-900 dark:text-gray-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOpenAiKey(!showOpenAiKey)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                      >
+                        {showOpenAiKey ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Modello:</label>
+                    <select
+                      value={aiConfig.openaiModel}
+                      onChange={e => handleUpdateOpenAiModel(e.target.value)}
+                      className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1 text-gray-800 dark:text-gray-200"
+                    >
+                      <option value="gpt-4o">GPT-4o (Massima qualità)</option>
+                      <option value="gpt-4o-mini">GPT-4o Mini (Economico)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Servizi Connessi (RapidAPI & Server Status) */}
+            <div className="card p-5 space-y-3">
+              <h3 className="font-extrabold text-sm text-gray-900 dark:text-gray-100">
+                Servizi Accessori
+              </h3>
+
+              <div className="space-y-2 pt-1">
                 {/* RapidAPI */}
-                <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">📸</span>
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">📸</span>
                     <div>
-                      <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">
+                      <p className="text-xs font-bold text-gray-900 dark:text-gray-100">
                         RapidAPI Social Scraper
                       </p>
                       <p className="text-[10px] text-gray-400">Instagram, TikTok &amp; YouTube</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                    {hasRapidAPI ? 'Attiva ✓' : 'Disattivata'}
-                  </span>
-                </div>
-
-                {/* OpenAI */}
-                <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🤖</span>
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100">
-                        OpenAI (GPT-4o)
-                      </p>
-                      <p className="text-[10px] text-gray-400">Analisi nutrizionale &amp; ricette</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                    {hasOpenAI ? 'Attiva ✓' : 'Disattivata'}
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                    {hasRapidAPI ? 'Attivo ✓' : 'Disattivato'}
                   </span>
                 </div>
               </div>

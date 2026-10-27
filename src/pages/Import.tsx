@@ -17,6 +17,7 @@ import {
   getGroupAllowanceAndUsage,
   getMealSpecificIngredientSuggestions,
   parseFoodQuantityAndUnit,
+  findFoodInNutritionPlan,
   isEgg,
   type GroupCapacityInfo,
 } from '@/lib/deterministicRecipeAdapter'
@@ -77,6 +78,7 @@ export default function ImportPage() {
   const [newIngredientInput, setNewIngredientInput] = useState('')
   const [adHocNotes, setAdHocNotes] = useState('')
   const [isSavingAdHoc, setIsSavingAdHoc] = useState(false)
+  const [selectedMealPlanId, setSelectedMealPlanId] = useState<string | null>(null)
 
   // ── Social Import State ────────────────────────────────────────────────────
   const [url, setUrl] = useState('')
@@ -98,12 +100,30 @@ export default function ImportPage() {
     getActiveProfile().then(p => p && setProfile(p))
   }, [location])
 
-  // Active Meal Plan reference based on targetMeal
-  const activeMealPlan = useMemo(() => {
-    return profile?.meals.find(
-      m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
-    ) || profile?.meals[0]
+  // Applicable meals in profile for the current targetMeal (includes variants like "Cena Post Workout")
+  const applicableMeals = useMemo(() => {
+    if (!profile || !profile.meals) return []
+    if (targetMeal === 'lunch_dinner') {
+      return profile.meals.filter(m => m.mealType === 'lunch' || m.mealType === 'dinner')
+    }
+    return profile.meals.filter(m => m.mealType === targetMeal)
   }, [profile, targetMeal])
+
+  // Active Meal Plan reference based on targetMeal or user-selected specific alternative
+  const activeMealPlan = useMemo(() => {
+    if (selectedMealPlanId) {
+      const found = applicableMeals.find(m => m.id === selectedMealPlanId)
+      if (found) return found
+    }
+    return applicableMeals[0] || profile?.meals[0]
+  }, [applicableMeals, selectedMealPlanId, profile])
+
+  // Reset selected variant if targetMeal changes to an incompatible meal
+  useEffect(() => {
+    if (selectedMealPlanId && !applicableMeals.some(m => m.id === selectedMealPlanId)) {
+      setSelectedMealPlanId(null)
+    }
+  }, [targetMeal, applicableMeals, selectedMealPlanId])
 
   // Suggested ingredients based on meal type (colazione -> latte, yogurt, avena, cioccolato fondente 15g; pranzo -> salmone, patate 200g, ecc.)
   const suggestedIngredients = useMemo(() => {
@@ -162,18 +182,32 @@ export default function ImportPage() {
     ).filter(c => c !== 'other')
 
     return categoriesPresent.map(cat =>
-      getGroupAllowanceAndUsage(activeMealPlan, cat, adHocAdaptedPreview)
+      getGroupAllowanceAndUsage(activeMealPlan, cat, adHocAdaptedPreview, {
+        isVariantOrAlternative: Boolean(activeMealPlan.isVariant),
+        suppressExceededBanner: Boolean(activeMealPlan.isVariant),
+      })
     )
   }, [adHocAdaptedPreview, activeMealPlan])
 
-  // Add ingredient to ad-hoc list
-  const handleAddIngredient = (name: string, category?: RecipeIngredient['category']) => {
+  // Add ingredient to ad-hoc list (searches nutrition plan first!)
+  const handleAddIngredient = (name: string, category?: RecipeIngredient['category'], customQuantity?: string) => {
     const trimmed = name.trim()
     if (!trimmed) return
     if (adHocIngredients.some(i => i.name.toLowerCase() === trimmed.toLowerCase())) return
 
-    const cat = category || classifyIngredientCategory(trimmed)
-    setAdHocIngredients(prev => [...prev, { name: trimmed, category: cat }])
+    // 1. Cerca direttamente nel piano nutrizionale attivo dell'utente
+    const planMatch = findFoodInNutritionPlan(trimmed, activeMealPlan, profile)
+    const cat = category || planMatch?.category || classifyIngredientCategory(trimmed)
+    const initialQty = customQuantity || (planMatch ? `${planMatch.quantity}${planMatch.unit || 'g'}` : undefined)
+
+    setAdHocIngredients(prev => [
+      ...prev,
+      {
+        name: trimmed,
+        category: cat,
+        customQuantity: initialQty,
+      }
+    ])
     setNewIngredientInput('')
   }
 
@@ -530,6 +564,39 @@ export default function ImportPage() {
                 ))}
               </div>
 
+              {/* Seleziona variante pasto se ci sono alternative nel piano (es. Cena Post Workout) */}
+              {applicableMeals.length > 1 && (
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-primary-700 dark:text-primary-300">
+                      Variante pasto specifica (fabbisogno dedicato):
+                    </span>
+                    <span className="text-[10px] text-gray-400">
+                      {activeMealPlan?.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {applicableMeals.map(m => {
+                      const isSelected = activeMealPlan?.id === m.id
+                      return (
+                        <button
+                          key={m.id || m.label}
+                          type="button"
+                          onClick={() => setSelectedMealPlanId(m.id || null)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all active:scale-95 ${
+                            isSelected
+                              ? 'bg-primary-600 text-white border-primary-600 shadow-xs'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary-400'
+                          }`}
+                        >
+                          {m.isVariant ? `💪 ${m.label}` : m.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Dish Type: Main vs Side Dish (Contorno) */}
               <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2">
                 <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Tipo:</span>
@@ -715,6 +782,8 @@ export default function ImportPage() {
                         className={`p-2 rounded-xl border text-xs flex items-center justify-between gap-2 ${
                           cap.isExceeded
                             ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200'
+                            : cap.isAlternativeVariant
+                            ? 'bg-primary-50/80 dark:bg-primary-950/40 border-primary-200/80 dark:border-primary-800/60 text-primary-900 dark:text-primary-200'
                             : 'bg-white dark:bg-gray-800 border-gray-200/70 dark:border-gray-700 text-gray-800 dark:text-gray-200'
                         }`}
                       >
@@ -727,6 +796,8 @@ export default function ImportPage() {
                           className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full flex-shrink-0 ${
                             cap.isExceeded
                               ? 'bg-amber-200 dark:bg-amber-900/80 text-amber-900 dark:text-amber-100'
+                              : cap.isAlternativeVariant
+                              ? 'bg-primary-200 dark:bg-primary-900/80 text-primary-950 dark:text-primary-100'
                               : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                           }`}
                         >

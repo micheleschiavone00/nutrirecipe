@@ -1,26 +1,38 @@
 import type { NutritionProfile, Recipe, MealType, TargetMealType, FoodGroup, RecipeIngredient, RecipeStep, RecipeMealVariant } from '@/types'
 import { CONFIG } from '@/config'
 import { getApplicableMealsForTarget, getRecipeVariants } from './recipeVariants'
+import { getUserAiConfig, callGeminiDirect } from './userAiSettings'
 
 async function chatCompletion(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   model = 'gpt-4o',
 ): Promise<string> {
+  const userConfig = getUserAiConfig()
+
+  // 1. If user configured personal Google Gemini API key: use direct client-side call
+  // (Zero server cost for developer, 100% private to user)
+  if (userConfig.provider === 'gemini' && userConfig.geminiApiKey) {
+    return callGeminiDirect(messages, userConfig.geminiApiKey, userConfig.geminiModel || 'gemini-1.5-flash')
+  }
+
+  // 2. Otherwise use OpenAI / serverless endpoint
   const apiBase = import.meta.env.VITE_API_BASE ?? ''
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
 
-  if (CONFIG.openAIApiKey) {
-    headers['x-openai-key'] = CONFIG.openAIApiKey
+  // Use user's personal OpenAI key if configured, otherwise server fallback
+  const userOpenAiKey = userConfig.openaiApiKey || CONFIG.openAIApiKey
+  if (userOpenAiKey) {
+    headers['x-openai-key'] = userOpenAiKey
   }
 
   const response = await fetch(`${apiBase}/api/ai`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
-      model,
+      model: userConfig.openaiModel || model,
       messages,
     }),
   })

@@ -16,6 +16,7 @@ import {
   parseQuantityInGrams,
   parseFoodQuantityAndUnit,
   isEgg,
+  normalizeFoodSearchTerm,
 } from '@/lib/deterministicRecipeAdapter'
 import type { Recipe, MealType, TargetMealType, RecipeIngredient, RecipeMealVariant } from '@/types'
 
@@ -101,9 +102,12 @@ export default function RecipeDetailPage() {
       const match = activeProfile.meals.find(
         m => m.id === activeVariant.id ||
              (m.variantName && activeVariant.label?.toLowerCase().includes(m.variantName.toLowerCase())) ||
-             (m.label && activeVariant.label?.toLowerCase().includes(m.label.toLowerCase()))
+             (m.label && activeVariant.label?.toLowerCase().includes(m.label.toLowerCase())) ||
+             (m.label && normalizeFoodSearchTerm(activeVariant.label).includes(normalizeFoodSearchTerm(m.label)))
       )
       if (match) return match
+      const fallbackVariant = activeProfile.meals.find(m => m.mealType === mealType && m.isVariant)
+      if (fallbackVariant) return fallbackVariant
     }
 
     return activeProfile.meals.find(m => m.mealType === mealType && !m.isVariant) ||
@@ -250,7 +254,10 @@ export default function RecipeDetailPage() {
             if (items.length === 0) return null
             const label = CATEGORY_LABELS[cat] || cat
             const icon = CATEGORY_ICONS[cat] || '🍴'
-            const groupCap = getGroupAllowanceAndUsage(matchingMealPlan, cat, displayItems)
+            const groupCap = getGroupAllowanceAndUsage(matchingMealPlan, cat, displayItems, {
+              isVariantOrAlternative: Boolean(activeVariant.isVariant || matchingMealPlan?.isVariant),
+              suppressExceededBanner: Boolean(activeVariant.isVariant || matchingMealPlan?.isVariant),
+            })
 
             return (
               <div key={cat} className="bg-white dark:bg-gray-800/70 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-2 shadow-2xs">
@@ -274,6 +281,11 @@ export default function RecipeDetailPage() {
                       Bilanciate 50/50
                     </span>
                   )}
+                  {groupCap.isAlternativeVariant && (
+                    <span className="text-[10px] font-semibold bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-full border border-primary-200 dark:border-primary-800">
+                      Alternativa {activeVariant.label.replace(/^[^\w\s]+/, '').trim()}
+                    </span>
+                  )}
                 </div>
 
                 {/* Group Capacity and Allowance Limit Info */}
@@ -281,6 +293,8 @@ export default function RecipeDetailPage() {
                   className={`px-2.5 py-1.5 rounded-xl text-[11px] flex items-center justify-between gap-1.5 border ${
                     groupCap.isExceeded
                       ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200'
+                      : groupCap.isAlternativeVariant
+                      ? 'bg-primary-50/80 dark:bg-primary-950/40 border-primary-200/80 dark:border-primary-800/60 text-primary-900 dark:text-primary-200'
                       : 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700/60 text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -291,6 +305,8 @@ export default function RecipeDetailPage() {
                     className={`font-extrabold text-[10px] px-1.5 py-0.5 rounded-md flex-shrink-0 ${
                       groupCap.isExceeded
                         ? 'bg-amber-200 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100'
+                        : groupCap.isAlternativeVariant
+                        ? 'bg-primary-200 dark:bg-primary-900/80 text-primary-950 dark:text-primary-100'
                         : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                     }`}
                   >
@@ -397,8 +413,8 @@ export default function RecipeDetailPage() {
                           )}
                         </div>
 
-                        {/* Exceeded warning banner if individual item exceeds max allowed with other items */}
-                        {isExceeded && itemCap && (
+                        {/* Exceeded warning banner if individual item exceeds max allowed with other items (suppressed on designed alternative meals) */}
+                        {isExceeded && !groupCap.isAlternativeVariant && itemCap && (
                           <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-900/60 flex items-center gap-1">
                             <span>⚠️</span>
                             <span>
