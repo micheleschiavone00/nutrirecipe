@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getActiveProfile } from '@/lib/db'
 import { generateId, MEAL_LABELS, MEAL_ICONS, getMonday, getWeekDays } from '@/lib/utils'
+import { detectRecipeIcon } from '@/lib/recipeIcons'
 import {
   FOOD_CATEGORY_INFO,
   DEFAULT_WEEKLY_RULES,
@@ -927,7 +928,7 @@ export default function CreateTemplateWizardPage() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <span className="text-2xl">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+                                <span className="text-2xl">{recipe.customIcon || detectRecipeIcon(recipe.title, recipe.adaptedIngredients, recipe.targetMeal)}</span>
                               )}
                             </div>
 

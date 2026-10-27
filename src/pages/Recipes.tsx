@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, cn } from '@/lib/utils'
 import { PageHeader, EmptyState, Badge } from '@/components/ui'
+import { detectRecipeIcon } from '@/lib/recipeIcons'
 import type { Recipe, TargetMealType } from '@/types'
 
 const FILTER_OPTIONS: { value: TargetMealType | 'all'; label: string }[] = [
@@ -127,7 +128,9 @@ function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }
         {recipe.thumbnailUrl ? (
           <img src={recipe.thumbnailUrl} alt={recipe.title} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-4xl">{MEAL_ICONS[recipe.targetMeal]}</span>
+          <span className="text-4xl">
+            {recipe.customIcon || detectRecipeIcon(recipe.title, recipe.adaptedIngredients, recipe.targetMeal)}
+          </span>
         )}
         {/* Source badge */}
         <div className="absolute top-2 left-2">

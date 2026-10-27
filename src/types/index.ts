@@ -108,6 +108,7 @@ export interface Recipe {
   sourceUrl?: string
   source: RecipeSource
   targetMeal: TargetMealType
+  customIcon?: string         // emoji specifica del piatto (es. "🐟", "🍗", "🥩", "🍝")
   dishType?: DishType         // 'complete' = piatto unico bilanciato, 'main' = primo/secondo, 'side' = contorno
   originalIngredients: RecipeIngredient[]
   adaptedIngredients: RecipeIngredient[]

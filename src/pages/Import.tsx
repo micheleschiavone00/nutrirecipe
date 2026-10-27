@@ -5,6 +5,8 @@ import { extractVideoMetadata, detectSource } from '@/lib/social'
 import { extractRecipeFromText, adaptRecipeToProfile } from '@/lib/ai'
 import { generateId, MEAL_LABELS, MEAL_ICONS } from '@/lib/utils'
 import { PageHeader, LoadingSpinner, Badge, NutriBar } from '@/components/ui'
+import { detectRecipeIcon } from '@/lib/recipeIcons'
+import RecipeIconPickerModal from '@/components/RecipeIconPickerModal'
 import {
   adaptIngredientsDeterministically,
   generateVariantsDeterministically,
@@ -14,6 +16,8 @@ import {
   calculateNutritionalValues,
   getGroupAllowanceAndUsage,
   getMealSpecificIngredientSuggestions,
+  parseFoodQuantityAndUnit,
+  isEgg,
   type GroupCapacityInfo,
 } from '@/lib/deterministicRecipeAdapter'
 import type {
@@ -65,8 +69,11 @@ export default function ImportPage() {
   const [adHocTitle, setAdHocTitle] = useState('')
   const [adHocDishType, setAdHocDishType] = useState<DishType>('main')
   const [adHocIngredients, setAdHocIngredients] = useState<
-    { name: string; category?: RecipeIngredient['category'] }[]
+    { name: string; category?: RecipeIngredient['category']; customQuantity?: string }[]
   >([])
+  const [adHocIcon, setAdHocIcon] = useState('🍽️')
+  const [isManualIcon, setIsManualIcon] = useState(false)
+  const [isIconModalOpen, setIsIconModalOpen] = useState(false)
   const [newIngredientInput, setNewIngredientInput] = useState('')
   const [adHocNotes, setAdHocNotes] = useState('')
   const [isSavingAdHoc, setIsSavingAdHoc] = useState(false)
@@ -107,15 +114,35 @@ export default function ImportPage() {
     )
   }, [targetMeal, profile, adHocTitle, adHocIngredients])
 
+  // Auto-detect recipe icon from title or ingredients unless manually set
+  useEffect(() => {
+    if (!isManualIcon) {
+      const detected = detectRecipeIcon(adHocTitle, adHocIngredients, targetMeal)
+      setAdHocIcon(detected)
+    }
+  }, [adHocTitle, adHocIngredients, targetMeal, isManualIcon])
+
   // Deterministic live adaptation preview for Ad-Hoc creation
   const adHocAdaptedPreview = useMemo(() => {
     if (adHocIngredients.length === 0) return []
 
-    return adaptIngredientsDeterministically(
+    const adapted = adaptIngredientsDeterministically(
       adHocIngredients.map(i => ({ name: i.name, category: i.category })),
       activeMealPlan,
       { sideDishMode: adHocDishType === 'side' }
     )
+
+    // Se l'utente ha modificato manualmente la dose dell'ingrediente, applicala come override
+    return adapted.map((item, idx) => {
+      const custom = adHocIngredients[idx]?.customQuantity
+      if (custom && custom.trim()) {
+        return {
+          ...item,
+          adaptedQuantity: custom.trim(),
+        }
+      }
+      return item
+    })
   }, [adHocIngredients, activeMealPlan, adHocDishType])
 
   // Live accurate nutritional values calculation using centralized deterministic logic
@@ -154,6 +181,41 @@ export default function ImportPage() {
     setAdHocIngredients(prev => prev.filter((_, i) => i !== idx))
   }
 
+  // Modifica rapida della categoria di un ingrediente (es. da "other" a "carbs" per il cous cous)
+  const handleIngredientCategoryChange = (idx: number, newCat: RecipeIngredient['category']) => {
+    setAdHocIngredients(prev =>
+      prev.map((ing, i) => (i === idx ? { ...ing, category: newCat } : ing))
+    )
+  }
+
+  // Modifica manuale del testo della quantità
+  const handleIngredientQtyChange = (idx: number, newQty: string) => {
+    setAdHocIngredients(prev =>
+      prev.map((ing, i) => (i === idx ? { ...ing, customQuantity: newQty } : ing))
+    )
+  }
+
+  // Regolazione rapida dose con bottoni +/-
+  const handleIngredientStepQty = (idx: number, delta: number) => {
+    setAdHocIngredients(prev =>
+      prev.map((ing, i) => {
+        if (i !== idx) return ing
+        const currentQtyStr = ing.customQuantity || adHocAdaptedPreview[idx]?.adaptedQuantity || '100g'
+        const parsed = parseFoodQuantityAndUnit(ing.name, currentQtyStr)
+        const isEggFood = isEgg(ing.name) || ing.name.toLowerCase().includes('uov')
+
+        if (isEggFood && (parsed.unit.includes('uov') || !currentQtyStr.includes('g'))) {
+          const stepDelta = delta > 0 ? 1 : -1
+          const nextEggs = Math.max(1, parsed.eggCount + stepDelta)
+          return { ...ing, customQuantity: nextEggs === 1 ? '1 uovo' : `${nextEggs} uova` }
+        }
+
+        const nextGrams = Math.max(5, parsed.grams + delta)
+        return { ...ing, customQuantity: `${nextGrams}g` }
+      })
+    )
+  }
+
   // Save Ad-Hoc Recipe
   const handleSaveAdHoc = async () => {
     if (!adHocTitle.trim()) {
@@ -189,6 +251,7 @@ export default function ImportPage() {
       const newRecipe: Recipe = {
         id: generateId(),
         title: adHocTitle.trim(),
+        customIcon: adHocIcon,
         description: adHocNotes.trim() || undefined,
         source: 'manual',
         targetMeal,
@@ -290,6 +353,7 @@ export default function ImportPage() {
 
           finalRecipe = {
             ...adapted,
+            customIcon: detectRecipeIcon(rawRecipe.title || metadata.title || '', strictlyAdapted, targetMeal),
             adaptedIngredients: strictlyAdapted,
             id: generateId(),
             dishType: detectDishType(strictlyAdapted),
@@ -319,6 +383,7 @@ export default function ImportPage() {
         finalRecipe = {
           id: generateId(),
           title: rawRecipe.title || metadata.title || 'Ricetta importata',
+          customIcon: detectRecipeIcon(rawRecipe.title || metadata.title || '', deterministicIngredients, targetMeal),
           description: rawRecipe.description || metadata.description || '',
           source,
           sourceUrl: cleanUrl,
@@ -401,20 +466,44 @@ export default function ImportPage() {
           <div className="space-y-4 animate-fade-in">
             {/* Title & Idea Input */}
             <div className="card p-4 space-y-3">
-              <label className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide block">
-                1. Cosa vuoi preparare? *
-              </label>
-              <input
-                type="text"
-                required
-                value={adHocTitle}
-                onChange={e => setAdHocTitle(e.target.value)}
-                placeholder="es. Salmone in friggitrice ad aria, Frittata zucchine e parmigiano..."
-                className="input-field text-sm font-bold"
-                autoFocus
-              />
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide block">
+                  1. Cosa vuoi preparare? *
+                </label>
+                {/* Selettore Icona Ricetta */}
+                <button
+                  type="button"
+                  onClick={() => setIsIconModalOpen(true)}
+                  className="px-2.5 py-1 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-xs font-extrabold flex items-center gap-1.5 transition-transform active:scale-95 border border-gray-200/80 dark:border-gray-700/80"
+                  title="Personalizza l'icona del piatto"
+                >
+                  <span className="text-lg">{adHocIcon}</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400">Cambia ✏️</span>
+                </button>
+              </div>
+
+              <div className="flex gap-2 items-center">
+                <button
+                  type="button"
+                  onClick={() => setIsIconModalOpen(true)}
+                  className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-2xl flex-shrink-0 transition-transform active:scale-95 border border-gray-200/80 dark:border-gray-700/80 shadow-2xs"
+                  title="Tocca per cambiare l'icona"
+                >
+                  {adHocIcon}
+                </button>
+                <input
+                  type="text"
+                  required
+                  value={adHocTitle}
+                  onChange={e => setAdHocTitle(e.target.value)}
+                  placeholder="es. Salmone in friggitrice ad aria, Cous cous verdure..."
+                  className="input-field text-sm font-bold flex-1 py-2.5"
+                  autoFocus
+                />
+              </div>
+
               <p className="text-[11px] text-gray-400 dark:text-gray-500">
-                L&apos;algoritmo rileverà automaticamente gli ingredienti chiave dal testo.
+                Icona e ingredienti vengono rilevati automaticamente (es. salmone → 🐟). Tocca l&apos;icona per cambiarla.
               </p>
             </div>
 
@@ -519,17 +608,35 @@ export default function ImportPage() {
                         className="bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-2.5 flex items-center justify-between gap-2"
                       >
                         <div className="flex-1 min-w-0 pr-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
                               {ing.name}
                             </span>
-                            <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">
-                              {ing.category}
-                            </span>
+
+                            {/* Dropdown / Selettore Categoria Modificabile */}
+                            <select
+                              value={ing.category || 'other'}
+                              onChange={e =>
+                                handleIngredientCategoryChange(
+                                  idx,
+                                  e.target.value as RecipeIngredient['category']
+                                )
+                              }
+                              className="text-[10px] font-bold py-0.5 px-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 cursor-pointer focus:ring-1 focus:ring-primary-500"
+                              title="Modifica categoria dell'ingrediente"
+                            >
+                              <option value="carbs">🌾 Carboidrati</option>
+                              <option value="proteins">🥩 Proteine</option>
+                              <option value="vegetables">🥦 Verdure</option>
+                              <option value="fats">🥑 Grassi</option>
+                              <option value="dairy">🧀 Latticini</option>
+                              <option value="fruits">🍎 Frutta</option>
+                              <option value="other">🍴 Altro</option>
+                            </select>
                           </div>
 
                           {itemCap && (
-                            <div className="flex items-center gap-1.5 text-[10.5px] text-gray-500 dark:text-gray-400 mt-0.5">
+                            <div className="flex items-center gap-1.5 text-[10.5px] text-gray-500 dark:text-gray-400 mt-1">
                               <span>Piano: <strong>{itemCap.baselineLabel}</strong></span>
                               {itemCap.otherItemsPercent > 0 && (
                                 <>
@@ -543,14 +650,37 @@ export default function ImportPage() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="font-extrabold text-primary-700 dark:text-primary-400 text-xs">
-                            {preview?.adaptedQuantity || 'calcolo…'}
-                          </span>
+                        {/* Modifica Quantità con bottoni +/- e input diretto */}
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleIngredientStepQty(idx, -5)}
+                            className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-black text-xs flex items-center justify-center transition-all active:scale-90"
+                            title="Diminuisci dose"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="text"
+                            value={ing.customQuantity ?? preview?.adaptedQuantity ?? '100g'}
+                            onChange={e => handleIngredientQtyChange(idx, e.target.value)}
+                            className="w-16 text-center font-extrabold text-xs text-primary-700 dark:text-primary-300 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-700 rounded-lg px-1 py-0.5 focus:ring-1 focus:ring-primary-500"
+                            title="Quantità modificabile"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleIngredientStepQty(idx, 5)}
+                            className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-black text-xs flex items-center justify-center transition-all active:scale-90"
+                            title="Aumenta dose"
+                          >
+                            +
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => handleRemoveIngredient(idx)}
-                            className="text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 text-xs p-1"
+                            className="text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 text-xs p-1 ml-0.5"
+                            title="Rimuovi ingrediente"
                           >
                             ✕
                           </button>
@@ -894,6 +1024,18 @@ export default function ImportPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Scelta Icona Ricetta */}
+      <RecipeIconPickerModal
+        isOpen={isIconModalOpen}
+        currentIcon={adHocIcon}
+        recipeTitle={adHocTitle}
+        onSelectIcon={icon => {
+          setAdHocIcon(icon)
+          setIsManualIcon(true)
+        }}
+        onClose={() => setIsIconModalOpen(false)}
+      />
     </div>
   )
 }

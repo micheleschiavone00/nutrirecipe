@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, generateId } from '@/lib/utils'
+import { detectRecipeIcon } from '@/lib/recipeIcons'
 import type { Recipe, MealType, RecipeMealVariant } from '@/types'
 
 interface AddToPlannerModalProps {
@@ -147,7 +148,7 @@ export default function AddToPlannerModal({
               {recipe.thumbnailUrl ? (
                 <img src={recipe.thumbnailUrl} alt={recipe.title} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+                <span className="text-2xl">{recipe.customIcon || detectRecipeIcon(recipe.title, recipe.adaptedIngredients, recipe.targetMeal)}</span>
               )}
             </div>
             <div className="flex-1 min-w-0">

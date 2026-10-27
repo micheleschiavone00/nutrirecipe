@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { MEAL_LABELS, MEAL_ICONS, formatDayLabel, cn } from '@/lib/utils'
+import { detectRecipeIcon } from '@/lib/recipeIcons'
 import type { MealType, Recipe } from '@/types'
 
 interface SelectRecipeModalProps {
@@ -372,7 +373,7 @@ export default function SelectRecipeModal({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-2xl">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+                            <span className="text-2xl">{recipe.customIcon || detectRecipeIcon(recipe.title, recipe.adaptedIngredients, recipe.targetMeal)}</span>
                           )}
                         </div>
 

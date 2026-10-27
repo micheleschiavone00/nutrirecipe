@@ -7,7 +7,9 @@ import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, CATEGORY_ICONS, formatDate } 
 import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
 import AddToPlannerModal from '@/components/AddToPlannerModal'
 import RecalibrateModal from '@/components/RecalibrateModal'
+import RecipeIconPickerModal from '@/components/RecipeIconPickerModal'
 import { reAdaptSingleRecipe } from '@/lib/recipeEnricher'
+import { detectRecipeIcon } from '@/lib/recipeIcons'
 import {
   calculateNutritionalValues,
   getGroupAllowanceAndUsage,
@@ -58,6 +60,22 @@ export default function RecipeDetailPage() {
   const [editingVariantId, setEditingVariantId] = useState<string>('default')
   const [editedIngredients, setEditedIngredients] = useState<RecipeIngredient[]>([])
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('')
+  const [isIconModalOpen, setIsIconModalOpen] = useState(false)
+
+  const currentRecipeIcon = useMemo(() => {
+    if (!recipe) return '🍽️'
+    return recipe.customIcon || detectRecipeIcon(recipe.title, recipe.adaptedIngredients, recipe.targetMeal)
+  }, [recipe])
+
+  const handleSaveRecipeIcon = async (newIcon: string) => {
+    if (!recipe) return
+    await db.recipes.update(recipe.id, {
+      customIcon: newIcon,
+      updatedAt: new Date(),
+    })
+    setSaveSuccessMsg(`✅ Icona ricetta aggiornata a ${newIcon}!`)
+    setTimeout(() => setSaveSuccessMsg(''), 3000)
+  }
 
   const activeVariant = useMemo(() => {
     if (variants.length === 0) {
@@ -512,8 +530,18 @@ export default function RecipeDetailPage() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 flex items-center justify-center">
-              <span className="text-7xl">{MEAL_ICONS[recipe.targetMeal] ?? '🍽️'}</span>
+            <div
+              onClick={() => setIsIconModalOpen(true)}
+              className="w-full h-full bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 flex flex-col items-center justify-center cursor-pointer group transition-all"
+              title="Tocca per cambiare icona"
+            >
+              <span className="text-7xl group-hover:scale-110 transition-transform">
+                {currentRecipeIcon}
+              </span>
+              <span className="text-[11px] font-bold text-white/90 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full mt-2 border border-white/20 flex items-center gap-1 opacity-90 group-hover:opacity-100 shadow-sm">
+                <span>Modifica icona</span>
+                <span>✏️</span>
+              </span>
             </div>
           )}
 
@@ -540,10 +568,16 @@ export default function RecipeDetailPage() {
 
           {/* Meal Pill in bottom left of image */}
           <div className="absolute bottom-3 left-3 z-10">
-            <span className="bg-black/60 backdrop-blur-md text-white font-semibold text-xs px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm">
-              <span>{MEAL_ICONS[recipe.targetMeal]}</span>
+            <button
+              type="button"
+              onClick={() => setIsIconModalOpen(true)}
+              className="bg-black/60 hover:bg-black/80 backdrop-blur-md text-white font-semibold text-xs px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm transition-transform active:scale-95 cursor-pointer"
+              title="Tocca per cambiare l'icona"
+            >
+              <span>{currentRecipeIcon}</span>
               <span>{MEAL_LABELS[recipe.targetMeal]}</span>
-            </span>
+              <span className="text-[10px] text-white/70">✏️</span>
+            </button>
           </div>
         </div>
       </div>
@@ -582,6 +616,18 @@ export default function RecipeDetailPage() {
               </select>
               <span className="absolute right-2.5 pointer-events-none text-[9px] text-primary-600 dark:text-primary-400">▼</span>
             </div>
+
+            {/* Quick Icon Selector / Custom Icon button */}
+            <button
+              type="button"
+              onClick={() => setIsIconModalOpen(true)}
+              className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs"
+              title="Personalizza l'icona del piatto (es. Salmone 🐟, Carne 🥩, Pasta 🍝)"
+            >
+              <span className="text-base">{currentRecipeIcon}</span>
+              <span>Icona</span>
+              <span className="text-[10px] text-gray-400">✏️</span>
+            </button>
 
             {recipe.dishType === 'side' && (
               <Badge className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 font-bold text-xs px-2.5 py-1">
@@ -1086,6 +1132,15 @@ export default function RecipeDetailPage() {
         onApply={handleApplyRecalibrate}
         onProceedAI={handleProceedAI}
         onManualEdit={handleStartManualEdit}
+      />
+
+      {/* ── Recipe Icon Picker Modal ───────────────────────────────────── */}
+      <RecipeIconPickerModal
+        isOpen={isIconModalOpen}
+        currentIcon={currentRecipeIcon}
+        recipeTitle={recipe.title}
+        onSelectIcon={handleSaveRecipeIcon}
+        onClose={() => setIsIconModalOpen(false)}
       />
     </div>
   )

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, generateShoppingList as createShoppingList } from '@/lib/db'
 import { getMonday, getWeekDays, formatDayLabel, MEAL_LABELS, MEAL_ICONS, generateId, cn } from '@/lib/utils'
+import { detectRecipeIcon } from '@/lib/recipeIcons'
 import { PageHeader } from '@/components/ui'
 import SelectRecipeModal from '@/components/SelectRecipeModal'
 import WeeklyTemplatesModal from '@/components/WeeklyTemplatesModal'
@@ -334,6 +335,11 @@ function DayCard({
                           onClick={() => recipe && onRecipeClick(recipe.id)}
                         >
                           <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm">
+                              {isCheat
+                                ? '🍕'
+                                : (recipe?.customIcon || (recipe ? detectRecipeIcon(recipe.title, recipe.adaptedIngredients, slot.mealType) : '🍽️'))}
+                            </span>
                             <p className={cn('text-sm font-medium', slot.isCompleted && 'line-through text-gray-400 dark:text-gray-500')}>
                               {recipe?.title ?? slot.customLabel ?? 'Pasto personalizzato'}
                             </p>

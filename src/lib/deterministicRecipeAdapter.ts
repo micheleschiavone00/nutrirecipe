@@ -51,8 +51,12 @@ const PROTEIN_KEYWORDS = [
 
 const CARB_KEYWORDS = [
   'pasta', 'riso', 'avena', 'farina', 'pane', 'patate', 'patata', 'gnocchi',
-  'piadina', 'couscous', 'quinoa', 'polenta', 'mais', 'gallette', 'fette biscottate',
-  'cereali', 'spaghetti', 'penne', 'fusilli', 'riso basmati', 'pangrattato', 'pan grattato'
+  'piadina', 'couscous', 'cous cous', 'cuscus', 'quinoa', 'polenta', 'mais', 'gallette', 'fette biscottate',
+  'cereali', 'spaghetti', 'penne', 'fusilli', 'rigatoni', 'tagliatelle', 'riso basmati', 'pangrattato', 'pan grattato',
+  'farro', 'orzo', 'miglio', 'bulgur', 'grano saraceno', 'segale', 'semola',
+  'focaccia', 'pizza', 'wrap', 'tortilla', 'taralli', 'grissini', 'crackers', 'cracker',
+  'panino', 'baguette', 'rosetta', 'ciabatta', 'crostini', 'purè', 'patate dolci',
+  'cornflakes', 'muesli', 'granola', 'amido', 'fecola', 'pan bauletto'
 ]
 
 const VEGETABLE_KEYWORDS = [
@@ -425,6 +429,17 @@ export function findMatchingFoodOption(
       return { quantity: chocoOpt.opt.quantity, unit: chocoOpt.opt.unit, optionName: chocoOpt.opt.name }
     }
     return { quantity: 15, unit: 'g', optionName: 'Cioccolato fondente (limite piano)' }
+  }
+
+  // Cous cous / Farro / Quinoa / Bulgur / Cereali
+  if (ingLower.includes('cous') || ingLower.includes('cuscus') || ingLower.includes('farro') || ingLower.includes('quinoa') || ingLower.includes('bulgur') || ingLower.includes('orzo')) {
+    const carbOpt = allOptions.find(o => {
+      const n = o.opt.name.toLowerCase()
+      return n.includes('cous') || n.includes('cuscus') || n.includes('cereali') || n.includes('farro') || n.includes('quinoa') || n.includes('pasta') || n.includes('riso')
+    })
+    if (carbOpt) {
+      return { quantity: carbOpt.opt.quantity, unit: carbOpt.opt.unit, optionName: carbOpt.opt.name }
+    }
   }
 
   // Direct substring match with option names
@@ -1008,6 +1023,8 @@ export function suggestIngredientsFromTitle(
   if (text.includes('asparagi')) suggested.push({ name: 'Asparagi', category: 'vegetables' })
 
   // Carbs
+  if (text.includes('cous') || text.includes('cuscus')) suggested.push({ name: 'Cous cous', category: 'carbs', defaultGrams: '70g' })
+  if (text.includes('farro') || text.includes('quinoa') || text.includes('orzo')) suggested.push({ name: 'Farro o Quinoa', category: 'carbs', defaultGrams: '70g' })
   if (text.includes('pasta')) suggested.push({ name: 'Pasta integrale o di semola', category: 'carbs' })
   if (text.includes('riso')) suggested.push({ name: 'Riso basmati', category: 'carbs' })
   if (text.includes('avena') || text.includes('pancake')) suggested.push({ name: 'Farina d\'avena', category: 'carbs' })
@@ -1292,6 +1309,7 @@ export function getMealSpecificIngredientSuggestions(
       { name: 'Lenticchie secche', category: 'proteins' },
       { name: 'Ceci secchi', category: 'proteins' },
       { name: 'Patate', category: 'carbs', defaultGrams: '200g' },
+      { name: 'Cous cous', category: 'carbs', defaultGrams: '70g' },
       { name: 'Riso basmati', category: 'carbs' },
       { name: 'Pasta integrale', category: 'carbs' },
       { name: 'Pane integrale', category: 'carbs' },

@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.1.0'
+export const APP_VERSION = '2.1.1'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.1.1',
+    date: '27 Ottobre 2026',
+    title: 'Riconoscimento Cous Cous, Modifica Categoria/Quantità Ad-Hoc & Icone Cibo Dedicate',
+    isLatest: true,
+    summary:
+      'Versione 2.1.1: potenziato il riconoscimento dei carboidrati includendo cous cous, couscous, cuscus, farro, quinoa, bulgur e cereali; introdotta nella creazione ricette ad-hoc la possibilità di modificare sia la categoria (tramite selettore dropdown immediato) sia la quantità di ciascun ingrediente con pulsanti +/-; integrato il rilevamento automatico intelligente dell\'icona del piatto (es. Salmone → 🐟, Pollo → 🍗, Bistecca → 🥩, Pasta → 🍝) al posto delle sole icone del pasto; e aggiunta la possibilità di personalizzare e cambiare l\'icona sia in fase di creazione sia per tutte le ricette precedenti salvate nel ricettario.',
+    changes: [
+      {
+        type: 'fix',
+        title: 'Riconoscimento Cous Cous & Cereali tra i Carboidrati',
+        description:
+          'Il cous cous (scritto sia "cous cous" che "couscous" o "cuscus"), il farro, la quinoa e il bulgur vengono ora riconosciuti istantaneamente come carboidrati complessi e agganciati alla quota corretta del piano nutrizionale (standard 70g o quota cereali).',
+        howToUse: 'Scrivendo "Cous cous" o selezionandolo dai suggerimenti, viene automaticamente inserito nel gruppo Carboidrati.',
+      },
+      {
+        type: 'feat',
+        title: 'Modifica Categoria e Quantità nella Creazione Ad-Hoc',
+        description:
+          'Nella schermata "Aggiungi Ricetta", ogni ingrediente presenta ora un menu a tendina per cambiare al volo la categoria (Carboidrati, Proteine, Verdure, Grassi, Latticini, Frutta, Altro) e comandi +/- e input numerico per personalizzare la grammatura.',
+        howToUse: 'Tocca il menu della categoria accanto all\'ingrediente per riassegnarlo se finisce in "Altro", oppure usa +/- per regolarne la dose.',
+      },
+      {
+        type: 'feat',
+        title: 'Icone Specifiche del Piatto (Salmone 🐟, Pollo 🍗, Pasta 🍝, ecc.)',
+        description:
+          'Le ricette non mostrano più soltanto l\'icona generica del momento del giorno (☀️, 🌙, 🍳): l\'app rileva dal titolo e dagli ingredienti il cibo caratterizzante (es. Salmone in friggitrice ad aria riceve l\'icona 🐟).',
+        howToUse: 'Scrivendo il titolo della ricetta, l\'icona si aggiorna in automatico e compare nel ricettario e nel Meal Planner.',
+      },
+      {
+        type: 'feat',
+        title: 'Personalizzazione Icona per Nuove Ricette e Ricette Precedenti',
+        description:
+          'Sia durante l\'aggiunta di una nuova ricetta sia entrando nel dettaglio di qualsiasi ricetta precedente salvata, puoi toccare l\'icona o il pulsante "Icona ✏️" per scegliere da una ricca griglia di emoji del cibo o inserire qualsiasi emoji dal tuo tastierino.',
+        howToUse: 'Nel dettaglio di qualsiasi ricetta, tocca la grande icona o il pulsante "Icona ✏️" per cambiarla e salvare istantaneamente.',
+      },
+    ],
+  },
   {
     version: '2.1.0',
     date: '27 Ottobre 2026',
     title: 'Modifica Quantità Spesa, Scadenza Dispensa, Fix Barra Checkout & Nuove Impostazioni Categorizzate',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.1.0: introdotta la modifica delle quantità e delle unità di misura per ciascun articolo della lista della spesa; aggiunta la gestione e modifica rapida della data di scadenza per gli alimenti in dispensa; risolta la sovrapposizione tra il pulsante "Completa Spesa" e la barra di navigazione con calcolo dinamico della safe area; e riorganizzata radicalmente la schermata Impostazioni in sezioni categorizzate e pagine dedicate a schermo intero (Piano Nutrizionale, Privacy & Sicurezza, Altre Info, Buoni Pasto, Aspetto & Tema).',
     changes: [
