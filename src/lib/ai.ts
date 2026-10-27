@@ -230,7 +230,12 @@ REGOLE CRUCIALI DI ADATTAMENTO:
      * Assegna a ciascun ingrediente il campo 'component' specificando a cosa serve (es. "Per il panino", "Per il pulled pork", "Per la salsa", "Per la farcitura").
      * Se la ricetta è a preparazione unica o semplice, usa "Principale" o "Base".
 
-7. GESTIONE MULTI-VARIANTE (PRANZO E CENA / CENA POST WORKOUT):
+7. FORMAGGI STAGIONATI E FETA (QUOTA SPECIALE MAX 50g):
+   - La Feta e i formaggi stagionati (parmigiano, grana, pecorino, caciocavallo, scamorza, ecc.) appartengono alla categoria nutrizionale dei formaggi ad alta densità/stagionati, la cui porzione di piano è tipicamente 50g (e MAI i 100-150g della carne/pesce o formaggi freschi)!
+   - Se nella ricetta è presente la feta o formaggio stagionato, la dose singola di riferimento è 50g (o quota esatta stagionato se specificata nel piano).
+   - Se abbinata ad altra proteina (es. uova o legumi), applica la ripartizione 50/50 sulla quota di 50g (quindi 25g di feta e 1 uovo).
+
+8. GESTIONE MULTI-VARIANTE (PRANZO E CENA / CENA POST WORKOUT):
    - Se ci sono più opzioni nel piano (es. Pranzo e Cena con grammature diverse, o Cena standard e Cena Post Workout):
      * Calibra 'adaptedIngredients' e 'steps' principali per la prima opzione.
      * DEVI INOLTRE generare l'array 'variants', con un elemento dedicato per CIASCUNA opzione (${applicableMeals.map(m => m.label).join(', ')}).

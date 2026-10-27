@@ -87,9 +87,44 @@ export function isCheeseProtein(name: string): boolean {
   return CHEESE_PROTEIN_KEYWORDS.some(k => lower.includes(k))
 }
 
+export function isAgedCheese(name: string): boolean {
+  const lower = name.toLowerCase().trim()
+  return [
+    'feta',
+    'parmigiano',
+    'grana',
+    'pecorino',
+    'stagionat',
+    'pasta dura',
+    'semidur',
+    'caciocavallo',
+    'provolone',
+    'scamorza',
+    'asiago',
+    'fontina',
+    'emmental',
+    'groviera',
+    'montasio',
+    'gouda',
+    'cheddar',
+  ].some(k => lower.includes(k))
+}
+
 export function isFreshCheese(name: string): boolean {
   const lower = name.toLowerCase().trim()
-  return ['feta', 'ricotta', 'mozzarella', 'fiocchi di latte', 'primosale', 'quartirolo', 'tofu', 'tempeh'].some(k => lower.includes(k))
+  if (isAgedCheese(lower)) return false
+  return [
+    'ricotta',
+    'mozzarella',
+    'fiocchi di latte',
+    'primosale',
+    'quartirolo',
+    'crescenza',
+    'stracchino',
+    'robiola',
+    'tofu',
+    'tempeh',
+  ].some(k => lower.includes(k))
 }
 
 export function isSeasoningCheese(name: string): boolean {
@@ -124,6 +159,7 @@ export function isMainProteinSource(name: string): boolean {
     isMeat(lower) ||
     isLegume(lower) ||
     isEgg(lower) ||
+    isAgedCheese(lower) ||
     isFreshCheese(lower) ||
     (isSeasoningCheese(lower) && (lower.includes('frittata') || lower.includes('polpett') || lower.includes('impasto')))
   )
@@ -262,12 +298,35 @@ export function findMatchingFoodOption(
   }
 
   // TIER 1: Exact or specific food token matches (highest priority)
-  // Feta: match specific feta option
-  if (ingLower.includes('feta')) {
-    const fetaOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('feta'))
-    if (fetaOpt) {
-      return { quantity: fetaOpt.opt.quantity, unit: fetaOpt.opt.unit, optionName: fetaOpt.opt.name }
+  // Formaggi stagionati / Feta / Parmigiano:
+  // La Feta appartiene ai formaggi stagionati e deve rispettare i 50g previsti dal piano per formaggi stagionati (e MAI i 100g di proteine generiche!)
+  if (isAgedCheese(ingLower)) {
+    // 1. Cerca opzione specifica con 'feta'
+    if (ingLower.includes('feta')) {
+      const fetaOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('feta'))
+      if (fetaOpt) {
+        return { quantity: fetaOpt.opt.quantity, unit: fetaOpt.opt.unit, optionName: fetaOpt.opt.name }
+      }
     }
+
+    // 2. Cerca opzione 'formaggio stagionato' / 'formaggi stagionati' / 'pasta dura' nel piano
+    const stagionatoOpt = allOptions.find(o => {
+      const n = o.opt.name.toLowerCase()
+      return (
+        n.includes('stagionat') ||
+        n.includes('pasta dura') ||
+        n.includes('semidur') ||
+        n.includes('grana') ||
+        n.includes('parmigiano') ||
+        n.includes('pecorino')
+      )
+    })
+    if (stagionatoOpt) {
+      return { quantity: stagionatoOpt.opt.quantity, unit: stagionatoOpt.opt.unit, optionName: stagionatoOpt.opt.name }
+    }
+
+    // 3. Fallback per formaggio stagionato/feta: quota rigorosa 50g (e mai 100g di proteine generiche)
+    return { quantity: 50, unit: 'g', optionName: 'Formaggio stagionato / Feta (limite 50g)' }
   }
 
   // Uova / Uovo
@@ -503,6 +562,7 @@ export function adaptIngredientsDeterministically(
       ...ing,
       category: cat,
       isCheese: isCheeseProtein(ing.name),
+      isAgedCheese: isAgedCheese(ing.name),
       isFreshCheese: isFreshCheese(ing.name),
       isSeasoningCheese: isSeasoningCheese(ing.name),
       isLegume: isLegume(ing.name),
@@ -558,10 +618,14 @@ export function adaptIngredientsDeterministically(
           const finalGrams = Math.round(baseLegumeGrams * proteinSplitFactor)
           adaptedQty = proteinCount > 1 ? `${finalGrams}g (quota 50% dimezzata)` : `${finalGrams}g`
         } else if (ing.isCheese) {
-          if (ing.isFreshCheese) {
-            // Feta greca, mozzarella, ricotta, fiocchi di latte (secondo piatto ~90g)
-            // Se combinata con Legumi: 90g * 0.5 = 45g!
-            const baseCheese = matched?.quantity ? matched.quantity : 90
+          if (ing.isAgedCheese) {
+            // Formaggio stagionato / Feta: quota standard 50g (o quota esatta del piano se specificata)
+            const baseCheese = matched?.quantity ? matched.quantity : 50
+            const finalGrams = Math.round(baseCheese * proteinSplitFactor)
+            adaptedQty = proteinCount > 1 ? `${finalGrams}g (quota 50% dimezzata)` : `${finalGrams}g`
+          } else if (ing.isFreshCheese) {
+            // Formaggi freschi (mozzarella, ricotta, fiocchi di latte ~100g)
+            const baseCheese = matched?.quantity ? matched.quantity : 100
             const finalGrams = Math.round(baseCheese * proteinSplitFactor)
             adaptedQty = proteinCount > 1 ? `${finalGrams}g (quota 50% dimezzata)` : `${finalGrams}g`
           } else {
@@ -894,9 +958,9 @@ export function adaptCombinedMeals(
 export function suggestIngredientsFromTitle(
   title: string,
   profile?: NutritionProfile
-): { name: string; category: RecipeIngredient['category'] }[] {
+): { name: string; category: RecipeIngredient['category']; defaultGrams?: string }[] {
   const text = title.toLowerCase().trim()
-  const suggested: { name: string; category: RecipeIngredient['category'] }[] = []
+  const suggested: { name: string; category: RecipeIngredient['category']; defaultGrams?: string }[] = []
 
   // Check proteins
   if (text.includes('salmone')) suggested.push({ name: 'Salmone fresco', category: 'proteins' })
@@ -919,9 +983,9 @@ export function suggestIngredientsFromTitle(
 
   // Parmigiano / Formaggio in dough or recipe
   if (text.includes('parmigiano') || text.includes('grana') || text.includes('pecorino')) {
-    suggested.push({ name: 'Parmigiano Reggiano grattugiato', category: 'proteins' })
+    suggested.push({ name: 'Parmigiano Reggiano grattugiato', category: 'proteins', defaultGrams: '30g' })
   } else if (text.includes('feta')) {
-    suggested.push({ name: 'Feta greca', category: 'proteins' })
+    suggested.push({ name: 'Feta greca', category: 'proteins', defaultGrams: '50g' })
   } else if (text.includes('ricotta')) {
     suggested.push({ name: 'Ricotta fresca', category: 'proteins' })
   } else if (text.includes('mozzarella')) {
@@ -1062,6 +1126,16 @@ export function getGroupAllowanceAndUsage(
       baselineQty = Math.round((baselineQty * 2.85) / 10) * 10
       baselineUnit = 'g'
       baselineName = 'Patate'
+    }
+
+    // Formaggi stagionati / Feta / Parmigiano / Grana:
+    // La Feta appartiene ai formaggi stagionati e deve rispettare i 50g previsti dal piano (mai 100g di proteine generiche)
+    if (isAgedCheese(item.name)) {
+      if (!matched || baselineQty > 50) {
+        baselineQty = 50
+        baselineUnit = 'g'
+        baselineName = matched?.optionName || 'Formaggi stagionati / Feta (limite 50g)'
+      }
     }
 
     let exactPercent = 0
@@ -1213,8 +1287,8 @@ export function getMealSpecificIngredientSuggestions(
       { name: 'Salmone fresco', category: 'proteins' },
       { name: 'Petto di pollo', category: 'proteins' },
       { name: 'Filetto di merluzzo o pesce bianco', category: 'proteins' },
-      { name: 'Uova intere', category: 'proteins' },
-      { name: 'Feta greca', category: 'proteins' },
+      { name: 'Uova intere', category: 'proteins', defaultGrams: '2 uova' },
+      { name: 'Feta greca', category: 'proteins', defaultGrams: '50g' },
       { name: 'Lenticchie secche', category: 'proteins' },
       { name: 'Ceci secchi', category: 'proteins' },
       { name: 'Patate', category: 'carbs', defaultGrams: '200g' },

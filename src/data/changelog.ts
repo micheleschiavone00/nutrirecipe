@@ -16,14 +16,45 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.0.2'
+export const APP_VERSION = '2.0.3'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.0.3',
+    date: '27 Ottobre 2026',
+    title: 'Classificazione Feta nei Formaggi Stagionati (Limite Rigoroso 50g)',
+    isLatest: true,
+    summary:
+      'Versione 2.0.3: la Feta viene ora classificata rigorosamente come formaggio stagionato ad alta densità proteica con limite di riferimento fissato a 50g (e mai ricadente sui 100g generici delle proteine). Se la ricetta contiene 40g di feta, l\'app calcola esattamente l\'80% del fabbisogno (40g su 50g); se abbinata ad un uovo (es. 10g di feta e 1 uovo), calcola la percentuale esatta del 70% (20% + 50%) e segnala come quota massima consentita 25g. Nel suggeritore rapido e nell\'adattamento automatico, la dose singola di riferimento per la feta è categoricamente 50g.',
+    changes: [
+      {
+        type: 'fix',
+        title: 'Classificazione Feta tra i Formaggi Stagionati (50g Max)',
+        description:
+          'La Feta non viene più trattata come formaggio fresco generico né ricade sui 100g del gruppo proteine. Viene agganciata all\'opzione dei formaggi stagionati del piano (standard 50g) o all\'opzione specifica "Feta" se presente nel piano nutrizionale.',
+        howToUse: 'Inserendo la Feta o formaggi stagionati (parmigiano, grana, pecorino, scamorza), la quota mostrata è sempre di max 50g.',
+      },
+      {
+        type: 'feat',
+        title: 'Calcolo Matematico Percentuale su Feta & Abbinamenti Multi-Proteina',
+        description:
+          'Il calcolo del fabbisogno per la Feta è proporzionato ai 50g: 40g di feta corrispondono all\'80% della quota proteica; 10g di feta (20%) + 1 uovo (50%) corrispondono esattamente al 70% totale.',
+        howToUse: 'Sia nel dettaglio ricetta che nella schermata di aggiunta piatto, le percentuali e il tasto ⚡ Max riflettono i 50g della feta.',
+      },
+      {
+        type: 'fix',
+        title: 'Suggeritore Rapido Ad-Hoc con Feta Greca a 50g',
+        description:
+          'Nei suggerimenti rapidi degli ingredienti e dal titolo ricetta, la Feta greca viene proposta con la dose calibrata di 50g (e 2 uova per le uova intere).',
+        howToUse: 'Toccando il suggerimento "Feta greca", viene inserita con il corretto dosaggio a norma del piano.',
+      },
+    ],
+  },
   {
     version: '2.0.2',
     date: '27 Ottobre 2026',
     title: 'Fix Schermata Nera nel Tab Spesa & Protezione Globale con ErrorBoundary',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.0.2: risolto il problema di rendering per cui la schermata Spesa diventava completamente nera. È stato eliminato l\'ordinamento su campi IndexedDB non indicizzati (SchemaError su createdAt in Dexie) passando a un caricamento resiliente con toArray() e sort in memoria; aggiunte protezioni null-safe per gli ingredienti dei pasti pianificati; introdotta la migrazione versione 4 del database; ed integrato un ErrorBoundary globale a livello di applicazione per prevenire qualsiasi crash dell\'interfaccia.',
     changes: [
