@@ -83,7 +83,7 @@ function QuantityStepper({ quantity, unit = 'g', onChange }: QuantityStepperProp
       <button
         type="button"
         onClick={handlePlus}
-        className="w-7 h-7 rounded-lg bg-primary-100 hover:bg-primary-200 active:scale-95 text-primary-800 font-extrabold text-sm flex items-center justify-center transition-all select-none border border-primary-200/60"
+        className="w-7 h-7 rounded-lg bg-primary-100 dark:bg-primary-950/60 hover:bg-primary-200 dark:hover:bg-primary-900/60 active:scale-95 text-primary-800 dark:text-primary-300 font-extrabold text-sm flex items-center justify-center transition-all select-none border border-primary-200/60 dark:border-primary-800"
         title={`Aumenta (+${step}${unit})`}
       >
         +
@@ -96,19 +96,19 @@ function QuantityStepper({ quantity, unit = 'g', onChange }: QuantityStepperProp
         value={val}
         onChange={handleChange}
         placeholder="0"
-        className="w-14 text-center input-field text-xs py-1 px-1 font-extrabold text-primary-950 bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+        className="w-14 text-center input-field text-xs py-1 px-1 font-extrabold text-primary-950 dark:text-primary-200 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
       />
 
       <button
         type="button"
         onClick={handleMinus}
-        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-extrabold text-sm flex items-center justify-center transition-all select-none border border-gray-200"
+        className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 text-gray-700 dark:text-gray-300 font-extrabold text-sm flex items-center justify-center transition-all select-none border border-gray-200 dark:border-gray-700"
         title={`Diminuisci (-${step}${unit})`}
       >
         –
       </button>
 
-      <span className="text-gray-500 font-semibold text-xs min-w-[1.2rem] text-left">{unit}</span>
+      <span className="text-gray-500 dark:text-gray-400 font-semibold text-xs min-w-[1.2rem] text-left">{unit}</span>
     </div>
   )
 }
@@ -292,7 +292,7 @@ export default function SetupPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white dark:from-gray-950 dark:to-gray-900">
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="safe-top px-6 pt-4 pb-2">
@@ -301,8 +301,8 @@ export default function SetupPage() {
               <span className="text-2xl">🥗</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">NutriRecipe</h1>
-              <p className="text-sm text-gray-500">Setup iniziale</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">NutriRecipe</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Setup iniziale</p>
             </div>
           </div>
           <StepIndicator steps={STEPS} current={step} />
@@ -312,10 +312,10 @@ export default function SetupPage() {
         {step === 0 && (
           <div className="px-6 pt-4 animate-slide-up">
             {existingProfile && (
-              <div className="bg-primary-50 border border-primary-200 rounded-2xl p-3.5 mb-5 flex items-center justify-between gap-3">
-                <div className="text-xs text-primary-900">
+              <div className="bg-primary-50 dark:bg-primary-950/60 border border-primary-200 dark:border-primary-800 rounded-2xl p-3.5 mb-5 flex items-center justify-between gap-3">
+                <div className="text-xs text-primary-900 dark:text-primary-200">
                   <p className="font-bold">Hai già un piano nutrizionale attivo</p>
-                  <p className="text-primary-700">Vuoi visualizzare o modificare quello esistente ({existingProfile.name})?</p>
+                  <p className="text-primary-700 dark:text-primary-300">Vuoi visualizzare o modificare quello esistente ({existingProfile.name})?</p>
                 </div>
                 <button
                   onClick={() => navigate('/profile')}
@@ -325,8 +325,8 @@ export default function SetupPage() {
                 </button>
               </div>
             )}
-            <h2 className="text-xl font-bold text-gray-900 mb-1">Ciao! Come ti chiami?</h2>
-            <p className="text-gray-500 text-sm mb-6">Personalizziamo l'app per te.</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">Ciao! Come ti chiami?</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Personalizziamo l'app per te.</p>
             <input
               type="text"
               placeholder="Il tuo nome"
@@ -349,8 +349,8 @@ export default function SetupPage() {
         {/* Step 1 — Piano nutrizionale */}
         {step === 1 && (
           <div className="px-6 pt-4 animate-slide-up">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">Il tuo piano nutrizionale</h2>
-            <p className="text-gray-500 text-sm mb-4">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">Il tuo piano nutrizionale</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
               Carica il PDF della tua nutrizionista, incolla il testo o compila a mano.
             </p>
 
@@ -359,8 +359,8 @@ export default function SetupPage() {
                 {/* PDF upload */}
                 <label className="card p-4 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-all hover:border-primary-300">
                   <span className="text-3xl">📄</span>
-                  <span className="font-semibold text-gray-900 text-sm text-center">Carica PDF</span>
-                  <span className="text-xs text-gray-400 text-center">Analizza file PDF</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm text-center">Carica PDF</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 text-center">Analizza file PDF</span>
                   <input
                     type="file"
                     accept=".pdf"
@@ -378,8 +378,8 @@ export default function SetupPage() {
                   className="card p-4 flex flex-col items-center gap-2 active:scale-95 transition-all hover:border-primary-300"
                 >
                   <span className="text-3xl">📋</span>
-                  <span className="font-semibold text-gray-900 text-sm text-center">Incolla testo</span>
-                  <span className="text-xs text-gray-400 text-center">Da WhatsApp o email</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm text-center">Incolla testo</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 text-center">Da WhatsApp o email</span>
                 </button>
 
                 {/* Manual */}
@@ -388,8 +388,8 @@ export default function SetupPage() {
                   className="card p-4 flex flex-col items-center gap-2 active:scale-95 transition-all hover:border-primary-300"
                 >
                   <span className="text-3xl">✏️</span>
-                  <span className="font-semibold text-gray-900 text-sm text-center">Compila a mano</span>
-                  <span className="text-xs text-gray-400 text-center">Inserisci grammature</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm text-center">Compila a mano</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 text-center">Inserisci grammature</span>
                 </button>
               </div>
             )}
@@ -397,8 +397,8 @@ export default function SetupPage() {
             {/* Paste text section */}
             {method === 'text' && !loading && (
               <div className="card p-4 space-y-3 mb-6">
-                <h3 className="text-sm font-semibold text-gray-900">Incolla il tuo piano nutrizionale</h3>
-                <p className="text-xs text-gray-500">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Incolla il tuo piano nutrizionale</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Copia e incolla qui sotto il testo del piano (anche da email o messaggi WhatsApp):
                 </p>
                 <textarea
@@ -430,8 +430,8 @@ export default function SetupPage() {
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
-                <p className="text-red-600 text-sm">{error}</p>
+              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl p-3 mb-4">
+                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
               </div>
             )}
 
@@ -440,17 +440,17 @@ export default function SetupPage() {
               <div className="space-y-4 mb-6">
                 {meals.map((meal, mealIdx) => (
                   <div key={meal.mealType} className="card overflow-hidden">
-                    <div className="bg-primary-50 px-4 py-3 border-b border-primary-100 flex items-center justify-between">
-                      <h3 className="font-semibold text-primary-800">{meal.label}</h3>
+                    <div className="bg-primary-50 dark:bg-primary-950/60 px-4 py-3 border-b border-primary-100 dark:border-primary-900 flex items-center justify-between">
+                      <h3 className="font-semibold text-primary-800 dark:text-primary-300">{meal.label}</h3>
                       {meal.groups.length > 0 && (
-                        <span className="text-xs text-primary-600 bg-primary-100 px-2 py-0.5 rounded-full font-medium">
+                        <span className="text-xs text-primary-600 dark:text-primary-300 bg-primary-100 dark:bg-primary-900/60 px-2 py-0.5 rounded-full font-medium">
                           {meal.groups.length} {meal.groups.length === 1 ? 'gruppo' : 'gruppi'}
                         </span>
                       )}
                     </div>
                     <div className="p-4 space-y-4">
                       {meal.groups.map((group, groupIdx) => (
-                        <div key={group.id} className="bg-gray-50 rounded-xl p-3 space-y-2 border border-gray-100">
+                        <div key={group.id} className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 space-y-2 border border-gray-100 dark:border-gray-800">
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
@@ -461,7 +461,7 @@ export default function SetupPage() {
                             />
                             <button
                               onClick={() => removeGroup(mealIdx, groupIdx)}
-                              className="w-8 h-8 flex items-center justify-center text-red-400 rounded-lg hover:bg-red-50"
+                              className="w-8 h-8 flex items-center justify-center text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30"
                             >
                               ✕
                             </button>
@@ -481,7 +481,7 @@ export default function SetupPage() {
                           </select>
                           {/* Options */}
                           <div className="space-y-2">
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                               Alternative e grammature
                             </p>
                             {group.options.map((opt, optIdx) => (
@@ -506,7 +506,7 @@ export default function SetupPage() {
                             ))}
                             <button
                               onClick={() => addOption(mealIdx, groupIdx)}
-                              className="text-xs text-primary-600 font-medium flex items-center gap-1"
+                              className="text-xs text-primary-600 dark:text-primary-400 font-medium flex items-center gap-1"
                             >
                               + Aggiungi alternativa
                             </button>
@@ -515,7 +515,7 @@ export default function SetupPage() {
                       ))}
                       <button
                         onClick={() => addGroup(mealIdx)}
-                        className="w-full py-2 border-2 border-dashed border-primary-200 rounded-xl text-primary-600 text-sm font-medium hover:border-primary-400 transition-colors"
+                        className="w-full py-2 border-2 border-dashed border-primary-200 dark:border-primary-800 rounded-xl text-primary-600 dark:text-primary-400 text-sm font-medium hover:border-primary-400 transition-colors"
                       >
                         + Aggiungi gruppo alimentare
                       </button>
@@ -541,11 +541,11 @@ export default function SetupPage() {
         {/* Step 2 — Done */}
         {step === 2 && (
           <div className="px-6 pt-8 flex flex-col items-center text-center animate-slide-up">
-            <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mb-6">
+            <div className="w-24 h-24 bg-primary-100 dark:bg-primary-950/60 rounded-full flex items-center justify-center mb-6">
               <span className="text-5xl">🎉</span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Tutto pronto, {name}!</h2>
-            <p className="text-gray-500 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Tutto pronto, {name}!</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-8">
               Il tuo piano nutrizionale è stato salvato. Inizia importando la prima ricetta dai social!
             </p>
             <button onClick={() => navigate('/import')} className="btn-primary w-full mb-3">

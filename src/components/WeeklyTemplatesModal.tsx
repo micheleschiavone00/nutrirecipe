@@ -143,18 +143,18 @@ export default function WeeklyTemplatesModal({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
+        className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden border border-gray-100 dark:border-gray-800"
         onClick={e => e.stopPropagation()}
       >
         {/* Fixed Header */}
-        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
+        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">📋</span>
             <div>
-              <h3 className="font-extrabold text-gray-900 text-base leading-tight">
+              <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-base leading-tight">
                 Piani Settimane Standard
               </h3>
-              <p className="text-xs text-gray-400">Salva e riutilizza schemi settimanali fissi</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">Salva e riutilizza schemi settimanali fissi</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export default function WeeklyTemplatesModal({
             </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 transition-colors"
             >
               ✕
             </button>
@@ -178,8 +178,8 @@ export default function WeeklyTemplatesModal({
         </div>
 
         {/* Tab switch fixed */}
-        <div className="px-4 sm:px-5 pt-3 pb-2 flex-shrink-0 bg-white">
-          <div className="flex bg-gray-100 p-1 rounded-xl">
+        <div className="px-4 sm:px-5 pt-3 pb-2 flex-shrink-0 bg-white dark:bg-gray-900">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => {
@@ -187,7 +187,9 @@ export default function WeeklyTemplatesModal({
                 setSelectedTemplateForApply(null)
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                tab === 'saved' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                tab === 'saved'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               📂 Modelli Salvati ({templates?.length ?? 0})
@@ -199,7 +201,9 @@ export default function WeeklyTemplatesModal({
                 setSelectedTemplateForApply(null)
               }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                tab === 'save_current' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                tab === 'save_current'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               💾 Salva Questa Settimana
@@ -274,7 +278,7 @@ export default function WeeklyTemplatesModal({
               </div>
 
               {/* Pinned Action Buttons for Apply */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+              <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
                 <button
                   type="button"
                   onClick={() => setSelectedTemplateForApply(null)}
@@ -339,17 +343,17 @@ export default function WeeklyTemplatesModal({
                     return (
                       <div
                         key={tpl.id}
-                        className="bg-gray-50 hover:bg-gray-100/80 border border-gray-200/80 rounded-2xl p-3.5 flex flex-col gap-2.5 transition-all"
+                        className="bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-750 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3.5 flex flex-col gap-2.5 transition-all"
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <h4 className="font-bold text-gray-900 text-sm leading-tight">
+                            <h4 className="font-bold text-gray-900 dark:text-gray-100 text-sm leading-tight">
                               {tpl.name}
                             </h4>
                             {tpl.description && (
-                              <p className="text-xs text-gray-500 mt-0.5">{tpl.description}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tpl.description}</p>
                             )}
-                            <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-400">
+                            <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-400 dark:text-gray-500">
                               <span>🍽️ {tpl.meals.length} pasti</span>
                               <span>•</span>
                               <span>📅 {daysCount} giorni coperti</span>
@@ -358,7 +362,7 @@ export default function WeeklyTemplatesModal({
                           <button
                             type="button"
                             onClick={() => handleDeleteTemplate(tpl.id, tpl.name)}
-                            className="text-gray-300 hover:text-red-500 text-sm p-1 transition-colors"
+                            className="text-gray-300 dark:text-gray-600 hover:text-red-500 text-sm p-1 transition-colors"
                             title="Elimina modello"
                           >
                             🗑
@@ -374,8 +378,8 @@ export default function WeeklyTemplatesModal({
                                 key={idx}
                                 className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                                   count > 0
-                                    ? 'bg-primary-100 text-primary-800 border border-primary-200/60'
-                                    : 'bg-gray-200/60 text-gray-400'
+                                    ? 'bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-300 border border-primary-200/60 dark:border-primary-800'
+                                    : 'bg-gray-200/60 dark:bg-gray-700/60 text-gray-400 dark:text-gray-500'
                                 }`}
                               >
                                 {name} {count > 0 ? `(${count})` : ''}
@@ -401,7 +405,7 @@ export default function WeeklyTemplatesModal({
               </div>
 
               {/* Pinned Footer for Templates List */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-[0_-4px_16px_rgba(0,0,0,0.04)] gap-2">
+              <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-[0_-4px_16px_rgba(0,0,0,0.04)] gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -409,7 +413,7 @@ export default function WeeklyTemplatesModal({
                       onClose()
                       navigate('/planner/create-template')
                     }}
-                    className="text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors"
+                    className="text-xs font-bold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 hover:bg-primary-100 dark:hover:bg-primary-900/60 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors"
                   >
                     <span>✨</span>
                     <span>Crea Settimana</span>
@@ -417,7 +421,7 @@ export default function WeeklyTemplatesModal({
                   <button
                     type="button"
                     onClick={() => setTab('save_current')}
-                    className="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1 py-1.5 px-2 rounded-lg hover:bg-gray-100 transition-colors hidden sm:flex"
+                    className="text-xs font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-1 py-1.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden sm:flex"
                   >
                     <span>💾</span>
                     <span>Salva settimana</span>
@@ -492,7 +496,7 @@ export default function WeeklyTemplatesModal({
             </div>
 
             {/* Pinned Action Buttons for Saving Current Week */}
-            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
               <button
                 type="button"
                 onClick={() => setTab('saved')}

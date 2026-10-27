@@ -37,14 +37,14 @@ export default function RecipesPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <PageHeader
         title="Il mio Ricettario"
         subtitle={`${allRecipes?.length ?? 0} ricette salvate`}
         action={
           <button
             onClick={() => navigate('/import')}
-            className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-md"
+            className="w-10 h-10 bg-primary-500 hover:bg-primary-600 rounded-full flex items-center justify-center text-white shadow-md active:scale-95 transition-all"
           >
             +
           </button>
@@ -72,7 +72,7 @@ export default function RecipesPage() {
               'flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all',
               filter === opt.value
                 ? 'bg-primary-500 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200',
+                : 'bg-white dark:bg-gray-800/90 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700',
             )}
           >
             {opt.label}
@@ -131,14 +131,14 @@ function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }
         )}
         {/* Source badge */}
         <div className="absolute top-2 left-2">
-          <Badge variant="default" className="text-xs capitalize bg-white/90 text-gray-700">
+          <Badge variant="default" className="text-xs capitalize bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 border border-transparent dark:border-gray-700/80">
             {recipe.source}
           </Badge>
         </div>
         {/* Favorite */}
         <button
           onClick={toggleFavorite}
-          className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center"
+          className="absolute top-2 right-2 w-7 h-7 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center border border-transparent dark:border-gray-700/80"
         >
           {recipe.isFavorite ? '❤️' : '🤍'}
         </button>
@@ -146,13 +146,13 @@ function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }
 
       {/* Info */}
       <div className="p-3">
-        <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2">
           {recipe.title}
         </h3>
         <div className="flex items-center gap-1 mt-1.5">
-          <span className="text-xs text-gray-400">{MEAL_LABELS[recipe.targetMeal]}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{MEAL_LABELS[recipe.targetMeal]}</span>
           {recipe.variants && recipe.variants.length > 1 && (
-            <span className="bg-primary-50 text-primary-700 text-[10px] font-bold px-1.5 py-0.2 rounded border border-primary-200/60 ml-auto">
+            <span className="bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 text-[10px] font-bold px-1.5 py-0.2 rounded border border-primary-200/60 dark:border-primary-800 ml-auto">
               {recipe.variants.length} opzioni
             </span>
           )}

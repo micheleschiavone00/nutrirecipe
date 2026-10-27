@@ -151,24 +151,24 @@ export default function RecipeDetailPage() {
             const icon = CATEGORY_ICONS[cat] || '🍴'
 
             return (
-              <div key={cat} className="bg-white border border-gray-100 rounded-2xl p-3 space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between pb-1 border-b border-gray-100">
+              <div key={cat} className="bg-white dark:bg-gray-800/70 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-1.5 shadow-2xs">
+                <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm">{icon}</span>
-                    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
+                    <h4 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       {label}
                     </h4>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
                       ({items.length} {items.length === 1 ? 'alimento' : 'alimenti'})
                     </span>
                   </div>
                   {cat === 'vegetables' && items.length > 1 && (
-                    <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                    <span className="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                       Ripartite equamente
                     </span>
                   )}
                   {cat === 'proteins' && items.length > 1 && (
-                    <span className="text-[10px] font-semibold bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
+                    <span className="text-[10px] font-semibold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-800">
                       Bilanciate 50/50
                     </span>
                   )}
@@ -178,16 +178,16 @@ export default function RecipeDetailPage() {
                   {items.map((ing, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between py-1 border-b border-gray-50 last:border-0"
+                      className="flex items-center justify-between py-1 border-b border-gray-50 dark:border-gray-800/60 last:border-0"
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
-                        <span className="text-xs sm:text-sm text-gray-800 font-medium truncate">{ing.name}</span>
+                        <span className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 font-medium truncate">{ing.name}</span>
                         {ing.component && ing.component !== 'Principale' && (
-                          <span className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
                             {ing.component}
                           </span>
                         )}
-                        {ing.isOptional && <span className="text-[10px] text-gray-400">(opz.)</span>}
+                        {ing.isOptional && <span className="text-[10px] text-gray-400 dark:text-gray-500">(opz.)</span>}
                       </div>
                       {isManualEditing ? (
                         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -226,12 +226,12 @@ export default function RecipeDetailPage() {
       return (
         <div className="space-y-3">
           {compMap.map(([compName, items]) => (
-            <div key={compName} className="bg-white border border-gray-100 rounded-2xl p-3 space-y-1.5 shadow-2xs">
-              <div className="flex items-center justify-between pb-1 border-b border-gray-100">
+            <div key={compName} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-1.5 shadow-2xs">
+              <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm">🥪</span>
-                  <h4 className="text-xs font-bold text-gray-900">{compName}</h4>
-                  <span className="text-[10px] text-gray-400">({items.length} alimenti)</span>
+                  <h4 className="text-xs font-bold text-gray-900 dark:text-gray-100">{compName}</h4>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500">({items.length} alimenti)</span>
                 </div>
               </div>
 
@@ -239,16 +239,16 @@ export default function RecipeDetailPage() {
                 {items.map((ing, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-1 border-b border-gray-50 last:border-0"
+                    className="flex items-center justify-between py-1 border-b border-gray-50 dark:border-gray-800/60 last:border-0"
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
                       <Badge variant={ing.category as any} className="text-[9px] py-0.2">
                         {CATEGORY_LABELS[ing.category]}
                       </Badge>
-                      <span className="text-xs sm:text-sm text-gray-800 font-medium truncate">{ing.name}</span>
-                      {ing.isOptional && <span className="text-[10px] text-gray-400">(opz.)</span>}
+                      <span className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 font-medium truncate">{ing.name}</span>
+                      {ing.isOptional && <span className="text-[10px] text-gray-400 dark:text-gray-500">(opz.)</span>}
                     </div>
-                    <span className="font-extrabold text-primary-700 text-xs sm:text-sm whitespace-nowrap">
+                    <span className="font-extrabold text-primary-700 dark:text-primary-400 text-xs sm:text-sm whitespace-nowrap">
                       {ing.adaptedQuantity}
                     </span>
                   </div>
@@ -262,25 +262,25 @@ export default function RecipeDetailPage() {
 
     // Flat list
     return (
-      <div className="bg-white border border-gray-100 rounded-2xl p-3 space-y-1 shadow-2xs">
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-1 shadow-2xs">
         {ingredients.map((ing, i) => (
           <div
             key={i}
-            className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0"
+            className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800/60 last:border-0"
           >
             <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
               <Badge variant={ing.category as any} className="text-[9px] py-0.2">
                 {CATEGORY_LABELS[ing.category]}
               </Badge>
-              <span className="text-xs sm:text-sm text-gray-800 truncate">{ing.name}</span>
+              <span className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 truncate">{ing.name}</span>
               {ing.component && (
-                <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                <span className="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded">
                   {ing.component}
                 </span>
               )}
-              {ing.isOptional && <span className="text-[10px] text-gray-400">(opz.)</span>}
+              {ing.isOptional && <span className="text-[10px] text-gray-400 dark:text-gray-500">(opz.)</span>}
             </div>
-            <span className="font-extrabold text-primary-700 text-xs sm:text-sm whitespace-nowrap">
+            <span className="font-extrabold text-primary-700 dark:text-primary-400 text-xs sm:text-sm whitespace-nowrap">
               {ing.adaptedQuantity}
             </span>
           </div>
@@ -297,14 +297,14 @@ export default function RecipeDetailPage() {
             {step.order}
           </div>
           <div className="flex-1 space-y-1">
-            <p className="text-xs sm:text-sm text-gray-800 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-relaxed font-normal">
               {step.description}
             </p>
             {step.duration && (
-              <p className="text-[11px] text-gray-400">⏱ {step.duration}</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">⏱ {step.duration}</p>
             )}
             {step.tip && (
-              <p className="text-[11px] text-primary-700 bg-primary-50 rounded-lg px-2.5 py-1 font-medium">
+              <p className="text-[11px] text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 rounded-lg px-2.5 py-1 font-medium">
                 💡 {step.tip}
               </p>
             )}
@@ -315,7 +315,7 @@ export default function RecipeDetailPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-12">
       {/* ── Top Framed Hero Image ─────────────────────────────────── */}
       <div className="p-4 pb-0 max-w-2xl mx-auto">
         <div className="relative aspect-[16/10] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md bg-gray-900 border border-gray-200/80">
@@ -337,7 +337,7 @@ export default function RecipeDetailPage() {
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-3.5 left-3.5 w-10 h-10 bg-white/90 hover:bg-white text-gray-800 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10"
+            className="absolute top-3.5 left-3.5 w-10 h-10 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10 border border-transparent dark:border-gray-700/80"
             aria-label="Indietro"
           >
             <span className="text-base font-bold">←</span>
@@ -346,7 +346,7 @@ export default function RecipeDetailPage() {
           {/* Favorite button */}
           <button
             onClick={toggleFavorite}
-            className="absolute top-3.5 right-3.5 w-10 h-10 bg-white/90 hover:bg-white backdrop-blur-md rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10"
+            className="absolute top-3.5 right-3.5 w-10 h-10 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10 border border-transparent dark:border-gray-700/80"
             aria-label="Preferito"
           >
             <span className="text-base">{recipe.isFavorite ? '❤️' : '🤍'}</span>
@@ -379,7 +379,7 @@ export default function RecipeDetailPage() {
           </div>
 
           {/* Meta & Category Selector */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
             {/* Quick Meal Re-categorizer */}
             <div className="relative inline-flex items-center">
               <select
@@ -387,30 +387,30 @@ export default function RecipeDetailPage() {
                 onChange={async (e) => {
                   await db.recipes.update(recipe.id, { targetMeal: e.target.value as TargetMealType })
                 }}
-                className="appearance-none bg-primary-50 hover:bg-primary-100 text-primary-800 text-xs font-semibold px-3 py-1.5 pr-7 rounded-xl border border-primary-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-400 transition-colors"
+                className="appearance-none bg-primary-50 hover:bg-primary-100 text-primary-800 dark:bg-gray-800 dark:text-primary-300 dark:border-gray-700 text-xs font-semibold px-3 py-1.5 pr-7 rounded-xl border border-primary-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-400 transition-colors"
                 title="Cambia categoria pasto"
               >
                 {TARGET_MEAL_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <span className="absolute right-2.5 pointer-events-none text-[9px] text-primary-600">▼</span>
+              <span className="absolute right-2.5 pointer-events-none text-[9px] text-primary-600 dark:text-primary-400">▼</span>
             </div>
 
             {recipe.dishType === 'side' && (
-              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 font-bold text-xs px-2.5 py-1">
+              <Badge className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 font-bold text-xs px-2.5 py-1">
                 🥗 Contorno
               </Badge>
             )}
 
             {recipe.source !== 'manual' && (
-              <Badge className="bg-gray-100 text-gray-700 capitalize font-medium text-xs px-2.5 py-1">
+              <Badge className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 capitalize font-medium text-xs px-2.5 py-1">
                 {recipe.source}
               </Badge>
             )}
 
             {recipe.tags.map(tag => (
-              <Badge key={tag} className="bg-gray-50 text-gray-500 text-xs px-2 py-0.5">
+              <Badge key={tag} className="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 text-xs px-2 py-0.5">
                 #{tag}
               </Badge>
             ))}
@@ -478,11 +478,11 @@ export default function RecipeDetailPage() {
               i => i.category === 'vegetables' || i.category === 'fats' || i.category === 'other'
             ) &&
             !recipe.adaptedIngredients.some(i => i.category === 'proteins'))) && (
-          <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-emerald-900 shadow-2xs">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/90 dark:border-emerald-800/80 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-emerald-900 dark:text-emerald-200 shadow-2xs">
             <span className="text-xl">🥗</span>
             <div>
               <p className="font-extrabold text-xs">Piatto Contorno (Solo Verdure)</p>
-              <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+              <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
                 Questa ricetta è un contorno e non costituisce un pasto completo. Nel{' '}
                 <strong>Meal Planner</strong> puoi abbinarlo a un secondo piatto o piatto principale
                 (es. Frittata, Salmone o Pollo): le verdure e i macro verranno ripartiti
@@ -494,15 +494,15 @@ export default function RecipeDetailPage() {
 
         {/* ── Multi-Variant Selector Bar (Pranzo / Cena / Post Workout) ── */}
         {variants.length > 1 && (
-          <div className="card p-3.5 space-y-2.5 border-primary-200/80 bg-gradient-to-r from-primary-50/40 via-white to-primary-50/20">
+          <div className="card p-3.5 space-y-2.5 border-primary-200/80 dark:border-gray-800 bg-gradient-to-r from-primary-50/40 via-white to-primary-50/20 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="text-base">⚖️</span>
                 <div>
-                  <h3 className="text-xs font-extrabold text-gray-900 uppercase tracking-wide">
+                  <h3 className="text-xs font-extrabold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                     Grammature per Pasto ({variants.length})
                   </h3>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
                     Adattamenti specifici per ogni momento della giornata
                   </p>
                 </div>
@@ -512,7 +512,7 @@ export default function RecipeDetailPage() {
                 onClick={() =>
                   setMultiVariantView(multiVariantView === 'boxes' ? 'single' : 'boxes')
                 }
-                className="text-[11px] font-bold text-primary-700 bg-white hover:bg-primary-50 border border-primary-200 px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1"
+                className="text-[11px] font-bold text-primary-700 dark:text-primary-300 bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-gray-700 border border-primary-200 dark:border-gray-700 px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1"
               >
                 <span>{multiVariantView === 'boxes' ? '📑 Vista Singola' : '🔲 Riquadri Insieme'}</span>
               </button>
@@ -524,8 +524,8 @@ export default function RecipeDetailPage() {
                 onClick={() => setMultiVariantView('boxes')}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                   multiVariantView === 'boxes'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                    ? 'bg-gray-900 dark:bg-primary-600 text-white shadow-sm'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 <span>🔲</span>
@@ -544,7 +544,7 @@ export default function RecipeDetailPage() {
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-primary-600 text-white shadow-sm'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <span>{v.label}</span>
@@ -553,7 +553,7 @@ export default function RecipeDetailPage() {
                         className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
                           isSelected
                             ? 'bg-primary-700 text-primary-100'
-                            : 'bg-gray-100 text-gray-500'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
                         }`}
                       >
                         {v.nutritionalValues.calories} kcal
@@ -568,27 +568,27 @@ export default function RecipeDetailPage() {
 
         {/* Notes on recipe / balance (clean, no robot label) */}
         {recipe.adaptationNotes && (
-          <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4">
-            <p className="text-xs font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
+          <div className="bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/80 rounded-2xl p-4">
+            <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
               <span>💡</span>
               <span>Note di preparazione e bilanciamento</span>
             </p>
-            <p className="text-xs sm:text-sm text-emerald-950 leading-relaxed">
+            <p className="text-xs sm:text-sm text-emerald-950 dark:text-emerald-100 leading-relaxed">
               {recipe.adaptationNotes}
             </p>
           </div>
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex bg-gray-200/80 rounded-2xl p-1 shadow-inner">
+        <div className="flex bg-gray-200/80 dark:bg-gray-800/80 rounded-2xl p-1 shadow-inner">
           {(['ingredients', 'steps', 'notes'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 tab === t
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-800'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
               {t === 'ingredients' ? '🥗 Ingredienti' : t === 'steps' ? '👨‍🍳 Preparazione' : '📝 Note'}
@@ -602,23 +602,23 @@ export default function RecipeDetailPage() {
             {/* View Mode Switcher */}
             <div className="card p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Organizzazione ingredienti
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 dark:text-gray-500">
                   {multiVariantView === 'boxes' && variants.length > 1
                     ? `${variants.length} pasti a confronto`
                     : `${activeVariant.adaptedIngredients.length} ingredienti`}
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 rounded-xl">
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
                 <button
                   onClick={() => setIngredientView('category')}
                   className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center ${
                     ingredientView === 'category'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-800'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                   }`}
                 >
                   🥩 Per Macro
@@ -627,8 +627,8 @@ export default function RecipeDetailPage() {
                   onClick={() => setIngredientView('component')}
                   className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center ${
                     ingredientView === 'component'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-800'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                   }`}
                 >
                   🥪 Componenti
@@ -637,8 +637,8 @@ export default function RecipeDetailPage() {
                   onClick={() => setIngredientView('list')}
                   className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center ${
                     ingredientView === 'list'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-800'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                   }`}
                 >
                   📋 Lista
@@ -654,38 +654,38 @@ export default function RecipeDetailPage() {
                     key={v.id}
                     className={`card p-4 space-y-3 border-2 ${
                       v.mealType === 'lunch'
-                        ? 'border-amber-200/90 bg-amber-50/10'
+                        ? 'border-amber-200/90 bg-amber-50/10 dark:bg-amber-950/20 dark:border-amber-800/60'
                         : v.isVariant
-                        ? 'border-emerald-300/90 bg-emerald-50/15'
-                        : 'border-indigo-200/90 bg-indigo-50/10'
+                        ? 'border-emerald-300/90 bg-emerald-50/15 dark:bg-emerald-950/20 dark:border-emerald-800/60'
+                        : 'border-indigo-200/90 bg-indigo-50/10 dark:bg-indigo-950/20 dark:border-indigo-800/60'
                     }`}
                   >
-                    <div className="flex items-center justify-between pb-2.5 border-b border-gray-200/70 gap-2 flex-wrap">
+                    <div className="flex items-center justify-between pb-2.5 border-b border-gray-200/70 dark:border-gray-800 gap-2 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-extrabold text-sm sm:text-base text-gray-900">
+                        <h3 className="font-extrabold text-sm sm:text-base text-gray-900 dark:text-gray-100">
                           {v.label}
                         </h3>
                         {v.isVariant && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
                             Alternativa
                           </span>
                         )}
                       </div>
                       {v.nutritionalValues && (
-                        <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-white px-2.5 py-1 rounded-xl border border-gray-200 shadow-xs">
-                          <span className="text-primary-700">{v.nutritionalValues.calories} kcal</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-red-600">{v.nutritionalValues.proteins}g P</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-amber-600">{v.nutritionalValues.carbs}g C</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-gray-500">{v.nutritionalValues.fats}g F</span>
+                        <div className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 px-2.5 py-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xs">
+                          <span className="text-primary-700 dark:text-primary-400">{v.nutritionalValues.calories} kcal</span>
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+                          <span className="text-red-600 dark:text-red-400">{v.nutritionalValues.proteins}g P</span>
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+                          <span className="text-amber-600 dark:text-amber-400">{v.nutritionalValues.carbs}g C</span>
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+                          <span className="text-gray-500 dark:text-gray-400">{v.nutritionalValues.fats}g F</span>
                         </div>
                       )}
                     </div>
 
                     {v.adaptationNotes && (
-                      <p className="text-xs text-gray-600 bg-white/80 p-2.5 rounded-xl border border-gray-200/60 leading-relaxed">
+                      <p className="text-xs text-gray-600 dark:text-gray-300 bg-white/80 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700 leading-relaxed">
                         💡 {v.adaptationNotes}
                       </p>
                     )}
@@ -698,7 +698,7 @@ export default function RecipeDetailPage() {
               /* Single Variant View */
               <div className="space-y-3">
                 {activeVariant.adaptationNotes && (
-                  <p className="text-xs text-gray-600 bg-primary-50/50 p-2.5 rounded-xl border border-primary-200/60 leading-relaxed">
+                  <p className="text-xs text-gray-600 dark:text-gray-300 bg-primary-50/50 dark:bg-primary-950/40 p-2.5 rounded-xl border border-primary-200/60 dark:border-primary-900 leading-relaxed">
                     💡 {activeVariant.adaptationNotes}
                   </p>
                 )}
@@ -712,14 +712,14 @@ export default function RecipeDetailPage() {
                 ing.originalQuantity !== recipe.adaptedIngredients[i]?.adaptedQuantity
             ) && (
               <div className="card p-4 opacity-60">
-                <h3 className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">
                   📋 Ricetta originale (per confronto)
                 </h3>
                 <div className="space-y-1.5">
                   {recipe.originalIngredients.map((ing, i) => (
                     <div key={i} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{ing.name}</span>
-                      <span className="text-gray-500 line-through">{ing.originalQuantity}</span>
+                      <span className="text-gray-600 dark:text-gray-300">{ing.name}</span>
+                      <span className="text-gray-500 dark:text-gray-500 line-through">{ing.originalQuantity}</span>
                     </div>
                   ))}
                 </div>
@@ -738,21 +738,21 @@ export default function RecipeDetailPage() {
                     key={v.id}
                     className={`card p-4 space-y-3 border-2 ${
                       v.mealType === 'lunch'
-                        ? 'border-amber-200/90 bg-amber-50/10'
+                        ? 'border-amber-200/90 bg-amber-50/10 dark:bg-amber-950/20 dark:border-amber-800/60'
                         : v.isVariant
-                        ? 'border-emerald-300/90 bg-emerald-50/15'
-                        : 'border-indigo-200/90 bg-indigo-50/10'
+                        ? 'border-emerald-300/90 bg-emerald-50/15 dark:bg-emerald-950/20 dark:border-emerald-800/60'
+                        : 'border-indigo-200/90 bg-indigo-50/10 dark:bg-indigo-950/20 dark:border-indigo-800/60'
                     }`}
                   >
-                    <div className="flex items-center justify-between pb-2 border-b border-gray-200/70 gap-2">
+                    <div className="flex items-center justify-between pb-2 border-b border-gray-200/70 dark:border-gray-800 gap-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-lg">👨‍🍳</span>
-                        <h3 className="font-extrabold text-sm sm:text-base text-gray-900">
+                        <h3 className="font-extrabold text-sm sm:text-base text-gray-900 dark:text-gray-100">
                           Preparazione per {v.label}
                         </h3>
                       </div>
                       {v.nutritionalValues && (
-                        <span className="text-xs font-bold text-primary-700 bg-white px-2.5 py-1 rounded-lg border border-gray-200 shadow-xs">
+                        <span className="text-xs font-bold text-primary-700 dark:text-primary-300 bg-white dark:bg-gray-800 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xs">
                           {v.nutritionalValues.calories} kcal
                         </span>
                       )}
@@ -772,7 +772,7 @@ export default function RecipeDetailPage() {
         {tab === 'notes' && (
           <div className="space-y-3 mb-4">
             <div className="card p-4">
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Le mie note</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Le mie note</label>
               <textarea
                 placeholder="Aggiungi note personali…"
                 value={recipe.personalNotes ?? ''}
@@ -783,7 +783,7 @@ export default function RecipeDetailPage() {
             </div>
             <div className="card p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-gray-700">La mia valutazione</p>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">La mia valutazione</p>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -801,12 +801,12 @@ export default function RecipeDetailPage() {
                   href={recipe.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 underline flex items-center gap-1"
+                  className="text-sm text-blue-600 dark:text-blue-400 underline flex items-center gap-1"
                 >
                   🔗 Video originale
                 </a>
               )}
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                 Aggiunta il {formatDate(recipe.createdAt)}
               </p>
             </div>
@@ -817,7 +817,7 @@ export default function RecipeDetailPage() {
         <div className="flex gap-3 pb-8">
           <button
             onClick={deleteRecipe}
-            className="btn-secondary text-red-500 border-red-200 flex-1 hover:bg-red-50 font-semibold"
+            className="btn-secondary text-red-500 border-red-200 dark:border-red-900/60 dark:hover:bg-red-950/30 flex-1 hover:bg-red-50 font-semibold"
           >
             🗑 Elimina
           </button>

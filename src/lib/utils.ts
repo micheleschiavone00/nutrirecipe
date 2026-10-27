@@ -45,13 +45,13 @@ export const CATEGORY_ICONS: Record<string, string> = {
 }
 
 export const CATEGORY_COLORS = {
-  carbs: 'bg-amber-100 text-amber-800',
-  proteins: 'bg-red-100 text-red-800',
-  vegetables: 'bg-green-100 text-green-800',
-  fruits: 'bg-purple-100 text-purple-800',
-  dairy: 'bg-blue-100 text-blue-800',
-  fats: 'bg-yellow-100 text-yellow-800',
-  other: 'bg-gray-100 text-gray-800',
+  carbs: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+  proteins: 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800/60',
+  vegetables: 'bg-green-100 dark:bg-emerald-950/60 text-green-800 dark:text-emerald-300 border-green-200 dark:border-emerald-800/60',
+  fruits: 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800/60',
+  dairy: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800/60',
+  fats: 'bg-yellow-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800/60',
+  other: 'bg-gray-100 dark:bg-gray-800/60 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700/60',
 } as const
 
 export function formatDate(date: Date | string): string {

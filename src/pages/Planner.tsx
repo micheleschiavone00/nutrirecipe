@@ -70,14 +70,14 @@ export default function PlannerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <PageHeader
         title="Meal Planner"
         action={
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowTemplatesModal(true)}
-              className="flex items-center gap-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors"
+              className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors"
             >
               📋 Modelli
             </button>
@@ -92,17 +92,17 @@ export default function PlannerPage() {
       />
 
       {/* Week navigation */}
-      <div className="bg-white border-b border-gray-100 px-4 py-3">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between">
-          <button onClick={prevWeek} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+          <button onClick={prevWeek} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">
             ←
           </button>
           <div className="text-center">
-            <p className="font-semibold text-gray-900 text-sm">
+            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
               {formatDayLabel(weekDays[0], true)} – {formatDayLabel(weekDays[6], true)}
             </p>
           </div>
-          <button onClick={nextWeek} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+          <button onClick={nextWeek} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">
             →
           </button>
         </div>
@@ -114,7 +114,7 @@ export default function PlannerPage() {
               key={day}
               className={cn(
                 'flex-shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl text-xs font-medium',
-                isToday(day) ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'
+                isToday(day) ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
               )}
             >
               <span>{new Date(day).toLocaleDateString('it-IT', { weekday: 'short' })}</span>

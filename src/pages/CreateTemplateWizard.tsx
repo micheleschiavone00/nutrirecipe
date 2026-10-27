@@ -178,9 +178,9 @@ export default function CreateTemplateWizardPage() {
   const currentDayInfo = DAYS_CONFIG[currentDayIndex] || DAYS_CONFIG[0]
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pb-28">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col pb-28">
       {/* Top Header */}
-      <div className="bg-white border-b border-gray-200/80 sticky top-0 z-30">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200/80 dark:border-gray-800 sticky top-0 z-30">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <button
@@ -190,15 +190,15 @@ export default function CreateTemplateWizardPage() {
                   navigate('/planner')
                 }
               }}
-              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 transition-colors"
+              className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300 transition-colors"
             >
               ←
             </button>
             <div>
-              <h1 className="font-extrabold text-gray-900 text-sm sm:text-base leading-tight">
+              <h1 className="font-extrabold text-gray-900 dark:text-gray-100 text-sm sm:text-base leading-tight">
                 Crea Settimana Standard
               </h1>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">
                 Pianificazione guidata con frequenze nutrizionali
               </p>
             </div>
@@ -207,7 +207,7 @@ export default function CreateTemplateWizardPage() {
           <button
             type="button"
             onClick={() => setCurrentDayIndex(7)}
-            className="text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-xl transition-all shadow-xs"
+            className="text-xs font-bold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 hover:bg-primary-100 dark:hover:bg-primary-900/60 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-xl transition-all shadow-xs"
           >
             📋 Riepilogo ({templateMeals.length})
           </button>
@@ -227,7 +227,7 @@ export default function CreateTemplateWizardPage() {
                 className={`flex-1 min-w-[3.4rem] py-1.5 px-1 rounded-xl text-center border transition-all ${
                   isSelected
                     ? 'bg-primary-600 text-white border-primary-600 shadow-md scale-105'
-                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200/80'
+                    : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200/80 dark:border-gray-700'
                 }`}
               >
                 <div className="flex items-center justify-center gap-0.5">
@@ -236,7 +236,7 @@ export default function CreateTemplateWizardPage() {
                 </div>
                 <span
                   className={`text-[9px] font-semibold block mt-0.5 ${
-                    isSelected ? 'text-primary-100' : count > 0 ? 'text-primary-600' : 'text-gray-400'
+                    isSelected ? 'text-primary-100' : count > 0 ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   {count > 0 ? `${count} pasti` : 'vuoto'}
@@ -270,13 +270,13 @@ export default function CreateTemplateWizardPage() {
             </div>
 
             {/* Smart Nutrition Advisor Bar & Frequency Trackers */}
-            <div className="bg-white rounded-2xl border border-gray-200/80 p-3.5 space-y-3 shadow-xs">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 p-3.5 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-gray-800 uppercase tracking-wide flex items-center gap-1.5">
+                <span className="text-[11px] font-extrabold text-gray-800 dark:text-gray-200 uppercase tracking-wide flex items-center gap-1.5">
                   <span>📊</span>
                   <span>Frequenze Settimana finora</span>
                 </span>
-                <span className="text-[10px] text-gray-400">Aggiornato in tempo reale</span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500">Aggiornato in tempo reale</span>
               </div>
 
               {/* Category Badges Counter */}
@@ -293,10 +293,10 @@ export default function CreateTemplateWizardPage() {
                       key={rule.id}
                       className={`flex-shrink-0 px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs ${
                         isOver
-                          ? 'bg-rose-50 border-rose-300 text-rose-900 ring-1 ring-rose-400'
+                          ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 ring-1 ring-rose-400'
                           : count > 0
-                          ? 'bg-primary-50 border-primary-200 text-primary-900'
-                          : 'bg-gray-50 border-gray-200 text-gray-600'
+                          ? 'bg-primary-50 dark:bg-primary-950/60 border-primary-200 dark:border-primary-800 text-primary-900 dark:text-primary-200'
+                          : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
                       }`}
                     >
                       <span className="text-sm">{info.icon}</span>
@@ -313,16 +313,16 @@ export default function CreateTemplateWizardPage() {
 
               {/* Contextual Notices (Cheat Meal Reminder & Limit Warnings) */}
               {evaluation.notices.length > 0 && (
-                <div className="space-y-2 pt-1 border-t border-gray-100">
+                <div className="space-y-2 pt-1 border-t border-gray-100 dark:border-gray-800">
                   {evaluation.notices.map(notice => (
                     <div
                       key={notice.id}
                       className={`p-3 rounded-2xl border text-xs flex flex-col gap-1.5 ${
                         notice.type === 'cheat_reminder'
-                          ? 'bg-purple-50 border-purple-200 text-purple-900'
+                          ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/80 text-purple-900 dark:text-purple-200'
                           : notice.type === 'limit_warning'
-                          ? 'bg-amber-50 border-amber-200 text-amber-900'
-                          : 'bg-sky-50 border-sky-200 text-sky-900'
+                          ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200'
+                          : 'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800/80 text-sky-900 dark:text-sky-200'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -369,12 +369,12 @@ export default function CreateTemplateWizardPage() {
                 return (
                   <div
                     key={mealType}
-                    className="bg-white rounded-2xl border border-gray-200/80 p-3.5 space-y-2.5 shadow-xs"
+                    className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 p-3.5 space-y-2.5 shadow-xs"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{MEAL_ICONS[mealType]}</span>
-                        <h3 className="font-extrabold text-gray-900 text-xs sm:text-sm">
+                        <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
                           {MEAL_LABELS[mealType]}
                         </h3>
                       </div>
@@ -389,7 +389,7 @@ export default function CreateTemplateWizardPage() {
                           <button
                             type="button"
                             onClick={() => removeMealFromSlot(currentDayIndex, mealType)}
-                            className="text-gray-300 hover:text-red-500 text-xs p-1"
+                            className="text-gray-300 dark:text-gray-500 hover:text-red-500 text-xs p-1"
                             title="Rimuovi pasto"
                           >
                             ✕
@@ -400,27 +400,27 @@ export default function CreateTemplateWizardPage() {
 
                     {assigned ? (
                       /* Assigned Meal View */
-                      <div className="bg-gray-50 border border-gray-200/80 rounded-xl p-3 flex items-center justify-between gap-3">
+                      <div className="bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           {recipe?.thumbnailUrl ? (
                             <img
                               src={recipe.thumbnailUrl}
                               alt={recipe.title}
-                              className="w-12 h-12 rounded-xl object-cover border border-gray-200 flex-shrink-0"
+                              className="w-12 h-12 rounded-xl object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-xl flex-shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-gray-800 flex items-center justify-center text-xl flex-shrink-0">
                               {assigned.isCheatMeal ? '🍕' : MEAL_ICONS[mealType]}
                             </div>
                           )}
 
                           <div className="min-w-0">
-                            <h4 className="font-bold text-gray-900 text-xs sm:text-sm truncate">
+                            <h4 className="font-bold text-gray-900 dark:text-gray-100 text-xs sm:text-sm truncate">
                               {recipe?.title || assigned.customLabel || 'Pasto personalizzato'}
                             </h4>
-                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
+                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
                               {assigned.variantLabel && (
-                                <span className="bg-primary-100 text-primary-800 font-bold px-1.5 py-0.5 rounded">
+                                <span className="bg-primary-100 dark:bg-primary-950/60 text-primary-800 dark:text-primary-300 font-bold px-1.5 py-0.5 rounded">
                                   {assigned.variantLabel}
                                 </span>
                               )}
@@ -430,7 +430,7 @@ export default function CreateTemplateWizardPage() {
                                 </span>
                               )}
                               {assigned.isCheatMeal && (
-                                <span className="text-purple-700 font-bold">Pasto Libero ✓</span>
+                                <span className="text-purple-700 dark:text-purple-400 font-bold">Pasto Libero ✓</span>
                               )}
                             </div>
                           </div>
@@ -450,7 +450,7 @@ export default function CreateTemplateWizardPage() {
                         <button
                           type="button"
                           onClick={() => setPickerSlot({ dayOffset: currentDayIndex, mealType })}
-                          className="flex-1 py-2.5 px-3 border border-dashed border-gray-300 hover:border-primary-400 rounded-xl text-xs font-bold text-gray-600 hover:text-primary-700 flex items-center justify-center gap-1.5 bg-gray-50/50 hover:bg-primary-50/50 transition-all"
+                          className="flex-1 py-2.5 px-3 border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-400 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:text-primary-700 dark:hover:text-primary-400 flex items-center justify-center gap-1.5 bg-gray-50/50 dark:bg-gray-800/40 hover:bg-primary-50/50 dark:hover:bg-primary-950/30 transition-all"
                         >
                           <span>➕</span>
                           <span>Scegli cosa mangiare</span>
@@ -460,7 +460,7 @@ export default function CreateTemplateWizardPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickSetCheat(currentDayIndex, mealType)}
-                            className="py-2.5 px-3 rounded-xl border border-purple-200 hover:border-purple-300 bg-purple-50/80 hover:bg-purple-100 text-purple-900 font-bold text-xs flex items-center gap-1 transition-all flex-shrink-0"
+                            className="py-2.5 px-3 rounded-xl border border-purple-200 dark:border-purple-800/80 hover:border-purple-300 bg-purple-50/80 dark:bg-purple-950/40 hover:bg-purple-100 text-purple-900 dark:text-purple-300 font-bold text-xs flex items-center gap-1 transition-all flex-shrink-0"
                             title={`Imposta ${mealType === 'lunch' ? 'Pranzo' : 'Cena'} come Pasto Libero / Sgarro`}
                           >
                             <span>🍕</span>
@@ -477,14 +477,14 @@ export default function CreateTemplateWizardPage() {
         ) : (
           /* Step 7 / Riepilogo Finale & Salvataggio Modello */
           <div className="space-y-4">
-            <div className="bg-white rounded-3xl border border-gray-200/80 p-5 shadow-sm space-y-4">
-              <div className="flex items-center gap-2.5 border-b border-gray-100 pb-3">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200/80 dark:border-gray-800 p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2.5 border-b border-gray-100 dark:border-gray-800 pb-3">
                 <span className="text-3xl">📋</span>
                 <div>
-                  <h2 className="text-base sm:text-lg font-extrabold text-gray-900">
+                  <h2 className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-gray-100">
                     Riepilogo Settimana Standard
                   </h2>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Controlla il bilanciamento nutrizionale prima di salvare il modello.
                   </p>
                 </div>
@@ -492,7 +492,7 @@ export default function CreateTemplateWizardPage() {
 
               {/* Weekly Frequency Scorecard */}
               <div className="space-y-2">
-                <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide block">
+                <span className="text-xs font-extrabold text-gray-800 dark:text-gray-200 uppercase tracking-wide block">
                   Bilanciamento Nutrizionale
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -509,10 +509,10 @@ export default function CreateTemplateWizardPage() {
                         key={rule.id}
                         className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between ${
                           isOver
-                            ? 'bg-rose-50 border-rose-300 text-rose-900'
+                            ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200'
                             : isGood
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                            : 'bg-gray-50 border-gray-200 text-gray-700'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+                            : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
@@ -529,8 +529,8 @@ export default function CreateTemplateWizardPage() {
               </div>
 
               {/* 7-Day Matrix Summary */}
-              <div className="space-y-2 pt-2 border-t border-gray-100">
-                <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide block">
+              <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <span className="text-xs font-extrabold text-gray-800 dark:text-gray-200 uppercase tracking-wide block">
                   Pasti per Giorno ({templateMeals.length} totali)
                 </span>
                 <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
@@ -540,21 +540,21 @@ export default function CreateTemplateWizardPage() {
                       <div
                         key={day.dayOffset}
                         onClick={() => setCurrentDayIndex(idx)}
-                        className="p-2.5 rounded-xl border border-gray-200 hover:border-primary-400 bg-gray-50/70 hover:bg-white flex items-center justify-between cursor-pointer transition-all"
+                        className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary-400 bg-gray-50/70 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 flex items-center justify-between cursor-pointer transition-all"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-base">{day.emoji}</span>
-                          <span className="font-bold text-xs text-gray-900">{day.name}</span>
-                          <span className="text-[10px] text-gray-400">({dayMeals.length} pasti)</span>
+                          <span className="font-bold text-xs text-gray-900 dark:text-gray-100">{day.name}</span>
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500">({dayMeals.length} pasti)</span>
                         </div>
 
-                        <div className="flex items-center gap-1 text-[11px] text-gray-600">
+                        <div className="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
                           {dayMeals.map(m => (
                             <span key={m.mealType} title={MEAL_LABELS[m.mealType]}>
                               {m.isCheatMeal ? '🍕' : MEAL_ICONS[m.mealType]}
                             </span>
                           ))}
-                          <span className="text-primary-600 font-bold ml-1 text-xs">Modifica →</span>
+                          <span className="text-primary-600 dark:text-primary-400 font-bold ml-1 text-xs">Modifica →</span>
                         </div>
                       </div>
                     )
@@ -563,9 +563,9 @@ export default function CreateTemplateWizardPage() {
               </div>
 
               {/* Metadata Form */}
-              <div className="space-y-3 pt-2 border-t border-gray-100">
+              <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <div>
-                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wide block mb-1">
+                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide block mb-1">
                     Nome del Modello *
                   </label>
                   <input
@@ -579,7 +579,7 @@ export default function CreateTemplateWizardPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-gray-800 uppercase tracking-wide block mb-1">
+                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide block mb-1">
                     Note / Descrizione (opzionale)
                   </label>
                   <input
@@ -619,7 +619,7 @@ export default function CreateTemplateWizardPage() {
       </div>
 
       {/* Pinned Bottom Navigation Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200/80 p-3 sm:p-4 pb-[max(1rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200/80 dark:border-gray-800 p-3 sm:p-4 pb-[max(1rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
           {currentDayIndex > 0 ? (
             <button
@@ -636,7 +636,7 @@ export default function CreateTemplateWizardPage() {
               onClick={() => {
                 if (confirm('Vuoi annullare e tornare al Meal Planner?')) navigate('/planner')
               }}
-              className="text-xs font-bold text-gray-400 hover:text-gray-600 px-3 py-2"
+              className="text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 px-3 py-2"
             >
               Annulla
             </button>
@@ -644,11 +644,11 @@ export default function CreateTemplateWizardPage() {
 
           <div className="text-center">
             {currentDayIndex < 7 ? (
-              <p className="text-xs font-extrabold text-gray-900">
+              <p className="text-xs font-extrabold text-gray-900 dark:text-gray-100">
                 {currentDayInfo.name} • {currentDayMeals.length}/5 pasti
               </p>
             ) : (
-              <p className="text-xs font-extrabold text-primary-700">
+              <p className="text-xs font-extrabold text-primary-700 dark:text-primary-400">
                 Riepilogo Finale
               </p>
             )}
@@ -691,39 +691,39 @@ export default function CreateTemplateWizardPage() {
           onClick={() => setPickerSlot(null)}
         >
           <div
-            className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
+            className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden border border-gray-100 dark:border-gray-800"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
+            <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{MEAL_ICONS[pickerSlot.mealType]}</span>
-                  <h3 className="font-extrabold text-gray-900 text-base leading-tight">
+                  <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-base leading-tight">
                     {DAYS_CONFIG[pickerSlot.dayOffset]?.name} • {MEAL_LABELS[pickerSlot.mealType]}
                   </h3>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                   Scegli dal ricettario o inserisci un pasto libero
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setPickerSlot(null)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Quick Switch: Ricettario vs Pasto Libero */}
-            <div className="px-4 sm:px-5 pt-3 pb-1 flex-shrink-0 bg-white">
-              <div className="flex bg-gray-100 p-1 rounded-xl">
+            <div className="px-4 sm:px-5 pt-3 pb-1 flex-shrink-0 bg-white dark:bg-gray-900">
+              <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setIsCustomMode(false)}
                   className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                    !isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    !isCustomMode ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
                   📖 Dal Ricettario
@@ -732,7 +732,7 @@ export default function CreateTemplateWizardPage() {
                   type="button"
                   onClick={() => setIsCustomMode(true)}
                   className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                    isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    isCustomMode ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
                   🍕 Pasto Libero / Testo
@@ -757,15 +757,15 @@ export default function CreateTemplateWizardPage() {
                         true
                       )
                     }}
-                    className="w-full p-4 rounded-2xl border-2 border-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.99]"
+                    className="w-full p-4 rounded-2xl border-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-900 dark:text-purple-200 font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.99]"
                   >
                     <span>🍕</span>
                     <span>Imposta come Pasto Libero / Cheat Meal</span>
                   </button>
                 </div>
 
-                <div className="space-y-1.5 pt-2 border-t border-gray-100">
-                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                <div className="space-y-1.5 pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     Oppure inserisci un pasto libero personalizzato
                   </label>
                   <input
@@ -809,7 +809,7 @@ export default function CreateTemplateWizardPage() {
             ) : (
               /* Cookbook Recipe Picker with Intelligent Frequency Guidance */
               <>
-                <div className="px-4 sm:px-5 py-2 space-y-2 flex-shrink-0 bg-white">
+                <div className="px-4 sm:px-5 py-2 space-y-2 flex-shrink-0 bg-white dark:bg-gray-900">
                   <div className="relative">
                     <span className="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
                     <input
@@ -829,7 +829,7 @@ export default function CreateTemplateWizardPage() {
                       className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                         pickerCategoryFilter === 'all'
                           ? 'bg-primary-600 text-white shadow-xs'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
                       Tutte ({allRecipes?.length || 0})
@@ -840,7 +840,7 @@ export default function CreateTemplateWizardPage() {
                       className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                         pickerCategoryFilter === 'fish'
                           ? 'bg-sky-600 text-white shadow-xs'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
                       🐟 Pesce
@@ -851,7 +851,7 @@ export default function CreateTemplateWizardPage() {
                       className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                         pickerCategoryFilter === 'white_meat'
                           ? 'bg-amber-600 text-white shadow-xs'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
                       🍗 Bianca
@@ -862,7 +862,7 @@ export default function CreateTemplateWizardPage() {
                       className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                         pickerCategoryFilter === 'legumes'
                           ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
                       🫘 Legumi
@@ -873,7 +873,7 @@ export default function CreateTemplateWizardPage() {
                       className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                         pickerCategoryFilter === 'red_meat'
                           ? 'bg-rose-600 text-white shadow-xs'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
                       🥩 Rossa
@@ -916,10 +916,10 @@ export default function CreateTemplateWizardPage() {
                       return (
                         <div
                           key={recipe.id}
-                          className="bg-gray-50 hover:bg-primary-50/70 border border-gray-200/80 hover:border-primary-300 rounded-2xl p-3 flex flex-col gap-2 transition-all"
+                          className="bg-gray-50 dark:bg-gray-800/60 hover:bg-primary-50/70 dark:hover:bg-primary-950/40 border border-gray-200/80 dark:border-gray-700/80 hover:border-primary-300 dark:hover:border-primary-700 rounded-2xl p-3 flex flex-col gap-2 transition-all"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-primary-100 border border-primary-200/60 overflow-hidden flex items-center justify-center flex-shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-gray-800 border border-primary-200/60 dark:border-gray-700 overflow-hidden flex items-center justify-center flex-shrink-0">
                               {recipe.thumbnailUrl ? (
                                 <img
                                   src={recipe.thumbnailUrl}
@@ -932,10 +932,10 @@ export default function CreateTemplateWizardPage() {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-gray-900 text-xs sm:text-sm truncate">
+                              <h4 className="font-bold text-gray-900 dark:text-gray-100 text-xs sm:text-sm truncate">
                                 {recipe.title}
                               </h4>
-                              <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-gray-500 flex-wrap">
+                              <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-gray-500 dark:text-gray-400 flex-wrap">
                                 <span className={`font-bold px-1.5 py-0.2 rounded border ${catInfo.badgeColor}`}>
                                   {catInfo.icon} {catInfo.label}
                                 </span>
@@ -967,10 +967,10 @@ export default function CreateTemplateWizardPage() {
                             <div
                               className={`text-[10px] font-bold p-1.5 rounded-lg flex items-center justify-between ${
                                 recCheck.status === 'recommended'
-                                  ? 'bg-sky-50 text-sky-800 border border-sky-200'
+                                  ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
                                   : recCheck.status === 'discouraged'
-                                  ? 'bg-rose-50 text-rose-800 border border-rose-200'
-                                  : 'bg-gray-100 text-gray-700'
+                                  ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
                               }`}
                             >
                               <span>{recCheck.badge}</span>
@@ -984,8 +984,8 @@ export default function CreateTemplateWizardPage() {
 
                           {/* Variants if present */}
                           {recipe.variants && recipe.variants.length > 1 && (
-                            <div className="pt-1 border-t border-gray-200/60 flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] font-bold text-gray-500 uppercase">
+                            <div className="pt-1 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">
                                 Variante:
                               </span>
                               {recipe.variants.map(v => (
@@ -1001,7 +1001,7 @@ export default function CreateTemplateWizardPage() {
                                       v.label
                                     )
                                   }}
-                                  className="text-[10px] font-bold bg-white hover:bg-primary-100 border border-gray-200 px-2 py-0.5 rounded-lg text-gray-700 hover:text-primary-900 transition-colors"
+                                  className="text-[10px] font-bold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-primary-100 dark:hover:bg-gray-700 px-2 py-0.5 rounded-lg transition-colors"
                                 >
                                   {v.label}
                                 </button>
@@ -1014,11 +1014,11 @@ export default function CreateTemplateWizardPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex-shrink-0 border-t border-gray-100 bg-white p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex items-center justify-between">
+                <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => setIsCustomMode(true)}
-                    className="text-xs font-bold text-primary-600 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
                   >
                     <span>🍕</span>
                     <span>Imposta pasto libero invece</span>

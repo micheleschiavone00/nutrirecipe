@@ -62,52 +62,52 @@ export default function SettingsPage() {
   const hasRapidAPI = isRapidAPIConfigured()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
       <PageHeader title="Impostazioni" />
 
       <div className="px-4 pt-4 space-y-4 max-w-lg mx-auto">
         {/* API Services Status */}
         <div className="card p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">🔑 Servizi & API</h2>
-            <span className="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">🔑 Servizi & API</h2>
+            <span className="text-xs bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-semibold px-2.5 py-0.5 rounded-full">
               Uso Personale
             </span>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Le API key sono integrate nel codice dell'app per la massima comodità e privacy.
           </p>
 
           <div className="space-y-2 pt-1">
             {/* RapidAPI */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <span className="text-xl">📸</span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">RapidAPI Scraper</p>
-                  <p className="text-xs text-gray-500">Instagram, TikTok & YouTube</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">RapidAPI Scraper</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Instagram, TikTok & YouTube</p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 {hasRapidAPI ? 'Attiva' : 'Disattivata'}
               </span>
             </div>
 
             {/* OpenAI */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <span className="text-xl">🤖</span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">OpenAI (GPT-4o)</p>
-                  <p className="text-xs text-gray-500">Analisi PDF & adattamento ricette</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">OpenAI (GPT-4o)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Analisi PDF & adattamento ricette</p>
                 </div>
               </div>
               <span
                 className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${
                   hasOpenAI
-                    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                    : 'text-amber-700 bg-amber-50 border-amber-200'
+                    ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800'
+                    : 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800'
                 }`}
               >
                 <span
@@ -126,47 +126,47 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xl">🎨</span>
-              <h2 className="font-semibold text-gray-900">Icona App & Stili a Confronto</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Icona App & Stili a Confronto</h2>
             </div>
-            <span className="text-xs bg-primary-50 text-primary-700 font-semibold px-2 py-0.5 rounded-full border border-primary-200">
+            <span className="text-xs bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 font-semibold px-2 py-0.5 rounded-full border border-primary-200 dark:border-primary-800">
               Novità v1.4
             </span>
           </div>
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
             Abbiamo sostituito la precedente insalata con un sontuoso <strong>hamburger gourmet su bilancia digitale</strong> (180g). Confronta gli stili realizzati:
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             {/* 1. Liquid Glass 3D */}
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-200 mb-2">
+            <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 mb-2">
                 <img src="/icons/icon-liquidglass.png" alt="Liquid Glass 3D" className="w-full h-full object-cover" />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-primary-700 bg-primary-100 px-2 py-0.5 rounded-md mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary-700 dark:text-primary-300 bg-primary-100 dark:bg-primary-950/80 px-2 py-0.5 rounded-md mb-1">
                 Liquid Glass 3D
               </span>
-              <h3 className="text-xs font-bold text-gray-900">Predefinita</h3>
-              <p className="text-[10px] text-gray-500 mt-1">
+              <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100">Predefinita</h3>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                 Effetto vetro smerigliato con riflessi liquidi e illuminazione studio su sfondo smeraldo.
               </p>
             </div>
 
             {/* 2. Material Design */}
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-200 mb-2">
+            <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 mb-2">
                 <img src="/icons/icon-material.png" alt="Material Design" className="w-full h-full object-cover" />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md mb-1">
                 Material 3
               </span>
-              <h3 className="text-xs font-bold text-gray-900">Grafica Vettoriale</h3>
-              <p className="text-[10px] text-gray-500 mt-1">
+              <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100">Grafica Vettoriale</h3>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                 Design piatto geometrico con ombre di elevazione e colori saturi in stile Google Material.
               </p>
             </div>
 
             {/* 3. Dark Mode */}
-            <div className="bg-gray-900 text-white border border-gray-800 rounded-2xl p-3 flex flex-col items-center text-center">
+            <div className="bg-gray-900 dark:bg-gray-950 text-white border border-gray-850 dark:border-gray-800 rounded-2xl p-3 flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border border-gray-700 mb-2">
                 <img src="/icons/icon-dark.png" alt="Dark Mode" className="w-full h-full object-cover" />
               </div>
@@ -180,9 +180,9 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-start gap-2.5">
+          <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl p-3 flex items-start gap-2.5">
             <span className="text-base">🌗</span>
-            <p className="text-[11px] text-emerald-900 leading-relaxed">
+            <p className="text-[11px] text-emerald-900 dark:text-emerald-200 leading-relaxed">
               <strong>Adattamento Automatico:</strong> NutriRecipe rileva le impostazioni del tuo telefono (iOS / Android / Mac) e serve automaticamente l&apos;icona Dark Mode quando il dispositivo è in modalità scura.
             </p>
           </div>
@@ -191,12 +191,12 @@ export default function SettingsPage() {
         {/* Nutrition Profile */}
         <div className="card p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span>🥗</span>
               <span>Piano Nutrizionale</span>
             </h2>
             {activeProfile && (
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                 Attivo
               </span>
             )}
@@ -204,9 +204,9 @@ export default function SettingsPage() {
 
           {activeProfile ? (
             <div className="space-y-2">
-              <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-1">
-                <p className="text-sm font-bold text-gray-900">{activeProfile.name}</p>
-                <p className="text-xs text-gray-500">
+              <div className="bg-gray-50 dark:bg-gray-800/60 p-3 rounded-xl border border-gray-100 dark:border-gray-800 space-y-1">
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{activeProfile.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {activeProfile.meals?.length || 0} pasti configurati • Aggiornato il{' '}
                   {formatDate(activeProfile.updatedAt || activeProfile.createdAt)}
                 </p>
@@ -220,14 +220,14 @@ export default function SettingsPage() {
               </button>
               <button
                 onClick={() => navigate('/setup')}
-                className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                className="w-full py-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
               >
                 + Crea un nuovo piano da zero
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs text-gray-500">Nessun piano nutrizionale attualmente configurato.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Nessun piano nutrizionale attualmente configurato.</p>
               <button onClick={() => navigate('/setup')} className="btn-primary w-full text-xs">
                 Crea piano nutrizionale
               </button>
@@ -348,22 +348,22 @@ export default function SettingsPage() {
         </div>
 
         {/* Novità & Changelog */}
-        <div className="card p-4 space-y-3 bg-gradient-to-br from-white to-primary-50/40 border-primary-100">
+        <div className="card p-4 space-y-3 bg-gradient-to-br from-white to-primary-50/40 dark:from-gray-900 dark:to-gray-900 border-primary-100 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xl">🚀</span>
-              <h2 className="font-semibold text-gray-900">Novità & Aggiornamenti</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Novità & Aggiornamenti</h2>
             </div>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary-100 text-primary-800 border border-primary-200">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
               v{APP_VERSION}
             </span>
           </div>
-          <p className="text-xs text-gray-600 leading-relaxed">
+          <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
             Scopri tutte le novità introdotte, come sono state migliorate le funzioni dell'app e cosa è cambiato.
           </p>
           <button
             onClick={() => setShowChangelog(true)}
-            className="btn-secondary w-full flex items-center justify-center gap-2 text-primary-700 border-primary-200 bg-white hover:bg-primary-50 transition-colors font-medium text-sm"
+            className="btn-secondary w-full flex items-center justify-center gap-2 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800 bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm"
           >
             <span>📜</span>
             <span>Cosa c'è di nuovo in v{APP_VERSION}</span>
@@ -372,19 +372,19 @@ export default function SettingsPage() {
 
         {/* About */}
         <div className="card p-4 space-y-3">
-          <h2 className="font-semibold text-gray-900">ℹ️ Informazioni</h2>
-          <div className="space-y-2 text-sm text-gray-600">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">ℹ️ Informazioni</h2>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
             <div className="flex justify-between items-center">
               <span>Versione installata</span>
-              <span className="font-medium bg-gray-100 px-2 py-0.5 rounded text-xs">v{APP_VERSION}</span>
+              <span className="font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-xs">v{APP_VERSION}</span>
             </div>
             <div className="flex justify-between">
               <span>I tuoi dati</span>
-              <span className="font-medium text-green-600">Solo sul tuo dispositivo 🔒</span>
+              <span className="font-medium text-green-600 dark:text-green-400">Solo sul tuo dispositivo 🔒</span>
             </div>
           </div>
-          <div className="bg-blue-50 rounded-xl p-3">
-            <p className="text-xs text-blue-700">
+          <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 rounded-xl p-3">
+            <p className="text-xs text-blue-700 dark:text-blue-300">
               <strong>Privacy:</strong> NutriRecipe non invia i tuoi dati personali ad alcun server esterno.
               Il piano nutrizionale, le ricette e il meal planner risiedono sul tuo dispositivo.
             </p>
@@ -393,26 +393,26 @@ export default function SettingsPage() {
 
         {/* How to install */}
         <div className="card p-4 space-y-3">
-          <h2 className="font-semibold text-gray-900">📱 Installa su iPhone</h2>
-          <div className="space-y-2 text-sm text-gray-600">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">📱 Installa su iPhone</h2>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
             <ol className="list-decimal list-inside space-y-2">
               <li>Apri questa pagina in <strong>Safari</strong> su iPhone</li>
               <li>Tocca il pulsante <strong>Condividi</strong> (□↑)</li>
               <li>Scorri e tocca <strong>"Aggiungi a schermata Home"</strong></li>
               <li>Dai un nome e tocca <strong>Aggiungi</strong></li>
             </ol>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
               Una volta installata, l'app apparirà nel menu Condividi di TikTok e Instagram.
             </p>
           </div>
         </div>
 
         {/* Danger zone */}
-        <div className="card p-4 border-red-100">
-          <h2 className="font-semibold text-red-600 mb-3">⚠️ Zona pericolosa</h2>
+        <div className="card p-4 border-red-100 dark:border-red-950/60">
+          <h2 className="font-semibold text-red-600 dark:text-red-400 mb-3">⚠️ Zona pericolosa</h2>
           <button
             onClick={resetApp}
-            className="w-full py-2.5 px-4 rounded-xl border-2 border-red-300 text-red-600 font-medium text-sm hover:bg-red-50 transition-colors"
+            className="w-full py-2.5 px-4 rounded-xl border-2 border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 font-medium text-sm hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
           >
             Reimposta app ed elimina tutti i dati
           </button>

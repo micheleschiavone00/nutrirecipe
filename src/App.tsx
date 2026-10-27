@@ -64,12 +64,12 @@ export default function App() {
 
   if (!initialRoute) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
         <div className="flex flex-col items-center gap-3">
           <div className="w-16 h-16 bg-primary-500 rounded-3xl flex items-center justify-center shadow-lg">
             <span className="text-3xl">🥗</span>
           </div>
-          <p className="text-gray-500 text-sm">Caricamento…</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Caricamento…</p>
         </div>
       </div>
     )

@@ -133,38 +133,40 @@ export default function SelectRecipeModal({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
+        className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden border border-gray-100 dark:border-gray-800"
         onClick={e => e.stopPropagation()}
       >
         {/* Fixed Header */}
-        <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
+        <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl">{MEAL_ICONS[mealType]}</span>
-              <h3 className="font-extrabold text-gray-900 text-base leading-tight">
+              <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-base leading-tight">
                 Aggiungi a {MEAL_LABELS[mealType]}
               </h3>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               📅 {formatDayLabel(date, true)}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
+            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 transition-colors"
           >
             ✕
           </button>
         </div>
 
         {/* Tab switch: Scegli dal Ricettario vs Pasto Libero */}
-        <div className="px-4 sm:px-5 pt-3 pb-1 flex-shrink-0 bg-white">
-          <div className="flex bg-gray-100 p-1 rounded-xl">
+        <div className="px-4 sm:px-5 pt-3 pb-1 flex-shrink-0 bg-white dark:bg-gray-900">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => setIsCustomMode(false)}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                !isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                !isCustomMode
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               📖 Dal Ricettario
@@ -173,7 +175,9 @@ export default function SelectRecipeModal({
               type="button"
               onClick={() => setIsCustomMode(true)}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                isCustomMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                isCustomMode
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               ✍️ Pasto Libero
@@ -265,7 +269,7 @@ export default function SelectRecipeModal({
           /* Recipe Picker from Cookbook */
           <>
             {/* Search & Filter bar fixed */}
-            <div className="px-4 sm:px-5 py-2 space-y-2 flex-shrink-0 bg-white">
+            <div className="px-4 sm:px-5 py-2 space-y-2 flex-shrink-0 bg-white dark:bg-gray-900">
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
                 <input
@@ -293,7 +297,7 @@ export default function SelectRecipeModal({
                   className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                     filterMode === 'recommended'
                       ? 'bg-primary-600 text-white shadow-xs'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
                   ✨ Per {MEAL_LABELS[mealType]}
@@ -304,7 +308,7 @@ export default function SelectRecipeModal({
                   className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                     filterMode === 'all'
                       ? 'bg-primary-600 text-white shadow-xs'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
                   Tutte ({allRecipes?.length ?? 0})
@@ -315,7 +319,7 @@ export default function SelectRecipeModal({
                   className={`px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap transition-all ${
                     filterMode === 'favorites'
                       ? 'bg-primary-600 text-white shadow-xs'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
                   ❤️ Preferite
@@ -355,12 +359,12 @@ export default function SelectRecipeModal({
                       className={cn(
                         'w-full text-left rounded-2xl p-3 flex flex-col gap-2 transition-all cursor-pointer border',
                         isSelected
-                          ? 'bg-primary-50/90 border-primary-500 ring-2 ring-primary-500/20 shadow-sm'
-                          : 'bg-gray-50 hover:bg-gray-100/80 border-gray-200/80'
+                          ? 'bg-primary-50/90 dark:bg-primary-950/60 border-primary-500 ring-2 ring-primary-500/20 shadow-sm'
+                          : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-750 border-gray-200/80 dark:border-gray-700/80'
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-primary-100 border border-primary-200/60 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-950/80 border border-primary-200/60 dark:border-primary-800 overflow-hidden flex items-center justify-center flex-shrink-0">
                           {recipe.thumbnailUrl ? (
                             <img
                               src={recipe.thumbnailUrl}
@@ -374,13 +378,13 @@ export default function SelectRecipeModal({
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <h4 className="font-bold text-gray-900 text-xs sm:text-sm truncate leading-tight">
+                            <h4 className="font-bold text-gray-900 dark:text-gray-100 text-xs sm:text-sm truncate leading-tight">
                               {recipe.title}
                             </h4>
                             {recipe.isFavorite && <span className="text-[10px] text-red-500">❤️</span>}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
-                            <span className="bg-white px-1.5 py-0.5 rounded border border-gray-200/70 font-semibold text-gray-600">
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                            <span className="bg-white dark:bg-gray-700 px-1.5 py-0.5 rounded border border-gray-200/70 dark:border-gray-600 font-semibold text-gray-600 dark:text-gray-300">
                               {MEAL_LABELS[recipe.targetMeal]}
                             </span>
                             {recipe.nutritionalValues && (
@@ -404,7 +408,7 @@ export default function SelectRecipeModal({
                               'px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs transition-all active:scale-95',
                               isSelected
                                 ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-md'
-                                : 'bg-primary-50 hover:bg-primary-600 hover:text-white text-primary-700 border border-primary-200'
+                                : 'bg-primary-50 dark:bg-primary-950/60 hover:bg-primary-600 hover:text-white text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800'
                             )}
                           >
                             <span>+ Aggiungi</span>
@@ -414,8 +418,8 @@ export default function SelectRecipeModal({
 
                       {/* Variant selector if recipe has variants and is selected */}
                       {isSelected && hasVariants && (
-                        <div className="pt-2 border-t border-primary-200/60 flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] font-bold text-primary-950 uppercase tracking-wide">
+                        <div className="pt-2 border-t border-primary-200/60 dark:border-primary-800/60 flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold text-primary-950 dark:text-primary-200 uppercase tracking-wide">
                             Variante:
                           </span>
                           {recipe.variants!.map(v => {
@@ -432,7 +436,7 @@ export default function SelectRecipeModal({
                                   'px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all',
                                   isVSelected
                                     ? 'bg-primary-600 text-white shadow-xs'
-                                    : 'bg-white hover:bg-primary-100 text-gray-700 border border-gray-200'
+                                    : 'bg-white dark:bg-gray-800 hover:bg-primary-100 dark:hover:bg-primary-950 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
                                 )}
                               >
                                 {v.label} {isVSelected && '✓'}
@@ -448,7 +452,7 @@ export default function SelectRecipeModal({
             </div>
 
             {/* Quick Action Footer: Big "Aggiungi" Confirmation or Social Import */}
-            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex flex-col gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex flex-col gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
               {selectedRecipe ? (
                 <div className="space-y-2">
                   <button

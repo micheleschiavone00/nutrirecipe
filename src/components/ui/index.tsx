@@ -28,14 +28,14 @@ interface BadgeProps {
 }
 
 const BADGE_VARIANTS = {
-  carbs: 'bg-amber-100 text-amber-800',
-  proteins: 'bg-red-100 text-red-800',
-  vegetables: 'bg-green-100 text-green-800',
-  fruits: 'bg-purple-100 text-purple-800',
-  dairy: 'bg-blue-100 text-blue-800',
-  fats: 'bg-yellow-100 text-yellow-800',
-  other: 'bg-gray-100 text-gray-700',
-  default: 'bg-primary-100 text-primary-700',
+  carbs: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60',
+  proteins: 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/60',
+  vegetables: 'bg-green-100 dark:bg-emerald-950/60 text-green-800 dark:text-emerald-300 border border-green-200 dark:border-emerald-800/60',
+  fruits: 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60',
+  dairy: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60',
+  fats: 'bg-yellow-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/60',
+  other: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+  default: 'bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800',
 }
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {
@@ -55,8 +55,8 @@ export function LoadingSpinner({ size = 'md', label }: LoadingSpinnerProps) {
   const sizes = { sm: 'w-5 h-5', md: 'w-8 h-8', lg: 'w-12 h-12' }
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className={cn('rounded-full border-4 border-primary-200 border-t-primary-500 animate-spin', sizes[size])} />
-      {label && <p className="text-sm text-gray-500">{label}</p>}
+      <div className={cn('rounded-full border-4 border-primary-200 dark:border-primary-900 border-t-primary-500 animate-spin', sizes[size])} />
+      {label && <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>}
     </div>
   )
 }
@@ -73,8 +73,8 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
     <div className="flex flex-col items-center gap-4 py-16 px-6 text-center">
       <span className="text-6xl">{icon}</span>
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        <p className="text-sm text-gray-500 mt-1 leading-relaxed">{description}</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{description}</p>
       </div>
       {action && <div>{action}</div>}
     </div>
@@ -94,15 +94,15 @@ export function StepIndicator({ steps, current }: StepIndicatorProps) {
           <div className={cn(
             'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
             i < current ? 'bg-primary-500 text-white' :
-            i === current ? 'bg-primary-500 text-white ring-4 ring-primary-100' :
-            'bg-gray-200 text-gray-500',
+            i === current ? 'bg-primary-500 text-white ring-4 ring-primary-100 dark:ring-primary-900/50' :
+            'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
           )}>
             {i < current ? '✓' : i + 1}
           </div>
           {i < steps.length - 1 && (
             <div className={cn(
               'flex-1 h-0.5 transition-all',
-              i < current ? 'bg-primary-500' : 'bg-gray-200',
+              i < current ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700',
             )} />
           )}
         </div>
@@ -123,18 +123,18 @@ export function NutriBar({ calories, proteins, carbs, fats, className }: NutriBa
   if (!calories && !proteins && !carbs && !fats) return null
 
   const items = [
-    { label: 'Kcal', value: calories, color: 'text-orange-500' },
-    { label: 'Proteine', value: proteins ? `${proteins}g` : undefined, color: 'text-red-500' },
-    { label: 'Carbo', value: carbs ? `${carbs}g` : undefined, color: 'text-amber-500' },
-    { label: 'Grassi', value: fats ? `${fats}g` : undefined, color: 'text-yellow-500' },
+    { label: 'Kcal', value: calories, color: 'text-orange-500 dark:text-orange-400' },
+    { label: 'Proteine', value: proteins ? `${proteins}g` : undefined, color: 'text-red-500 dark:text-red-400' },
+    { label: 'Carbo', value: carbs ? `${carbs}g` : undefined, color: 'text-amber-500 dark:text-amber-400' },
+    { label: 'Grassi', value: fats ? `${fats}g` : undefined, color: 'text-yellow-500 dark:text-yellow-400' },
   ].filter(i => i.value !== undefined)
 
   return (
-    <div className={cn('flex items-center gap-4 bg-gray-50 rounded-2xl p-3', className)}>
+    <div className={cn('flex items-center gap-4 bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-3 border border-gray-100 dark:border-gray-800/80', className)}>
       {items.map(item => (
         <div key={item.label} className="flex flex-col items-center flex-1">
           <span className={cn('text-base font-bold', item.color)}>{item.value}</span>
-          <span className="text-xs text-gray-400">{item.label}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{item.label}</span>
         </div>
       ))}
     </div>

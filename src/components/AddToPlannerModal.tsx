@@ -117,23 +117,23 @@ export default function AddToPlannerModal({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
+        className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden border border-gray-100 dark:border-gray-800"
         onClick={e => e.stopPropagation()}
       >
         {/* Fixed Header */}
-        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
+        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
           <div className="flex items-center gap-2">
             <span className="text-2xl">📅</span>
             <div>
-              <h3 className="font-extrabold text-gray-900 text-base leading-tight">
+              <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-base leading-tight">
                 Aggiungi al Meal Planner
               </h3>
-              <p className="text-xs text-gray-400">Pianifica quando gustare questa ricetta</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">Pianifica quando gustare questa ricetta</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
+            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 transition-colors"
           >
             ✕
           </button>
@@ -142,8 +142,8 @@ export default function AddToPlannerModal({
         {/* Scrollable Body Content */}
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 [-webkit-overflow-scrolling:touch]">
           {/* Recipe Summary Box */}
-          <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-3 flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary-100 border border-primary-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/80 rounded-2xl p-3 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-950/80 border border-primary-200 dark:border-primary-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
               {recipe.thumbnailUrl ? (
                 <img src={recipe.thumbnailUrl} alt={recipe.title} className="w-full h-full object-cover" />
               ) : (
@@ -151,13 +151,18 @@ export default function AddToPlannerModal({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-gray-900 text-xs sm:text-sm truncate leading-tight">
+              <h4 className="font-bold text-gray-900 dark:text-gray-100 text-xs sm:text-sm truncate leading-tight">
                 {recipe.title}
               </h4>
-              <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500">
-                <span className="font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md border border-primary-200/60">
+              <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                <span className="font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 px-2 py-0.5 rounded-md border border-primary-200/60 dark:border-primary-800">
                   {MEAL_LABELS[recipe.targetMeal]}
                 </span>
+                {recipe.dishType === 'side' && (
+                  <span className="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 font-semibold px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 text-[10px]">
+                    🥗 Contorno
+                  </span>
+                )}
                 {recipe.nutritionalValues && (
                   <span>{recipe.nutritionalValues.calories} kcal • {recipe.nutritionalValues.proteins}g P</span>
                 )}
@@ -199,14 +204,14 @@ export default function AddToPlannerModal({
                       className={`flex-shrink-0 flex flex-col items-center justify-center w-16 py-2.5 px-1.5 rounded-2xl border transition-all ${
                         isSelected
                           ? 'bg-primary-600 text-white border-primary-600 shadow-md scale-105'
-                          : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-200/90'
+                          : 'bg-white dark:bg-gray-800/80 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200/90 dark:border-gray-700'
                       }`}
                     >
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-primary-100' : 'text-gray-400'}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-primary-100' : 'text-gray-400 dark:text-gray-500'}`}>
                         {d.isToday ? 'Oggi' : d.isTomorrow ? 'Domani' : d.dayName}
                       </span>
                       <span className="text-base font-extrabold mt-0.5">{d.dayNumber}</span>
-                      <span className={`text-[10px] ${isSelected ? 'text-primary-200' : 'text-gray-400'}`}>
+                      <span className={`text-[10px] ${isSelected ? 'text-primary-200' : 'text-gray-400 dark:text-gray-500'}`}>
                         {d.monthName}
                       </span>
                     </button>
@@ -218,7 +223,7 @@ export default function AddToPlannerModal({
 
           {/* Step 2: Meal Slot Selection */}
           <div className="space-y-2 pt-1">
-            <label className="text-xs font-bold text-gray-800 uppercase tracking-wide block">
+            <label className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide block">
               2. Scegli il pasto
             </label>
 
@@ -232,17 +237,17 @@ export default function AddToPlannerModal({
                     onClick={() => setSelectedMeal(opt.value)}
                     className={`p-3 rounded-2xl border flex items-center gap-2.5 transition-all text-left ${
                       isSelected
-                        ? 'bg-primary-50 border-primary-500 ring-2 ring-primary-500/30'
-                        : 'bg-white hover:bg-gray-50 border-gray-200/80 text-gray-700'
+                        ? 'bg-primary-50 dark:bg-primary-950/60 border-primary-500 ring-2 ring-primary-500/30'
+                        : 'bg-white dark:bg-gray-800/80 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200/80 dark:border-gray-700 text-gray-700 dark:text-gray-200'
                     }`}
                   >
                     <span className="text-xl">{opt.icon}</span>
                     <div className="min-w-0">
-                      <p className={`text-xs font-bold ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
+                      <p className={`text-xs font-bold ${isSelected ? 'text-primary-900 dark:text-primary-200' : 'text-gray-900 dark:text-gray-100'}`}>
                         {opt.label}
                       </p>
                       {isSelected && (
-                        <span className="text-[10px] text-primary-600 font-semibold">Selezionato ✓</span>
+                        <span className="text-[10px] text-primary-600 dark:text-primary-400 font-semibold">Selezionato ✓</span>
                       )}
                     </div>
                   </button>
@@ -253,8 +258,8 @@ export default function AddToPlannerModal({
 
           {/* Step 3: Variant Selection (if recipe has variants) */}
           {recipeVariants.length > 1 && (
-            <div className="space-y-2 pt-1 border-t border-gray-100">
-              <label className="text-xs font-bold text-gray-800 uppercase tracking-wide block">
+            <div className="space-y-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+              <label className="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide block">
                 3. Grammatura / Variante
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -270,22 +275,22 @@ export default function AddToPlannerModal({
                       }}
                       className={`p-2.5 rounded-2xl border text-left flex items-center justify-between transition-all ${
                         isSelected
-                          ? 'bg-primary-50 border-primary-500 ring-2 ring-primary-500/20'
-                          : 'bg-white hover:bg-gray-50 border-gray-200/80'
+                          ? 'bg-primary-50 dark:bg-primary-950/60 border-primary-500 ring-2 ring-primary-500/20'
+                          : 'bg-white dark:bg-gray-800/80 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200/80 dark:border-gray-700'
                       }`}
                     >
                       <div>
-                        <p className={`text-xs font-bold ${isSelected ? 'text-primary-950' : 'text-gray-900'}`}>
+                        <p className={`text-xs font-bold ${isSelected ? 'text-primary-950 dark:text-primary-200' : 'text-gray-900 dark:text-gray-100'}`}>
                           {v.label}
                         </p>
                         {v.nutritionalValues && (
-                          <p className="text-[10px] text-gray-500 mt-0.5">
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                             {v.nutritionalValues.calories} kcal • {v.nutritionalValues.proteins}g P • {v.nutritionalValues.carbs}g C
                           </p>
                         )}
                       </div>
                       {isSelected && (
-                        <span className="text-primary-600 font-bold text-xs ml-2">✓</span>
+                        <span className="text-primary-600 dark:text-primary-400 font-bold text-xs ml-2">✓</span>
                       )}
                     </button>
                   )
@@ -296,7 +301,7 @@ export default function AddToPlannerModal({
         </div>
 
         {/* Fixed Footer with Safe-Area Padding */}
-        <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+        <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
           <button
             type="button"
             onClick={onClose}

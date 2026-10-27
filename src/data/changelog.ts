@@ -16,14 +16,45 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.7.1'
+export const APP_VERSION = '1.7.2'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.7.2',
+    date: '27 Ottobre 2026',
+    title: 'Perfezionamento Dark Mode OLED Eye-Care & Audit Totale Superfici',
+    isLatest: true,
+    summary:
+      'Versione 1.7.2: revisione completa e capillare del tema scuro in tutta l\'app per eliminare qualsiasi bagliore bianco o affaticamento visivo. Introdotte superfici profonde nero/slate OLED (#030712 / gray-950) con elevazioni morbide su tonalità grafite e titanio, testi attenuati ad alta leggibilità, e dark styling integrale su modali, cassetti, selettori dei giorni, tabelle grammature, riquadri pasti e liste della spesa.',
+    changes: [
+      {
+        type: 'design',
+        title: 'Dark Mode Eye-Care & Superfici Morbide Anti-Affaticamento',
+        description:
+          'Eliminati tutti i riquadri e sfondi bianchi residui nelle modali (Aggiungi al Piano, Scegli Ricetta, Modelli Settimanali, Ricalibra Dosi, Changelog), nel generatore di ricette ad hoc, nella lista della spesa e nel wizard della settimana standard. I colori sono ora calibrati su tonalità slate/grafite che non affaticano la vista anche al buio completo o a letto.',
+        howToUse: 'Attiva la modalità scura in Impostazioni > Aspetto & Tema oppure lascia che l\'app segua automaticamente il tema del tuo telefono.',
+      },
+      {
+        type: 'design',
+        title: 'Contrasto e Tipografia per Schermi OLED',
+        description:
+          'I bottoni di selezione (pranzo/cena, vista singola vs riquadri insieme, per macro/componenti/lista) e le schede nutrizionali utilizzano gradienti scuri opacizzati e bordature sottili a contrasto morbido (gray-800 / gray-700), garantendo una lettura confortevole e un risparmio energetico ottimale su display OLED.',
+        howToUse: 'Naviga tra ricettario, planner e dettagli ricetta per sperimentare il nuovo comfort visivo.',
+      },
+      {
+        type: 'fix',
+        title: 'Coerenza Grafica su Cassetti e Drawer Mobili',
+        description:
+          'Uniformati gli header, le aree di scorrimento touch e i footer fissi di tutte le modali di scelta pasto e varianti, impedendo stacchi cromatici bianchi durante lo scroll e preservando le safe area inferiori su iOS e Android.',
+        howToUse: 'Disponibile automaticamente in tutta l\'applicazione.',
+      },
+    ],
+  },
   {
     version: '1.7.1',
     date: '27 Ottobre 2026',
     title: 'Dark Mode Completa, Fix Pasto Libero a Pranzo, Tasto Ricalibra e Riadattamento Completo con Avanzamento Real-Time',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Aggiornamento 1.7.1: supporto completo alla Dark Mode (con selettore Chiaro / Scuro / Sistema), risoluzione definitiva del bug dello sgarro sul pranzo, nuovo tasto "Ricalibra Dosi" sulla singola ricetta con anteprima e opzioni AI/Manuale, calibrazione esatta delle grammature dal piano nutrizionale (Salmone 200/250/280g, Lenticchie + Uova 50/50 e fix grassi a 99g), e riadattamento totale di tutte le ricette precedenti con barra di avanzamento real-time nelle impostazioni.',
     changes: [

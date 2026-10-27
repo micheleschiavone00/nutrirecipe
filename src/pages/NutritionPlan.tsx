@@ -20,13 +20,13 @@ const MEAL_LABELS_MAP: Record<MealType, string> = {
 }
 
 const CATEGORY_MAP: Record<string, { label: string; color: string }> = {
-  carbs: { label: '🌾 Carboidrati', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  proteins: { label: '🥩 Proteine', color: 'bg-red-100 text-red-800 border-red-200' },
-  vegetables: { label: '🥦 Verdure', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  fruits: { label: '🍎 Frutta', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  dairy: { label: '🥛 Latticini', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  fats: { label: '🥑 Grassi', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  other: { label: '🍴 Altro', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  carbs: { label: '🌾 Carboidrati', color: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
+  proteins: { label: '🥩 Proteine', color: 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800' },
+  vegetables: { label: '🥦 Verdure', color: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
+  fruits: { label: '🍎 Frutta', color: 'bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800' },
+  dairy: { label: '🥛 Latticini', color: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
+  fats: { label: '🥑 Grassi', color: 'bg-yellow-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800' },
+  other: { label: '🍴 Altro', color: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700' },
 }
 
 interface QuantityStepperProps {
@@ -85,7 +85,7 @@ function QuantityStepper({ quantity, unit = 'g', onChange }: QuantityStepperProp
       <button
         type="button"
         onClick={handlePlus}
-        className="w-6 h-6 rounded-lg bg-primary-100 hover:bg-primary-200 active:scale-95 text-primary-800 font-extrabold text-xs flex items-center justify-center transition-all select-none border border-primary-200/60"
+        className="w-6 h-6 rounded-lg bg-primary-100 dark:bg-primary-950/60 hover:bg-primary-200 dark:hover:bg-primary-900/60 active:scale-95 text-primary-800 dark:text-primary-300 font-extrabold text-xs flex items-center justify-center transition-all select-none border border-primary-200/60 dark:border-primary-800"
         title={`Aumenta (+${step}${unit})`}
       >
         +
@@ -99,21 +99,21 @@ function QuantityStepper({ quantity, unit = 'g', onChange }: QuantityStepperProp
         value={val}
         onChange={handleChange}
         placeholder="0"
-        className="w-12 text-center input-field text-xs py-1 px-0.5 font-extrabold text-primary-950 bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+        className="w-12 text-center input-field text-xs py-1 px-0.5 font-extrabold text-primary-950 dark:text-primary-200 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
       />
 
       {/* Minus button on the RIGHT (un meno a destra) */}
       <button
         type="button"
         onClick={handleMinus}
-        className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-extrabold text-xs flex items-center justify-center transition-all select-none border border-gray-200"
+        className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 text-gray-700 dark:text-gray-300 font-extrabold text-xs flex items-center justify-center transition-all select-none border border-gray-200 dark:border-gray-700"
         title={`Diminuisci (-${step}${unit})`}
       >
         –
       </button>
 
       {/* Unit */}
-      <span className="text-gray-500 font-semibold text-xs min-w-[1.2rem] text-left">{unit}</span>
+      <span className="text-gray-500 dark:text-gray-400 font-semibold text-xs min-w-[1.2rem] text-left">{unit}</span>
     </div>
   )
 }
@@ -218,7 +218,7 @@ export default function NutritionPlanPage() {
 
   if (activeProfile === undefined) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-950">
         <LoadingSpinner size="lg" />
       </div>
     )
@@ -226,7 +226,7 @@ export default function NutritionPlanPage() {
 
   if (activeProfile === null) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
         <EmptyState
           icon="📋"
           title="Nessun piano nutrizionale trovato"
@@ -475,7 +475,7 @@ export default function NutritionPlanPage() {
   const filteredMeals = activeTab === 'all' ? meals : meals.filter(m => m.mealType === activeTab)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-28">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-28">
       {/* Header */}
       <PageHeader
         title="Piano Nutrizionale"
@@ -504,11 +504,11 @@ export default function NutritionPlanPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xl">🥗</span>
-              <h2 className="font-bold text-gray-900 text-sm">Dettagli del Piano</h2>
+              <h2 className="font-bold text-gray-900 dark:text-gray-100 text-sm">Dettagli del Piano</h2>
             </div>
             <button
               onClick={() => setShowAiModal(true)}
-              className="text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1"
+              className="text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 hover:bg-primary-100 dark:hover:bg-primary-900/60 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1"
             >
               <span>📄</span>
               <span>Ricarica con AI</span>
@@ -516,7 +516,7 @@ export default function NutritionPlanPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Nome del profilo</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1 block">Nome del profilo</label>
             <input
               type="text"
               value={profileName}
@@ -527,47 +527,47 @@ export default function NutritionPlanPage() {
           </div>
 
           {/* Daily Macros (Optional) */}
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-xs font-semibold text-gray-500 mb-2">Obiettivi giornalieri (opzionali)</p>
+          <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Obiettivi giornalieri (opzionali)</p>
             <div className="grid grid-cols-4 gap-2">
               <div>
-                <label className="text-[10px] text-gray-500 block">Kcal</label>
+                <label className="text-[10px] text-gray-500 dark:text-gray-400 block">Kcal</label>
                 <input
                   type="number"
                   placeholder="2000"
                   value={dailyCalories}
                   onChange={e => setDailyCalories(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-orange-600"
+                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-orange-600 dark:text-orange-400"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-gray-500 block">Proteine (g)</label>
+                <label className="text-[10px] text-gray-500 dark:text-gray-400 block">Proteine (g)</label>
                 <input
                   type="number"
                   placeholder="140"
                   value={dailyProteins}
                   onChange={e => setDailyProteins(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-red-500"
+                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-red-500 dark:text-red-400"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-gray-500 block">Carboidrati (g)</label>
+                <label className="text-[10px] text-gray-500 dark:text-gray-400 block">Carboidrati (g)</label>
                 <input
                   type="number"
                   placeholder="220"
                   value={dailyCarbs}
                   onChange={e => setDailyCarbs(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-amber-600"
+                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-amber-600 dark:text-amber-400"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-gray-500 block">Grassi (g)</label>
+                <label className="text-[10px] text-gray-500 dark:text-gray-400 block">Grassi (g)</label>
                 <input
                   type="number"
                   placeholder="60"
                   value={dailyFats}
                   onChange={e => setDailyFats(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-gray-700"
+                  className="input-field text-xs px-2 py-1.5 text-center font-bold text-gray-700 dark:text-gray-300"
                 />
               </div>
             </div>
@@ -575,13 +575,13 @@ export default function NutritionPlanPage() {
         </div>
 
         {/* Weekly Frequencies and Rules Card */}
-        <div className="card p-4 space-y-3 bg-white">
+        <div className="card p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xl">🎯</span>
               <div>
-                <h3 className="font-bold text-gray-900 text-sm">Frequenze Settimanali e Pasti Liberi</h3>
-                <p className="text-[11px] text-gray-400">Regole consigliate dal nutrizionista per la settimana</p>
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">Frequenze Settimanali e Pasti Liberi</h3>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">Regole consigliate dal nutrizionista per la settimana</p>
               </div>
             </div>
           </div>
@@ -594,13 +594,13 @@ export default function NutritionPlanPage() {
               return (
                 <div
                   key={rule.id}
-                  className="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-gray-50/80 border border-gray-200/70 text-xs"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-gray-50/80 dark:bg-gray-800/60 border border-gray-200/70 dark:border-gray-700/70 text-xs"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-gray-900 text-xs">
+                    <p className="font-bold text-gray-900 dark:text-gray-100 text-xs">
                       {rule.label}
                     </p>
-                    <p className="text-[10px] text-gray-500 truncate">
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                       {isMax ? `Massimo ${val} volte / sett.` : `Consigliato ${val} volte / sett.`}
                       {rule.notes ? ` • ${rule.notes}` : ''}
                     </p>
@@ -616,11 +616,11 @@ export default function NutritionPlanPage() {
                         else copy[rIdx] = { ...copy[rIdx], targetPerWeek: next }
                         setWeeklyFrequencies(copy)
                       }}
-                      className="w-6 h-6 rounded-lg bg-gray-200 hover:bg-gray-300 active:scale-95 text-gray-700 font-extrabold flex items-center justify-center text-xs"
+                      className="w-6 h-6 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-95 text-gray-700 dark:text-gray-200 font-extrabold flex items-center justify-center text-xs"
                     >
                       –
                     </button>
-                    <span className="w-8 text-center font-extrabold text-primary-950 text-xs">
+                    <span className="w-8 text-center font-extrabold text-primary-950 dark:text-primary-300 text-xs">
                       {val}v
                     </span>
                     <button
@@ -632,7 +632,7 @@ export default function NutritionPlanPage() {
                         else copy[rIdx] = { ...copy[rIdx], targetPerWeek: next }
                         setWeeklyFrequencies(copy)
                       }}
-                      className="w-6 h-6 rounded-lg bg-primary-100 hover:bg-primary-200 active:scale-95 text-primary-800 font-extrabold flex items-center justify-center text-xs"
+                      className="w-6 h-6 rounded-lg bg-primary-100 dark:bg-primary-950/60 hover:bg-primary-200 dark:hover:bg-primary-900/60 active:scale-95 text-primary-800 dark:text-primary-300 font-extrabold flex items-center justify-center text-xs"
                     >
                       +
                     </button>
@@ -650,7 +650,7 @@ export default function NutritionPlanPage() {
             className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               activeTab === 'all'
                 ? 'bg-primary-600 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
             }`}
           >
             Tutti i pasti
@@ -662,7 +662,7 @@ export default function NutritionPlanPage() {
               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === mType
                   ? 'bg-primary-600 text-white shadow-sm'
-                  : 'bg-white text-gray-600 border border-gray-200'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
               }`}
             >
               {MEAL_LABELS_MAP[mType]}
@@ -679,11 +679,11 @@ export default function NutritionPlanPage() {
                 key={mealId}
                 className={`card p-4 space-y-3 border ${
                   meal.isVariant
-                    ? 'border-primary-300 ring-2 ring-primary-400/20 bg-primary-50/15'
-                    : 'border-gray-200/80'
+                    ? 'border-primary-300 dark:border-primary-700 ring-2 ring-primary-400/20 bg-primary-50/15 dark:bg-primary-950/15'
+                    : 'border-gray-200/80 dark:border-gray-800'
                 }`}
               >
-                <div className="flex items-center justify-between pb-2 border-b border-gray-100 gap-2">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800 gap-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     {meal.isVariant ? (
                       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -693,18 +693,18 @@ export default function NutritionPlanPage() {
                           value={meal.label}
                           onChange={e => updateMealLabel(mealId, e.target.value)}
                           placeholder="es. Cena Post Workout"
-                          className="input-field py-1 px-2.5 text-xs sm:text-sm font-extrabold text-primary-950 bg-white border-primary-300 max-w-xs"
+                          className="input-field py-1 px-2.5 text-xs sm:text-sm font-extrabold text-primary-950 dark:text-primary-200 bg-white dark:bg-gray-800 border-primary-300 dark:border-primary-700 max-w-xs"
                         />
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-primary-100 text-primary-800 px-2 py-0.5 rounded-md flex-shrink-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-primary-100 dark:bg-primary-950/60 text-primary-800 dark:text-primary-300 px-2 py-0.5 rounded-md flex-shrink-0">
                           Alternativa {meal.mealType === 'dinner' ? 'Cena' : 'Pranzo'}
                         </span>
                       </div>
                     ) : (
                       <>
-                        <h3 className="font-bold text-gray-900 text-base">
+                        <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
                           {MEAL_LABELS_MAP[meal.mealType]}
                         </h3>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
                           ({meal.groups?.length || 0} gruppi)
                         </span>
                       </>
@@ -714,14 +714,14 @@ export default function NutritionPlanPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => addGroupToMeal(mealId)}
-                      className="text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 px-2.5 py-1 rounded-lg border border-primary-200 transition-colors"
+                      className="text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 hover:bg-primary-100 dark:hover:bg-primary-900/60 px-2.5 py-1 rounded-lg border border-primary-200 dark:border-primary-800 transition-colors"
                     >
                       + Aggiungi Gruppo
                     </button>
                     {meal.isVariant && (
                       <button
                         onClick={() => removeMealVariant(mealId, meal.label)}
-                        className="text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg border border-red-200 transition-colors"
+                        className="text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/50 px-2 py-1 rounded-lg border border-red-200 dark:border-red-900/60 transition-colors"
                         title="Elimina alternativa"
                       >
                         🗑 Elimina
@@ -732,7 +732,7 @@ export default function NutritionPlanPage() {
 
                 {/* Subtitle / notes for variant */}
                 {meal.isVariant && (
-                  <div className="text-[11px] text-primary-800 bg-primary-50/80 p-2.5 rounded-xl border border-primary-200/60 flex items-center gap-1.5">
+                  <div className="text-[11px] text-primary-800 dark:text-primary-300 bg-primary-50/80 dark:bg-primary-950/40 p-2.5 rounded-xl border border-primary-200/60 dark:border-primary-800/60 flex items-center gap-1.5">
                     <span>💡</span>
                     <span>
                       Questa alternativa verrà mostrata automaticamente nelle ricette per{' '}
@@ -748,7 +748,7 @@ export default function NutritionPlanPage() {
 
                 {/* Groups inside this meal */}
                 {!meal.groups || meal.groups.length === 0 ? (
-                  <div className="py-4 text-center text-xs text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  <div className="py-4 text-center text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
                     Nessun gruppo alimentare impostato per questo pasto.
                   </div>
                 ) : (
@@ -758,7 +758,7 @@ export default function NutritionPlanPage() {
                       return (
                         <div
                           key={group.id}
-                          className="bg-gray-50/70 border border-gray-200/90 rounded-2xl p-3.5 space-y-2.5"
+                          className="bg-gray-50/70 dark:bg-gray-800/50 border border-gray-200/90 dark:border-gray-700/80 rounded-2xl p-3.5 space-y-2.5"
                         >
                           {/* Group Header */}
                           <div className="flex items-center justify-between gap-2">
@@ -788,7 +788,7 @@ export default function NutritionPlanPage() {
                                   updateGroup(mealId, group.id, { name: e.target.value })
                                 }
                                 placeholder="Nome gruppo (es. Fonti Proteiche)"
-                                className="input-field text-xs font-semibold py-1 px-2 flex-1 bg-white"
+                                className="input-field text-xs font-semibold py-1 px-2 flex-1 bg-white dark:bg-gray-900"
                               />
                             </div>
 
@@ -802,8 +802,8 @@ export default function NutritionPlanPage() {
                           </div>
 
                           {/* Quantity Range */}
-                          <div className="flex items-center gap-2 text-xs text-gray-600 bg-white p-2 rounded-xl border border-gray-100">
-                            <span className="text-[11px] font-medium text-gray-500">Range quantità:</span>
+                          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-900 p-2 rounded-xl border border-gray-100 dark:border-gray-800">
+                            <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Range quantità:</span>
                             <input
                               type="number"
                               placeholder="Min"
@@ -844,12 +844,12 @@ export default function NutritionPlanPage() {
                           {/* Food Options */}
                           <div className="space-y-1.5 pt-1">
                             <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Alimenti &amp; Alternative
                               </span>
                               <button
                                 onClick={() => addOptionToGroup(mealId, group.id)}
-                                className="text-[11px] font-bold text-primary-600 hover:text-primary-700"
+                                className="text-[11px] font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
                               >
                                 + Aggiungi alimento
                               </button>
@@ -858,7 +858,7 @@ export default function NutritionPlanPage() {
                             {(group.options || []).map((opt, optIdx) => (
                               <div
                                 key={optIdx}
-                                className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-gray-100 text-xs"
+                                className="flex items-center gap-2 bg-white dark:bg-gray-900 p-1.5 rounded-xl border border-gray-100 dark:border-gray-800 text-xs"
                               >
                                 <input
                                   type="text"
@@ -901,8 +901,8 @@ export default function NutritionPlanPage() {
 
                 {/* Add Alternative Button on standard meals */}
                 {!meal.isVariant && (meal.mealType === 'dinner' || meal.mealType === 'lunch') && (
-                  <div className="pt-2 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <p className="text-[11px] text-gray-500">
+                  <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
                       Hai un&apos;altra variante (es.{' '}
                       {meal.mealType === 'dinner'
                         ? 'Cena Post Workout più proteica'
@@ -919,7 +919,7 @@ export default function NutritionPlanPage() {
                             : 'Pranzo Alternativo'
                         )
                       }
-                      className="text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto"
+                      className="text-xs font-bold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 hover:bg-primary-100 dark:hover:bg-primary-900/60 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto"
                     >
                       <span>➕</span>
                       <span>
@@ -953,36 +953,36 @@ export default function NutritionPlanPage() {
           onClick={() => setShowAiModal(false)}
         >
           <div
-            className="bg-white w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden"
+            className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[82dvh] sm:max-h-[85dvh] overflow-hidden border border-gray-100 dark:border-gray-800"
             onClick={e => e.stopPropagation()}
           >
             {/* Fixed Header */}
-            <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 flex-shrink-0 bg-white">
+            <div className="flex items-start justify-between p-4 sm:p-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
               <div className="flex items-center gap-2.5">
                 <span className="text-2xl">🤖</span>
                 <div>
-                  <h3 className="font-extrabold text-gray-900 text-base leading-tight">
+                  <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-base leading-tight">
                     Aggiorna con AI
                   </h3>
-                  <p className="text-xs text-gray-400">Estrai alimenti e dosi da nuova scheda</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Estrai alimenti e dosi da nuova scheda</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowAiModal(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-500 dark:text-gray-400 transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Method switcher */}
-            <div className="px-4 sm:px-5 pt-3 pb-2 flex-shrink-0 bg-white">
-              <div className="flex bg-gray-100 p-1 rounded-xl">
+            <div className="px-4 sm:px-5 pt-3 pb-2 flex-shrink-0 bg-white dark:bg-gray-900">
+              <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setAiMethod('text')}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    aiMethod === 'text' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    aiMethod === 'text' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
                   📝 Incolla Testo
@@ -991,7 +991,7 @@ export default function NutritionPlanPage() {
                   type="button"
                   onClick={() => setAiMethod('pdf')}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    aiMethod === 'pdf' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    aiMethod === 'pdf' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
                   📄 Carica PDF
@@ -1001,7 +1001,7 @@ export default function NutritionPlanPage() {
 
             {/* Scrollable Body */}
             <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3.5 [-webkit-overflow-scrolling:touch]">
-              <p className="text-xs text-gray-600 bg-gray-50 p-3 rounded-2xl border border-gray-200/80">
+              <p className="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/60 p-3 rounded-2xl border border-gray-200/80 dark:border-gray-700/80">
                 Hai una nuova scheda della nutrizionista? Carica il PDF o incolla il testo: l&apos;AI
                 estrarrà automaticamente tutti i pasti e dosi per aggiornare il tuo piano nutrizionale.
               </p>
@@ -1018,10 +1018,10 @@ export default function NutritionPlanPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <label className="border-2 border-dashed border-gray-300 hover:border-primary-400 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-gray-50/50">
+                  <label className="border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-400 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-gray-50/50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-200">
                     <span className="text-4xl mb-2">📑</span>
-                    <span className="text-xs font-semibold text-gray-700">Seleziona file PDF</span>
-                    <span className="text-[10px] text-gray-400 mt-1">PDF del piano nutrizionale</span>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">Seleziona file PDF</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">PDF del piano nutrizionale</span>
                     <input
                       type="file"
                       accept=".pdf,application/pdf"
@@ -1033,7 +1033,7 @@ export default function NutritionPlanPage() {
                     />
                   </label>
                   {aiLoading && (
-                    <div className="flex items-center justify-center gap-2 py-3 text-xs text-primary-700 font-semibold bg-primary-50 rounded-xl border border-primary-200">
+                    <div className="flex items-center justify-center gap-2 py-3 text-xs text-primary-700 dark:text-primary-300 font-semibold bg-primary-50 dark:bg-primary-950/60 rounded-xl border border-primary-200 dark:border-primary-800">
                       <LoadingSpinner size="sm" />
                       <span>Estrazione ed analisi PDF in corso…</span>
                     </div>
@@ -1042,14 +1042,14 @@ export default function NutritionPlanPage() {
               )}
 
               {aiError && (
-                <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-3 text-xs">
+                <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 rounded-xl p-3 text-xs">
                   {aiError}
                 </div>
               )}
             </div>
 
             {/* Pinned Action Footer */}
-            <div className="flex-shrink-0 border-t border-gray-100 bg-white p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3.5 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
               <button
                 type="button"
                 onClick={() => setShowAiModal(false)}
