@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { db, getActiveProfile } from '@/lib/db'
 import { extractVideoMetadata, detectSource } from '@/lib/social'
 import { extractRecipeFromText, adaptRecipeToProfile } from '@/lib/ai'
+import { extractRecipeDeterministically } from '@/lib/deterministicSocialExtractor'
+import { getUserAiConfig } from '@/lib/userAiSettings'
+import { isAdminLoggedIn } from '@/lib/adminAuth'
 import { generateId, MEAL_LABELS, MEAL_ICONS } from '@/lib/utils'
 import { PageHeader, LoadingSpinner, Badge, NutriBar } from '@/components/ui'
 import { detectRecipeIcon } from '@/lib/recipeIcons'
@@ -324,6 +327,56 @@ export default function ImportPage() {
   }
 
   // ── Social Import Handler ──────────────────────────────────────────────────
+  const buildDeterministicImportedRecipe = (
+    rawRecipe: { title: string; description: string; ingredients: string[]; steps: string[] },
+    metadata: any,
+    cleanUrl: string,
+    source: any,
+    applicableMeal: any,
+    meal: TargetMealType
+  ): Recipe => {
+    const rawIngredientsList = rawRecipe.ingredients.map(ing => ({
+      name: ing,
+      category: classifyIngredientCategory(ing),
+    }))
+
+    const deterministicIngredients = adaptIngredientsDeterministically(
+      rawIngredientsList,
+      applicableMeal
+    )
+
+    const macros = calculateNutritionalValues(deterministicIngredients)
+
+    return {
+      id: generateId(),
+      title: rawRecipe.title || metadata.title || 'Ricetta importata',
+      customIcon: detectRecipeIcon(rawRecipe.title || metadata.title || '', deterministicIngredients, meal),
+      description: rawRecipe.description || metadata.description || '',
+      source,
+      sourceUrl: cleanUrl,
+      thumbnailUrl: metadata.thumbnailUrl,
+      targetMeal: meal,
+      dishType: detectDishType(deterministicIngredients),
+      originalIngredients: deterministicIngredients.map(i => ({
+        ...i,
+        originalQuantity: i.adaptedQuantity,
+      })),
+      adaptedIngredients: deterministicIngredients,
+      steps: rawRecipe.steps.map((step, i) => ({
+        order: i + 1,
+        description: step,
+      })),
+      nutritionalValues: macros,
+      adaptationNotes:
+        'Calibrata con algoritmo nutrizionale deterministico: grammature adattate fedelmente al tuo piano nutrizionale.',
+      tags: ['social', source],
+      servings: 1,
+      isFavorite: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  }
+
   const handlePasteClipboard = async () => {
     try {
       const text = await navigator.clipboard.readText()
@@ -356,14 +409,49 @@ export default function ImportPage() {
         ...(metadata.ingredients ?? []),
       ].join('\n')
 
-      const rawRecipe = await extractRecipeFromText(rawText, cleanUrl)
+      const userAiConfig = getUserAiConfig()
+      const isAdmin = isAdminLoggedIn()
+      const canUseAI = isAdmin || (userAiConfig.provider === 'gemini' && Boolean(userAiConfig.geminiApiKey)) || (userAiConfig.provider === 'openai' && Boolean(userAiConfig.openaiApiKey))
+
+      let rawRecipe: {
+        title: string
+        description: string
+        ingredients: string[]
+        steps: string[]
+      }
+
+      if (canUseAI && userAiConfig.provider !== 'deterministic') {
+        try {
+          rawRecipe = await extractRecipeFromText(rawText, cleanUrl)
+        } catch (aiErr) {
+          console.warn('AI extraction failed or unavailable, using deterministic social extractor:', aiErr)
+          rawRecipe = extractRecipeDeterministically(rawText, cleanUrl)
+        }
+      } else {
+        // Pure Deterministic extraction from Instagram caption!
+        rawRecipe = extractRecipeDeterministically(rawText, cleanUrl)
+      }
+
+      // Fallback if ingredients list is empty
+      if (!rawRecipe.ingredients || rawRecipe.ingredients.length === 0) {
+        const titleSuggestions = suggestIngredientsFromTitle(rawRecipe.title || metadata.title || '')
+        if (titleSuggestions.length > 0) {
+          rawRecipe.ingredients = titleSuggestions.map(s => s.defaultGrams ? `${s.defaultGrams} ${s.name}` : s.name)
+        } else {
+          rawRecipe.ingredients = ['Porzione secondo piano nutrizionale']
+        }
+      }
 
       setStatus('adapting')
 
       // Use AI adaptation with Deterministic Fallback & Validation
       let finalRecipe: Recipe
-      try {
-        if (profile && profile.meals && profile.meals.length > 0) {
+      const applicableMeal = profile?.meals.find(
+        m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
+      ) || profile?.meals[0]
+
+      if (canUseAI && userAiConfig.provider !== 'deterministic' && profile && profile.meals?.length > 0) {
+        try {
           const adapted = await adaptRecipeToProfile(
             {
               ...rawRecipe,
@@ -375,11 +463,6 @@ export default function ImportPage() {
             targetMeal
           )
 
-          // Run deterministic algorithm validation on the ingredients
-          // to ensure multi-proteins (e.g. eggs + parmesan) and vegetables are strictly calibrated
-          const applicableMeal = profile.meals.find(
-            m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
-          )
           const strictlyAdapted = adaptIngredientsDeterministically(
             adapted.adaptedIngredients,
             applicableMeal
@@ -395,52 +478,13 @@ export default function ImportPage() {
             createdAt: new Date(),
             updatedAt: new Date(),
           }
-        } else {
-          throw new Error('No profile')
+        } catch {
+          // Fallback to Deterministic Adapter
+          finalRecipe = buildDeterministicImportedRecipe(rawRecipe, metadata, cleanUrl, source, applicableMeal, targetMeal)
         }
-      } catch {
-        // Fallback: Deterministic Algorithm without AI
-        const rawIngredientsList = rawRecipe.ingredients.map(ing => ({
-          name: ing,
-          category: classifyIngredientCategory(ing),
-        }))
-
-        const applicableMeal = profile?.meals.find(
-          m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
-        )
-
-        const deterministicIngredients = adaptIngredientsDeterministically(
-          rawIngredientsList,
-          applicableMeal
-        )
-
-        finalRecipe = {
-          id: generateId(),
-          title: rawRecipe.title || metadata.title || 'Ricetta importata',
-          customIcon: detectRecipeIcon(rawRecipe.title || metadata.title || '', deterministicIngredients, targetMeal),
-          description: rawRecipe.description || metadata.description || '',
-          source,
-          sourceUrl: cleanUrl,
-          thumbnailUrl: metadata.thumbnailUrl,
-          targetMeal,
-          dishType: detectDishType(deterministicIngredients),
-          originalIngredients: deterministicIngredients.map(i => ({
-            ...i,
-            originalQuantity: i.adaptedQuantity,
-          })),
-          adaptedIngredients: deterministicIngredients,
-          steps: rawRecipe.steps.map((step, i) => ({
-            order: i + 1,
-            description: step,
-          })),
-          adaptationNotes:
-            'Calibrata con algoritmo nutrizionale deterministico: grammature adattate al piano per proteine e verdure.',
-          tags: ['social', source],
-          servings: 1,
-          isFavorite: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
+      } else {
+        // Pure Deterministic Adaptation
+        finalRecipe = buildDeterministicImportedRecipe(rawRecipe, metadata, cleanUrl, source, applicableMeal, targetMeal)
       }
 
       setImportedRecipe(finalRecipe)

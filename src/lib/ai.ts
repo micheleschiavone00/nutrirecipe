@@ -2,16 +2,19 @@ import type { NutritionProfile, Recipe, MealType, TargetMealType, FoodGroup, Rec
 import { CONFIG } from '@/config'
 import { getApplicableMealsForTarget, getRecipeVariants } from './recipeVariants'
 import { getUserAiConfig, callGeminiDirect } from './userAiSettings'
+import { isAdminLoggedIn, getAdminKey } from './adminAuth'
 
 async function chatCompletion(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   model = 'gpt-4o',
 ): Promise<string> {
   const userConfig = getUserAiConfig()
+  const isAdmin = isAdminLoggedIn()
+  const adminKey = getAdminKey()
 
-  // 1. If user configured personal Google Gemini API key: use direct client-side call
+  // 1. If user configured personal Google Gemini API key and is not using admin: direct client-side call
   // (Zero server cost for developer, 100% private to user)
-  if (userConfig.provider === 'gemini' && userConfig.geminiApiKey) {
+  if (!isAdmin && userConfig.provider === 'gemini' && userConfig.geminiApiKey) {
     return callGeminiDirect(messages, userConfig.geminiApiKey, userConfig.geminiModel || 'gemini-1.5-flash')
   }
 
@@ -22,8 +25,13 @@ async function chatCompletion(
     'Content-Type': 'application/json',
   }
 
+  // If Admin (Michele): pass x-admin-key to unlock server's OPENAI_API_KEY on Vercel
+  if (isAdmin && adminKey) {
+    headers['x-admin-key'] = adminKey
+  }
+
   // Use user's personal OpenAI key if configured, otherwise server fallback
-  const userOpenAiKey = userConfig.openaiApiKey || CONFIG.openAIApiKey
+  const userOpenAiKey = userConfig.openaiApiKey || (isAdmin ? '' : CONFIG.openAIApiKey)
   if (userOpenAiKey) {
     headers['x-openai-key'] = userOpenAiKey
   }

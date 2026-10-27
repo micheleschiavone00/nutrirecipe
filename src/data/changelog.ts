@@ -16,14 +16,44 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.1.2'
+export const APP_VERSION = '2.1.3'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.1.3',
+    date: '27 Ottobre 2026',
+    title: 'Login Amministratore (Michele), Protezione Chiavi Vercel & Estrattore Social Deterministico',
+    isLatest: true,
+    summary:
+      'Versione 2.1.3: implementazione del Login Amministratore con master password per Michele, che sblocca l\'accesso alle chiavi API configurate sul server Vercel proteggendole da accessi non autorizzati; e rilascio del nuovo Estrattore Deterministico Social che analizza le didascalie di Instagram, TikTok e YouTube estraendo titolo, ingredienti e passaggi al 100% in locale e a 0€ anche senza AI attiva.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Login Amministratore (Michele) con Chiavi Vercel Dedicate',
+        description:
+          'In Impostazioni e nel Centro AI è ora presente la gestione account Admin: Michele può autenticarsi con la master password per sbloccare l\'uso dell\'API Key OpenAI configurata su Vercel. Gli utenti non autenticati sono protetti e non possono consumare i crediti server di Michele.',
+        howToUse: 'Tocca "Login Admin" in Impostazioni, inserisci la master password e sbloccherai le funzioni server Vercel.',
+      },
+      {
+        type: 'feat',
+        title: 'Estrattore Social Deterministico (Instagram & TikTok a 0€ senza AI)',
+        description:
+          'L\'importazione da Instagram e TikTok non fallisce più quando si sceglie la modalità deterministica o non si hanno chiavi AI: il nuovo estrattore analizza la didascalia del post, individua gli ingredienti, le dosi e i procedimenti e li calibra con il piano nutrizionale a costo zero.',
+        howToUse: 'Incolla qualsiasi link di un Reel Instagram o TikTok: l\'app estrae gli ingredienti sia con l\'AI sia in modalità deterministica offline.',
+      },
+      {
+        type: 'fix',
+        title: 'Protezione Serverless Endpoint contro Consumi Non Autorizzati',
+        description:
+          'L\'endpoint serverless /api/ai ora rifiuta le richieste prive di autorizzazione admin o di chiave personale utente (HTTP 403), azzerando ogni rischio di costi imprevisti per lo sviluppatore.',
+      },
+    ],
+  },
   {
     version: '2.1.2',
     date: '27 Ottobre 2026',
     title: 'Ricerca Cibo nel Piano Nutrizionale, Supporto Post-Workout & Chiavi AI Personali (Gemini BYOK)',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.1.2: ricerca automatica e istantanea di ogni pietanza direttamente all\'interno del tuo piano nutrizionale personale con estrazione fedele di categoria e grammatura massima esatta (es. cous cous cerca nel piano e propone 70g max anziché 100g); supporto nativo per alternative pasto e Cena Post Workout con quote proteiche aumentate rispettate fedelmente e soppressione dei banner di superamento fabbisogno per le varianti pianificate; integrazione del modello Google Gemini personale con API Key (gratuita per chiunque con account Google tramite Google AI Studio a 15 req/min, 0€ di costi centralizzati); e nuovo sistema completo di esportazione/ripristino backup JSON anti-perdita dati e guida architetturale cloud per Google Login.',
     changes: [

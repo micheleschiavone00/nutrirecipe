@@ -16,6 +16,8 @@ import {
   type AiProvider,
 } from '@/lib/userAiSettings'
 import { exportFullBackup, importFullBackup } from '@/lib/backup'
+import { isAdminLoggedIn, logoutAdmin } from '@/lib/adminAuth'
+import AdminLoginModal from '@/components/AdminLoginModal'
 
 type SettingsSection =
   | 'main'
@@ -48,6 +50,7 @@ export default function SettingsPage() {
   const [geminiTestStatus, setGeminiTestStatus] = useState<{ success?: boolean; message?: string } | null>(null)
   const [showGeminiKey, setShowGeminiKey] = useState(false)
   const [showOpenAiKey, setShowOpenAiKey] = useState(false)
+  const [showAdminModal, setShowAdminModal] = useState(false)
 
   // Backup & Restore State
   const [backupStatus, setBackupStatus] = useState<string>('')
@@ -235,6 +238,63 @@ export default function SettingsPage() {
                 <span className="text-gray-400 dark:text-gray-500 font-bold text-sm ml-2">›</span>
               </div>
             )}
+
+            {/* Admin Status Card (Accesso Sviluppatore Michele) */}
+            <div className={`card p-3.5 flex items-center justify-between border transition-all ${
+              isAdminLoggedIn()
+                ? 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-amber-300 dark:border-amber-800/80 shadow-xs'
+                : 'bg-white dark:bg-gray-900 border-gray-200/80 dark:border-gray-800'
+            }`}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg font-black flex-shrink-0 ${
+                  isAdminLoggedIn()
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                }`}>
+                  {isAdminLoggedIn() ? '👑' : '👤'}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-xs font-extrabold text-gray-900 dark:text-gray-100">
+                      {isAdminLoggedIn() ? 'Amministratore (Michele)' : 'Account Utente'}
+                    </p>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
+                      isAdminLoggedIn()
+                        ? 'bg-amber-200 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {isAdminLoggedIn() ? 'Vercel API Sbloccate ✓' : 'Utente Standard'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                    {isAdminLoggedIn()
+                      ? 'Chiavi server Vercel attive: importazioni social e AI sbloccate'
+                      : 'Chiavi server protette: usa Gemini gratis o accedi come Admin'}
+                  </p>
+                </div>
+              </div>
+
+              {isAdminLoggedIn() ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    logoutAdmin()
+                    setAiConfig(getUserAiConfig())
+                  }}
+                  className="text-[11px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 bg-red-50 dark:bg-red-950/60 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800/60 transition-all active:scale-95 flex-shrink-0 ml-2"
+                >
+                  Disconnetti
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowAdminModal(true)}
+                  className="text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:text-primary-800 bg-primary-50 dark:bg-primary-950/80 px-2.5 py-1 rounded-lg border border-primary-200 dark:border-primary-800 transition-all active:scale-95 flex-shrink-0 ml-2"
+                >
+                  🔐 Login Admin
+                </button>
+              )}
+            </div>
 
             {/* SEZIONE 1: ALIMENTAZIONE & PIANO */}
             <div className="space-y-1.5">
@@ -1113,6 +1173,48 @@ export default function SettingsPage() {
            ═════════════════════════════════════════════════════════════════════ */}
         {currentSection === 'api' && (
           <div className="space-y-4 animate-fade-in">
+            {/* Status Accesso Amministratore (Michele) */}
+            <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+              isAdminLoggedIn()
+                ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/80 text-amber-950 dark:text-amber-100'
+                : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+            }`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-xl">{isAdminLoggedIn() ? '👑' : '🔒'}</span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold truncate">
+                    {isAdminLoggedIn() ? 'Autenticato come Amministratore (Michele)' : 'Accesso Amministratore (Server Vercel)'}
+                  </p>
+                  <p className="text-[10.5px] opacity-80 truncate">
+                    {isAdminLoggedIn()
+                      ? 'Tutte le chiamate AI utilizzano le chiavi centrali del tuo server Vercel'
+                      : 'Accedi con la master password per usare le chiavi configurate su Vercel'}
+                  </p>
+                </div>
+              </div>
+
+              {isAdminLoggedIn() ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    logoutAdmin()
+                    setAiConfig(getUserAiConfig())
+                  }}
+                  className="text-xs font-bold text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-800/60 transition-all active:scale-95 flex-shrink-0"
+                >
+                  Disconnetti
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowAdminModal(true)}
+                  className="text-xs font-bold text-primary-700 dark:text-primary-300 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-primary-200 dark:border-primary-800 transition-all active:scale-95 flex-shrink-0"
+                >
+                  Accedi
+                </button>
+              )}
+            </div>
+
             {/* 1. Centro di Controllo AI Personale (Zero Costi per lo Sviluppatore) */}
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between">
@@ -1363,6 +1465,12 @@ export default function SettingsPage() {
       <ChangelogModal
         isOpen={showChangelog}
         onClose={() => setShowChangelog(false)}
+      />
+
+      <AdminLoginModal
+        isOpen={showAdminModal}
+        onClose={() => setShowAdminModal(false)}
+        onSuccess={() => setAiConfig(getUserAiConfig())}
       />
     </div>
   )
