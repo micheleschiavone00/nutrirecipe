@@ -16,14 +16,66 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.7.3'
+export const APP_VERSION = '2.0.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.0.0',
+    date: '27 Ottobre 2026',
+    title: 'NutriRecipe 2.0: Spesa & Dispensa Intelligente, Buoni Pasto Automatici, Memoria Prezzi e Monitoraggio Scadenze',
+    isLatest: true,
+    summary:
+      'NutriRecipe 2.0 segna una svolta fondamentale nell\'applicazione introducendo il modulo completo Spesa & Dispensa. La schermata della spesa è ora suddivisa in due sezioni integrate: la classica Lista della Spesa arricchita con aggiunta rapida e suggerimenti automatici dal Meal Planner (settimana corrente e della settimana prossima verso il weekend); un totale di spesa in alto a destra che cresce man mano che depenni gli articoli nel carrello; la gestione facoltativa dei Buoni Pasto (con calcolo istantaneo, es. "4 BP + 2.00 €"); la memoria dei prezzi con modale rapida di conferma quando spunti un alimento; il Checkout che azzera il conto e trasferisce gli alimenti direttamente nella tua Dispensa; e il nuovo tab Dispensa per monitorare scadenze, quantità residue e suggerire automaticamente di riordinare i cibi che stanno per scadere o esaurirsi.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Modulo Spesa & Dispensa a Doppio Tab Integrato',
+        description:
+          'La schermata Spesa include ora due sezioni navigabili con indicatori numerici: la Lista della Spesa organizzata per macro-categorie e la Dispensa di casa con l\'inventario degli alimenti già acquistati.',
+        howToUse: 'Apri la sezione Spesa dalla barra di navigazione inferiore e passa liberamente tra Lista Spesa e Dispensa.',
+      },
+      {
+        type: 'feat',
+        title: 'Totale nel Carrello in Alto a Destra & Buoni Pasto Intelligenti',
+        description:
+          'Il totale della spesa in alto a destra aumenta esclusivamente quando metti un alimento nel carrello depennandolo. Se attivi i Buoni Pasto (configurabili sia dalle impostazioni che con un tocco sul widget), l\'app calcola esattamente quanti buoni pasto usare e il saldo residuo (es. con buoni da 8€: spesa di 32€ = 4 BP, spesa di 34€ = 4 BP + 2.00€).',
+        howToUse: 'Tocca il widget del totale in alto a destra per configurare il valore del tuo buono pasto (es. 7€, 8€, 9.50€).',
+      },
+      {
+        type: 'feat',
+        title: 'Memoria Prezzi degli Alimenti & Modale di Conferma Prezzo al Tocco',
+        description:
+          'Quando spunti un ingrediente per metterlo nel carrello, si apre una modale rapida pre-compilata con l\'ultimo prezzo noto registrato in precedenza per quell\'alimento, con tasti veloci (+0.50€, +1.00€, +2.00€). Confermando, il prezzo viene memorizzato nel database per le spese future e sommato al conto totale.',
+        howToUse: 'Tocca la casella di un ingrediente mentre fai la spesa: conferma o adegua il prezzo pagato in un istante.',
+      },
+      {
+        type: 'feat',
+        title: 'Checkout della Spesa con Trasferimento Automatico in Dispensa',
+        description:
+          'Terminata la spesa, il pulsante "Completa Spesa" apre il riepilogo finale con il totale e i buoni pasto da consegnare alla cassa. Al checkout, il conto totale si azzera, gli alimenti acquistati vengono rimossi dalla lista e trasferiti automaticamente nella Dispensa con una data di scadenza stimata intelligente in base alla tipologia di alimento.',
+        howToUse: 'Premi "Completa Spesa" in basso per archiviare gli acquisti e riempire la dispensa di casa con un solo tocco.',
+      },
+      {
+        type: 'feat',
+        title: 'Tab Dispensa con Monitoraggio Scadenze & Scalamento Quantità',
+        description:
+          'La Dispensa mostra tutti gli alimenti disponibili a casa con badge cromatici di scadenza (verde = fresco, giallo = scade entro 3 giorni, rosso = scaduto!). Permette di scalare le quantità man mano che cucini (-50g, -100g) o segnare un cibo come finito, e con il tasto rapido "Riordina" permette di rimettere subito il cibo nella lista della spesa.',
+        howToUse: 'Nel tab Dispensa monitora le scadenze e tocca "Riordina" per reinserire nella spesa gli alimenti che stanno terminando.',
+      },
+      {
+        type: 'feat',
+        title: 'Suggerimenti Intelligenti dal Meal Planner (Settimana Corrente e Prossima)',
+        description:
+          'In fondo alla lista della spesa compaiono due sezioni di suggerimenti con aggiunta in un tap: gli ingredienti necessari per i pasti pianificati nel Meal Planner (se è verso il weekend, include anche la settimana prossima!) e gli alimenti della dispensa che sono esauriti o vicini alla scadenza.',
+        howToUse: 'Scorri in basso nella lista della spesa e tocca i chip suggeriti per aggiungere al volo gli ingredienti che mancano.',
+      },
+    ],
+  },
   {
     version: '1.7.3',
     date: '27 Ottobre 2026',
     title: 'Adattamento Nutrizionale Deterministico Avanzato, Fix Macro Salmone, Multi-Proteina Legumi+Feta, Limiti Fabbisogno in Real-Time & Planner Sticky',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 1.7.3: potenziamento dell\'algoritmo deterministico e risoluzione di tutti i casi limite di fabbisogno. Le patate vengono ora calcolate esattamente sui 200g previsti dal piano nutrizionale per il pranzo (e modulate su cena o post-workout); eliminato alla radice il bug delle 1023 kcal sul salmone; integrato il dimezzamento 50/50 per abbinamenti multi-proteina come Legumi e Feta; aggiunti i promemoria del limite massimo consentito per gruppo durante la modifica manuale; suggerimenti ingredienti intelligenti divisi per tipologia di pasto (Colazione con latte, yogurt e cioccolato fondente max 15g; Pranzo/Cena con salmone, verdure e patate); salvataggio manuale istantaneo e garantito in Recipe Detail con bottoni +/-; e barra settimanale del Meal Planner sticky con scorrimento fluido al tocco del giorno.',
     changes: [
@@ -174,7 +226,7 @@ export const CHANGELOG: Release[] = [
         title: 'Nuova Schermata "Aggiungi Ricetta" con Creazione Ad-Hoc',
         description:
           'La sezione "Importa" diventa "Aggiungi": ora puoi creare una ricetta personalizzata da zero (es. "Salmone in friggitrice ad aria"). L\'AI non crea procedimenti artificiali: il sistema suggerisce istantaneamente gli ingredienti giusti dal titolo e l\'algoritmo calcola subito le dosi esatte.',
-        howToUse: 'Tocca "➕ Aggiungi" nella barra in basso e seleziona "✍️ Crea Ad-Hoc".',
+        howToUse: 'Tocca "➕ Aggiungi" nella barra in basso e seleziona "✍️ Crea".',
       },
       {
         type: 'feat',

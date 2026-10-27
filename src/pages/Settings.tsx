@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { getSettings, getActiveProfile, db } from '@/lib/db'
+import { getSettings, saveSettings, getActiveProfile, db } from '@/lib/db'
 import { PageHeader } from '@/components/ui'
 import { isOpenAIConfigured, isRapidAPIConfigured } from '@/config'
 import ChangelogModal from '@/components/ChangelogModal'
@@ -19,13 +19,30 @@ export default function SettingsPage() {
   const [progress, setProgress] = useState<ReAdaptProgress | null>(null)
   const [migrateStatus, setMigrateStatus] = useState('')
 
+  const [voucherEnabled, setVoucherEnabled] = useState(false)
+  const [voucherVal, setVoucherVal] = useState('8.00')
+
   const activeProfile = useLiveQuery(() => getActiveProfile(), [])
 
   useEffect(() => {
-    getSettings().then(() => {
+    getSettings().then(s => {
       setLoading(false)
+      setVoucherEnabled(Boolean(s.mealVoucherEnabled))
+      setVoucherVal(String(s.mealVoucherValue ?? 8.00))
     })
   }, [])
+
+  const handleToggleVouchers = async (checked: boolean) => {
+    setVoucherEnabled(checked)
+    const val = parseFloat(voucherVal) || 8.00
+    await saveSettings({ mealVoucherEnabled: checked, mealVoucherValue: val })
+  }
+
+  const handleVoucherValueChange = async (valStr: string) => {
+    setVoucherVal(valStr)
+    const val = parseFloat(valStr) || 8.00
+    await saveSettings({ mealVoucherValue: val })
+  }
 
   const handleReAdaptAllRecipes = async () => {
     setMigrating(true)
@@ -389,6 +406,85 @@ export default function SettingsPage() {
               Il piano nutrizionale, le ricette e il meal planner risiedono sul tuo dispositivo.
             </p>
           </div>
+        </div>
+
+        {/* Buoni Pasto & Spesa */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <span>💳</span>
+              <span>Buoni Pasto &amp; Spesa</span>
+            </h2>
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                voucherEnabled
+                  ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              {voucherEnabled ? `${parseFloat(voucherVal || '8').toFixed(2)} € / buono` : 'Disattivati'}
+            </span>
+          </div>
+
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            Calcola automaticamente quanti buoni pasto puoi utilizzare alla cassa del supermercato in base agli alimenti depennati nel carrello.
+          </p>
+
+          <div className="bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-3 flex items-center justify-between border border-gray-100 dark:border-gray-700/60">
+            <div>
+              <p className="text-xs font-bold text-gray-900 dark:text-gray-100">
+                Usa Buoni Pasto nella Spesa
+              </p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                Mostra la ripartizione (es. 4 BP + 2.00 €)
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={voucherEnabled}
+              onChange={e => handleToggleVouchers(e.target.checked)}
+              className="w-5 h-5 rounded border-gray-300 dark:border-gray-700 text-primary-500 accent-primary-500 cursor-pointer"
+            />
+          </div>
+
+          {voucherEnabled && (
+            <div className="space-y-2 pt-1 animate-fade-in">
+              <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block">
+                Valore singolo Buono Pasto:
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="1"
+                    value={voucherVal}
+                    onChange={e => handleVoucherValueChange(e.target.value)}
+                    className="input-field text-sm font-bold py-2 pr-8"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
+                    €
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  {[7.0, 8.0, 9.5].map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => handleVoucherValueChange(preset.toFixed(2))}
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                        parseFloat(voucherVal) === preset
+                          ? 'bg-amber-100 dark:bg-amber-950/80 border-amber-400 text-amber-900 dark:text-amber-200'
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {preset.toFixed(2)}€
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* How to install */}

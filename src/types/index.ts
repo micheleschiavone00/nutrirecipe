@@ -173,6 +173,8 @@ export interface ShoppingItem {
   category: FoodGroup['category']
   recipes: string[]           // recipe IDs che lo richiedono
   isChecked: boolean
+  price?: number              // prezzo pagato / confermato al checkout
+  estimatedPrice?: number     // prezzo stimato dalla memoria prezzi
   store?: string
 }
 
@@ -184,6 +186,30 @@ export interface ShoppingList {
   updatedAt: Date
 }
 
+// ─── Pantry & Food Price Types ────────────────────────────────────────────────
+
+export interface PantryItem {
+  id: string
+  name: string
+  quantity: number
+  unit: string
+  category: FoodGroup['category']
+  purchaseDate: string        // ISO date YYYY-MM-DD
+  expiryDate?: string         // ISO date YYYY-MM-DD
+  pricePaid?: number
+  isDepleted?: boolean        // esaurito / da ricomprare
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface FoodPrice {
+  name: string                // lowercase trimmed name
+  lastPrice: number
+  unit?: string
+  updatedAt: Date
+}
+
 // ─── App Settings ─────────────────────────────────────────────────────────────
 
 export interface AppSettings {
@@ -192,6 +218,9 @@ export interface AppSettings {
   activeProfileId?: string
   language: 'it' | 'en'
   theme: 'light' | 'dark' | 'system'
+  mealVoucherEnabled?: boolean
+  mealVoucherValue?: number   // es. 8.00 €
+  mealVoucherCount?: number   // buoni pasto totali a disposizione
 }
 
 // ─── Import Job ───────────────────────────────────────────────────────────────

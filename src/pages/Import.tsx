@@ -380,7 +380,7 @@ export default function ImportPage() {
             }`}
           >
             <span>✍️</span>
-            <span>Crea Ad-Hoc</span>
+            <span>Crea</span>
           </button>
           <button
             type="button"
@@ -694,8 +694,7 @@ export default function ImportPage() {
               onClick={handleSaveAdHoc}
               className="btn-primary w-full text-sm py-3.5 font-bold shadow-lg flex items-center justify-center gap-2"
             >
-              <span>💾</span>
-              <span>{isSavingAdHoc ? 'Salvataggio…' : 'Salva Ricetta nel Ricettario ✓'}</span>
+              <span>{isSavingAdHoc ? 'Salvataggio…' : 'Salva Ricetta'}</span>
             </button>
           </div>
         )}

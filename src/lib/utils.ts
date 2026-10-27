@@ -7,12 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const MEAL_LABELS: Record<TargetMealType, string> = {
-  breakfast: '🌅 Colazione',
-  snack_am: '🍎 Spuntino mattina',
-  lunch: '☀️ Pranzo',
-  dinner: '🌙 Cena',
-  lunch_dinner: '☀️🌙 Pranzo e Cena',
-  snack_pm: '🍪 Merenda',
+  breakfast: 'Colazione',
+  snack_am: 'Spuntino mattina',
+  lunch: 'Pranzo',
+  dinner: 'Cena',
+  lunch_dinner: 'Pranzo e Cena',
+  snack_pm: 'Merenda',
 }
 
 export const MEAL_ICONS: Record<TargetMealType, string> = {
