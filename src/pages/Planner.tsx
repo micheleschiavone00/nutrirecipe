@@ -58,6 +58,17 @@ export default function PlannerPage() {
 
   const isToday = (dateStr: string) => dateStr === new Date().toISOString().split('T')[0]
 
+  const handleQuickCheat = async (date: string, mealType: MealType) => {
+    await db.plannedMeals.add({
+      id: generateId(),
+      date,
+      mealType,
+      customLabel: 'Pasto Libero / Sgarro 🍕',
+      isCheatMeal: true,
+      isCompleted: false,
+    })
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader
@@ -125,6 +136,7 @@ export default function PlannerPage() {
             onRemove={removeMeal}
             onToggle={toggleComplete}
             onAdd={(mealType) => setSlotToSelect({ date: day, mealType })}
+            onQuickCheat={(mealType) => handleQuickCheat(day, mealType)}
             onRecipeClick={(recipeId) => navigate(`/recipes/${recipeId}`)}
           />
         ))}
@@ -149,11 +161,16 @@ export default function PlannerPage() {
             })
           }}
           onAddCustomMeal={async (customLabel) => {
+            const isCheat =
+              customLabel.toLowerCase().includes('pasto libero') ||
+              customLabel.toLowerCase().includes('sgarro') ||
+              customLabel.toLowerCase().includes('cheat')
             await db.plannedMeals.add({
               id: generateId(),
               date: slotToSelect.date,
               mealType: slotToSelect.mealType,
               customLabel,
+              isCheatMeal: isCheat,
               isCompleted: false,
             })
           }}
@@ -181,7 +198,7 @@ export default function PlannerPage() {
 }
 
 function DayCard({
-  day, isToday, plannedMeals, recipesMap, onRemove, onToggle, onAdd, onRecipeClick,
+  day, isToday, plannedMeals, recipesMap, onRemove, onToggle, onAdd, onQuickCheat, onRecipeClick,
 }: {
   day: string
   isToday: boolean
@@ -190,6 +207,7 @@ function DayCard({
   onRemove: (id: string) => void
   onToggle: (meal: PlannedMeal) => void
   onAdd: (mealType: MealType) => void
+  onQuickCheat: (mealType: MealType) => void
   onRecipeClick: (recipeId: string) => void
 }) {
   const MEAL_ORDER: MealType[] = ['breakfast', 'snack_am', 'lunch', 'snack_pm', 'dinner']
@@ -199,61 +217,83 @@ function DayCard({
     <div className={cn('card overflow-hidden', isToday && 'ring-2 ring-primary-400')}>
       <div className={cn(
         'px-4 py-2.5 flex items-center justify-between',
-        isToday ? 'bg-primary-500' : 'bg-gray-50 border-b border-gray-100'
+        isToday ? 'bg-primary-500 text-white' : 'bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200'
       )}>
-        <p className={cn('font-semibold text-sm', isToday ? 'text-white' : 'text-gray-700')}>
+        <p className="font-semibold text-sm">
           {isToday ? '📍 ' : ''}{formatDayLabel(day, true)}
         </p>
-        {isToday && <span className="text-xs text-primary-100">Oggi</span>}
+        {isToday && <span className="text-xs text-primary-100 font-bold">Oggi</span>}
       </div>
-      <div className="divide-y divide-gray-50">
+      <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {MEAL_ORDER.map(mealType => {
           const slots = dayMeals.filter(m => m.mealType === mealType)
           return (
             <div key={mealType} className="px-4 py-2.5">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-medium text-gray-500">{MEAL_LABELS[mealType]}</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{MEAL_LABELS[mealType]}</p>
                 <button
                   onClick={() => onAdd(mealType)}
-                  className="text-primary-500 text-xs font-medium"
+                  className="text-primary-600 dark:text-primary-400 text-xs font-semibold hover:underline"
                 >
                   + Aggiungi
                 </button>
               </div>
               {slots.length === 0 ? (
-                <button
-                  onClick={() => onAdd(mealType)}
-                  className="w-full py-2 border border-dashed border-gray-200 rounded-xl text-xs text-gray-300 hover:border-primary-300 hover:text-primary-400 transition-colors"
-                >
-                  Nessuna ricetta pianificata
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onAdd(mealType)}
+                    className="flex-1 py-2 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl text-xs text-gray-400 hover:border-primary-300 hover:text-primary-500 transition-colors"
+                  >
+                    Nessuna ricetta pianificata
+                  </button>
+                  {(mealType === 'lunch' || mealType === 'dinner') && (
+                    <button
+                      type="button"
+                      onClick={() => onQuickCheat(mealType)}
+                      title={`Imposta ${mealType === 'lunch' ? 'Pranzo' : 'Cena'} come Pasto Libero / Sgarro`}
+                      className="px-2.5 py-2 border border-purple-200 dark:border-purple-800 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-bold flex items-center gap-1 transition-all flex-shrink-0 active:scale-95 shadow-2xs"
+                    >
+                      <span>🍕</span>
+                      <span className="hidden sm:inline">Pasto Libero</span>
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-1.5">
                   {slots.length > 1 && (
-                    <div className="px-2.5 py-1 bg-emerald-50/90 border border-emerald-200/80 rounded-xl text-[10px] text-emerald-800 font-bold flex items-center justify-between">
+                    <div className="px-2.5 py-1 bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800 rounded-xl text-[10px] text-emerald-800 dark:text-emerald-300 font-bold flex items-center justify-between">
                       <span className="flex items-center gap-1">
                         <span>🥗</span>
                         <span>Pasto Composto ({slots.length} pietanze)</span>
                       </span>
-                      <span className="text-[9px] font-semibold text-emerald-700 bg-white px-1.5 py-0.2 rounded border border-emerald-200">
+                      <span className="text-[9px] font-semibold text-emerald-700 dark:text-emerald-300 bg-white dark:bg-gray-800 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-700">
                         Verdure &amp; Dosi Ripartite ✓
                       </span>
                     </div>
                   )}
                   {slots.map(slot => {
                     const recipe = slot.recipeId ? recipesMap[slot.recipeId] : null
+                    const isCheat =
+                      slot.isCheatMeal ||
+                      slot.customLabel?.toLowerCase().includes('pasto libero') ||
+                      slot.customLabel?.toLowerCase().includes('sgarro')
+
                     return (
                       <div
                         key={slot.id}
                         className={cn(
-                          'flex items-center gap-2 p-2 rounded-xl',
-                          slot.isCompleted ? 'bg-green-50 opacity-60' : 'bg-gray-50'
+                          'flex items-center gap-2 p-2 rounded-xl border border-transparent transition-all',
+                          slot.isCompleted
+                            ? 'bg-green-50 dark:bg-green-950/30 opacity-60'
+                            : isCheat
+                            ? 'bg-purple-50/70 dark:bg-purple-950/30 border-purple-200/60 dark:border-purple-800/60'
+                            : 'bg-gray-50 dark:bg-gray-800/50'
                         )}
                       >
                         <button onClick={() => onToggle(slot)} className="flex-shrink-0">
                           <div className={cn(
                             'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                            slot.isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
+                            slot.isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-gray-600'
                           )}>
                             {slot.isCompleted && <span className="text-xs">✓</span>}
                           </div>
@@ -263,22 +303,28 @@ function DayCard({
                           onClick={() => recipe && onRecipeClick(recipe.id)}
                         >
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className={cn('text-sm font-medium', slot.isCompleted && 'line-through text-gray-400')}>
+                            <p className={cn('text-sm font-medium', slot.isCompleted && 'line-through text-gray-400 dark:text-gray-500')}>
                               {recipe?.title ?? slot.customLabel ?? 'Pasto personalizzato'}
                             </p>
+                            {isCheat && (
+                              <span className="text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 px-1.5 py-0.5 rounded-md border border-purple-200 dark:border-purple-800 flex items-center gap-0.5">
+                                <span>🍕</span>
+                                <span>Pasto Libero</span>
+                              </span>
+                            )}
                             {slot.variantLabel && (
-                              <span className="text-[10px] font-semibold bg-primary-100 text-primary-800 px-1.5 py-0.5 rounded-md border border-primary-200/60">
+                              <span className="text-[10px] font-semibold bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300 px-1.5 py-0.5 rounded-md border border-primary-200/60 dark:border-primary-800">
                                 {slot.variantLabel}
                               </span>
                             )}
                           </div>
                           {recipe?.nutritionalValues && (
-                            <p className="text-xs text-gray-400">{recipe.nutritionalValues.calories} kcal</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{recipe.nutritionalValues.calories} kcal</p>
                           )}
                         </div>
                         <button
                           onClick={() => onRemove(slot.id)}
-                          className="text-gray-300 hover:text-red-400 text-sm"
+                          className="text-gray-300 dark:text-gray-600 hover:text-red-400 text-sm p-1"
                         >
                           ✕
                         </button>

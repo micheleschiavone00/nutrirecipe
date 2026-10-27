@@ -16,14 +16,59 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.7.0'
+export const APP_VERSION = '1.7.1'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.7.1',
+    date: '27 Ottobre 2026',
+    title: 'Dark Mode Completa, Fix Pasto Libero a Pranzo, Tasto Ricalibra e Riadattamento Completo con Avanzamento Real-Time',
+    isLatest: true,
+    summary:
+      'Aggiornamento 1.7.1: supporto completo alla Dark Mode (con selettore Chiaro / Scuro / Sistema), risoluzione definitiva del bug dello sgarro sul pranzo, nuovo tasto "Ricalibra Dosi" sulla singola ricetta con anteprima e opzioni AI/Manuale, calibrazione esatta delle grammature dal piano nutrizionale (Salmone 200/250/280g, Lenticchie + Uova 50/50 e fix grassi a 99g), e riadattamento totale di tutte le ricette precedenti con barra di avanzamento real-time nelle impostazioni.',
+    changes: [
+      {
+        type: 'fix',
+        title: 'Fix Pasto Libero / Sgarro a Pranzo e Cena',
+        description:
+          'Risolto il bug che impediva di assegnare il pasto libero al pranzo: toccando il tasto "Pasto Libero" sul pranzo nella creazione guidata veniva erroneamente impostata la cena. Ora lo sgarro può essere assegnato con 1 tocco sia a pranzo che a cena in qualsiasi schermata (calendario, modale e creazione guidata).',
+        howToUse: 'Tocca il pulsante "🍕 Pasto Libero" sul riquadro del Pranzo o della Cena nel Planner o nella Creazione Guidata.',
+      },
+      {
+        type: 'feat',
+        title: 'Tasto "Ricalibra Dosi" sulla Singola Ricetta (Algoritmo, AI o Manuale)',
+        description:
+          'Aggiunto nella pagina della ricetta il tasto "⚡ Ricalibra Dosi con Algoritmo". Apre una modale di confronto prima/dopo che mostra le nuove dosi ricalcolate sul tuo piano attivo. Puoi confermare e applicare con 1 tocco, procedere invece con l\'AI se preferisci la narrazione generativa, oppure modificare manualmente qualsiasi grammatura con l\'editing inline.',
+        howToUse: 'Apri una qualsiasi ricetta e tocca "⚡ Ricalibra Dosi" sotto i valori nutrizionali.',
+      },
+      {
+        type: 'feat',
+        title: 'Riadattamento Completo di Tutte le Ricette con Barra di Avanzamento',
+        description:
+          'Nelle Impostazioni è ora presente il tool per rifare l\'intero procedimento di adattamento su tutte le ricette già importate nel ricettario. Mostra una barra di avanzamento fluida in tempo reale con il nome della ricetta in lavorazione, il conteggio progressivo e la percentuale.',
+        howToUse: 'Vai in "Impostazioni" e tocca "⚡ Riadatta tutte le ricette precedenti".',
+      },
+      {
+        type: 'fix',
+        title: 'Calibrazione Grammature Esatte da Piano & Correzione Calcolo Grassi',
+        description:
+          'L\'algoritmo ora interroga le opzioni specifiche del tuo piano nutrizionale: per il salmone assegna le grammature differenziate (es. 200g a pranzo, 250g a cena, 280g in cena post workout). Nelle ricette con legumi e uova (es. polpette di lenticchie) applica la corretta divisione al 50% (40g di lenticchie e 1 uovo intero con dosaggio calibrato degli addensanti). Corretto il calcolo nutrizionale eliminando l\'anomalia dei 99g di grassi sull\'olio.',
+        howToUse: 'Attivo automaticamente su tutte le calibrazioni e varianti pasto.',
+      },
+      {
+        type: 'design',
+        title: 'Dark Mode Completa & Adattiva al Sistema',
+        description:
+          'Interfaccia ottimizzata per la modalità scura con sfondo ad alto contrasto, elementi in grafite e titanio, preservando la leggibilità. Nelle Impostazioni è ora disponibile il selettore "Aspetto & Tema" con 3 opzioni: Chiaro ☀️, Scuro 🌙 o Segui Sistema 🌗.',
+        howToUse: 'Vai in Impostazioni > Aspetto & Tema per scegliere la modalità preferita.',
+      },
+    ],
+  },
   {
     version: '1.7.0',
     date: '27 Ottobre 2026',
     title: 'Algoritmo Deterministico di Calibrazione Dosi, Creazione Ricette Ad-Hoc e Pasti Composti con Contorni',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Introdotto un nuovo algoritmo matematico/deterministico indipendente dall\'AI per la calibrazione esatta delle dosi: quando sono presenti uova e parmigiano vengono entrambi dimezzati al 50% riconoscendo il parmigiano come proteina nobile. Nuova schermata "Aggiungi Ricetta" con creazione rapida ad hoc e suggeritore ingredienti dal titolo senza testi artificiali, rilevamento automatico dei contorni e supporto a pasti composti nel Planner con ripartizione automatica delle verdure.',
     changes: [

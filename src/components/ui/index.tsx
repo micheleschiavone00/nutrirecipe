@@ -9,11 +9,11 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, action, className }: PageHeaderProps) {
   return (
-    <div className={cn('safe-top bg-white/90 backdrop-blur-xl sticky top-0 z-40 border-b border-gray-100', className)}>
+    <div className={cn('safe-top bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl sticky top-0 z-40 border-b border-gray-100 dark:border-gray-800 transition-colors', className)}>
       <div className="px-4 py-3 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-          {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
+          {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>}
         </div>
         {action && <div>{action}</div>}
       </div>

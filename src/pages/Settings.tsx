@@ -6,14 +6,17 @@ import { PageHeader } from '@/components/ui'
 import { isOpenAIConfigured, isRapidAPIConfigured } from '@/config'
 import ChangelogModal from '@/components/ChangelogModal'
 import { APP_VERSION } from '@/data/changelog'
-import { migrateAllRecipesSteps } from '@/lib/recipeEnricher'
+import { reAdaptAllRecipes, type ReAdaptProgress } from '@/lib/recipeEnricher'
+import { useTheme } from '@/lib/theme'
 import { formatDate } from '@/lib/utils'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
   const [loading, setLoading] = useState(true)
   const [showChangelog, setShowChangelog] = useState(false)
   const [migrating, setMigrating] = useState(false)
+  const [progress, setProgress] = useState<ReAdaptProgress | null>(null)
   const [migrateStatus, setMigrateStatus] = useState('')
 
   const activeProfile = useLiveQuery(() => getActiveProfile(), [])
@@ -24,17 +27,20 @@ export default function SettingsPage() {
     })
   }, [])
 
-  const handleMigrateRecipes = async () => {
+  const handleReAdaptAllRecipes = async () => {
     setMigrating(true)
-    setMigrateStatus('Aggiornamento ricette in corso…')
+    setProgress(null)
+    setMigrateStatus('')
     try {
-      const res = await migrateAllRecipesSteps()
-      setMigrateStatus(`✅ ${res.updated} ricette su ${res.total} aggiornate con dosi!`)
+      const res = await reAdaptAllRecipes((p) => {
+        setProgress(p)
+      })
+      setMigrateStatus(`✅ ${res.updated} ricette su ${res.total} riadattate con successo al tuo piano nutrizionale!`)
     } catch {
-      setMigrateStatus("❌ Errore durante l'aggiornamento")
+      setMigrateStatus("❌ Errore durante il riadattamento delle ricette")
     } finally {
       setMigrating(false)
-      setTimeout(() => setMigrateStatus(''), 4500)
+      setTimeout(() => setMigrateStatus(''), 7000)
     }
   }
 
@@ -229,30 +235,115 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Ricettario & Dosi retroattive */}
+        {/* Aspetto & Tema */}
         <div className="card p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-              <span>⚖️</span>
-              <span>Dosi nei Procedimenti</span>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <span>🌗</span>
+              <span>Aspetto &amp; Tema</span>
             </h2>
-            <span className="text-xs text-emerald-700 bg-emerald-50 font-semibold px-2 py-0.5 rounded-md border border-emerald-200">
-              Automatico
+            <span className="text-xs bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 font-semibold px-2 py-0.5 rounded-full border border-primary-200 dark:border-primary-800">
+              {theme === 'system' ? 'Automatico' : theme === 'dark' ? 'Scuro' : 'Chiaro'}
             </span>
           </div>
-          <p className="text-xs text-gray-500 leading-relaxed">
-            Inserisci retroattivamente le dosi esatte tra parentesi nei passaggi di tutte le ricette salvate in precedenza.
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            Scegli il tema visivo dell&apos;applicazione. In modalità automatica, l&apos;interfaccia si adatta alle impostazioni del tuo telefono.
           </p>
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setTheme('light')}
+              className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
+                theme === 'light'
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 ring-2 ring-amber-400'
+                  : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span className="text-xl">☀️</span>
+              <span>Chiaro</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme('dark')}
+              className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
+                theme === 'dark'
+                  ? 'bg-gray-900 border-primary-500 text-white ring-2 ring-primary-500 shadow-sm'
+                  : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span className="text-xl">🌙</span>
+              <span>Scuro</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme('system')}
+              className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
+                theme === 'system'
+                  ? 'bg-primary-50 dark:bg-primary-950 border-primary-300 dark:border-primary-600 text-primary-900 dark:text-primary-200 ring-2 ring-primary-400'
+                  : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span className="text-xl">🌗</span>
+              <span>Sistema</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Riadattamento Completo Ricette al Piano Nutrizionale */}
+        <div className="card p-4 space-y-3.5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <span>⚡</span>
+              <span>Riadatta Ricette Esistenti al Piano</span>
+            </h2>
+            <span className="text-xs text-primary-700 bg-primary-50 dark:bg-primary-950 dark:text-primary-300 font-semibold px-2 py-0.5 rounded-md border border-primary-200 dark:border-primary-800">
+              Algoritmo v1.7.1
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            Rifai tutto il procedimento di adattamento deterministico su tutte le ricette salvate:
+            ricalibra dosi esatte dal tuo piano ({activeProfile?.name || 'Piano attivo'}), divide correttamente le proteine
+            (es. <strong>Uova + Lenticchie al 50%</strong> = 1 uovo + 40g lenticchie, <strong>Uova + Parmigiano</strong>),
+            ripartisce le verdure e rigenera le varianti Pranzo / Cena / Post-Workout con macro precisi.
+          </p>
+
+          {/* Progress Bar & Status */}
+          {migrating && progress && (
+            <div className="bg-primary-50/70 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 p-3.5 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-primary-900 dark:text-primary-200 truncate max-w-[70%]">
+                  Ricetta {progress.current} di {progress.total}: {progress.title}
+                </span>
+                <span className="font-extrabold text-primary-700 dark:text-primary-400">
+                  {progress.percent}%
+                </span>
+              </div>
+              <div className="w-full bg-primary-100 dark:bg-gray-800 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-primary-500 h-full rounded-full transition-all duration-150 ease-out"
+                  style={{ width: `${progress.percent}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-primary-600 dark:text-primary-400 flex items-center gap-1">
+                <span className="animate-spin inline-block">⚙️</span>
+                <span>Ricalibrazione grammature, varianti e macro in corso…</span>
+              </p>
+            </div>
+          )}
+
           <button
-            onClick={handleMigrateRecipes}
+            onClick={handleReAdaptAllRecipes}
             disabled={migrating}
-            className="btn-secondary w-full flex items-center justify-center gap-2 text-xs font-semibold"
+            className="btn-primary w-full flex items-center justify-center gap-2 text-xs font-bold shadow-sm"
           >
-            <span>🔄</span>
-            <span>{migrating ? 'Aggiornamento in corso…' : 'Aggiorna dosi in tutte le ricette precedenti'}</span>
+            <span>{migrating ? '⏳' : '⚡'}</span>
+            <span>{migrating ? 'Riadattamento in corso…' : 'Riadatta tutte le ricette precedenti'}</span>
           </button>
-          {migrateStatus && (
-            <p className="text-xs font-semibold text-center text-primary-700 animate-fade-in">{migrateStatus}</p>
+
+          {migrateStatus && !migrating && (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center">
+              <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">{migrateStatus}</p>
+            </div>
           )}
         </div>
 

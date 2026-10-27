@@ -118,9 +118,9 @@ export default function CreateTemplateWizardPage() {
     )
   }
 
-  // Quick 1-click cheat meal setter for dinner
-  const handleQuickSetCheat = (dayOffset: number) => {
-    setMealForSlot(dayOffset, 'dinner', undefined, undefined, undefined, 'Pasto Libero / Sgarro 🍕', true)
+  // Quick 1-click cheat meal setter for specific meal (lunch or dinner)
+  const handleQuickSetCheat = (dayOffset: number, mealType: MealType = 'dinner') => {
+    setMealForSlot(dayOffset, mealType, undefined, undefined, undefined, 'Pasto Libero / Sgarro 🍕', true)
   }
 
   // Save template to DB
@@ -335,7 +335,7 @@ export default function CreateTemplateWizardPage() {
                       {notice.actionType === 'set_cheat' && (
                         <button
                           type="button"
-                          onClick={() => handleQuickSetCheat(currentDayIndex)}
+                          onClick={() => handleQuickSetCheat(currentDayIndex, 'dinner')}
                           className="mt-1 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-1.5 px-3 rounded-xl self-start shadow-xs flex items-center gap-1 active:scale-95 transition-all"
                         >
                           <span>🍕 Imposta Cena di {currentDayInfo.name} come Pasto Libero</span>
@@ -459,9 +459,9 @@ export default function CreateTemplateWizardPage() {
                         {(mealType === 'lunch' || mealType === 'dinner') && (
                           <button
                             type="button"
-                            onClick={() => handleQuickSetCheat(currentDayIndex)}
+                            onClick={() => handleQuickSetCheat(currentDayIndex, mealType)}
                             className="py-2.5 px-3 rounded-xl border border-purple-200 hover:border-purple-300 bg-purple-50/80 hover:bg-purple-100 text-purple-900 font-bold text-xs flex items-center gap-1 transition-all flex-shrink-0"
-                            title="Imposta come Pasto Libero / Sgarro"
+                            title={`Imposta ${mealType === 'lunch' ? 'Pranzo' : 'Cena'} come Pasto Libero / Sgarro`}
                           >
                             <span>🍕</span>
                             <span className="hidden sm:inline">Pasto Libero</span>

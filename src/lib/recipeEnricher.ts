@@ -1,5 +1,11 @@
 import type { Recipe, RecipeIngredient, RecipeStep } from '@/types'
-import { db } from './db'
+import { db, getActiveProfile } from './db'
+import {
+  adaptIngredientsDeterministically,
+  generateVariantsDeterministically,
+  calculateNutritionalValues,
+  detectDishType,
+} from './deterministicRecipeAdapter'
 
 /**
  * Normalizes food names for fuzzy matching in step descriptions.
@@ -213,6 +219,112 @@ export async function migrateAllRecipesSteps(): Promise<{ total: number; updated
     return { total: allRecipes.length, updated: updatedCount }
   } catch (error) {
     console.error('Error migrating recipe steps:', error)
+    return { total: 0, updated: 0 }
+  }
+}
+
+/**
+ * Re-adapts a single recipe deterministically against a nutrition profile:
+ * - Recalculates adaptedIngredients (proteins, legumes, eggs, cheese 50/50, veggies, carbs, fats)
+ * - Identifies dishType ('side' | 'complete' | 'main')
+ * - Generates Lunch, Dinner, Dinner Post-Workout variants if applicable
+ * - Recalculates exact nutritional values (eliminates exaggerated fats)
+ * - Enriches step text with annotated doses
+ */
+export async function reAdaptSingleRecipe(
+  recipe: Recipe,
+  profileOverride?: any
+): Promise<Recipe> {
+  const profile = profileOverride || (await getActiveProfile())
+  const rawIngredients =
+    recipe.originalIngredients && recipe.originalIngredients.length > 0
+      ? recipe.originalIngredients
+      : recipe.adaptedIngredients
+
+  const applicableMeal =
+    profile?.meals?.find(
+      (m: any) =>
+        m.mealType === recipe.targetMeal ||
+        (recipe.targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
+    ) || profile?.meals?.[0]
+
+  // 1. Re-adapt base ingredients
+  const adaptedIngredients = adaptIngredientsDeterministically(rawIngredients, applicableMeal)
+
+  // 2. Dish type
+  const dishType = detectDishType(rawIngredients)
+
+  // 3. Multi-meal variants
+  const variants = generateVariantsDeterministically(
+    profile,
+    rawIngredients,
+    recipe.steps,
+    recipe.targetMeal
+  )
+
+  // 4. Nutritional values
+  const nutritionalValues = calculateNutritionalValues(adaptedIngredients)
+
+  // 5. Enrich steps with doses
+  const { recipe: enriched } = enrichRecipeStepsWithDoses({
+    ...recipe,
+    dishType,
+    adaptedIngredients,
+    variants,
+    nutritionalValues,
+    updatedAt: new Date(),
+  })
+
+  return enriched
+}
+
+export interface ReAdaptProgress {
+  current: number
+  total: number
+  title: string
+  percent: number
+}
+
+/**
+ * Re-adapts ALL recipes in the database against the user's active nutrition plan.
+ * Provides a granular real-time progress callback.
+ */
+export async function reAdaptAllRecipes(
+  onProgress?: (progress: ReAdaptProgress) => void
+): Promise<{ total: number; updated: number }> {
+  try {
+    const allRecipes = await db.recipes.toArray()
+    const profile = await getActiveProfile()
+    let updatedCount = 0
+    const total = allRecipes.length
+
+    if (total === 0) {
+      return { total: 0, updated: 0 }
+    }
+
+    for (let i = 0; i < total; i++) {
+      const r = allRecipes[i]
+
+      if (onProgress) {
+        onProgress({
+          current: i + 1,
+          total,
+          title: r.title,
+          percent: Math.round(((i + 1) / total) * 100),
+        })
+      }
+
+      const updated = await reAdaptSingleRecipe(r, profile)
+      await db.recipes.put(updated)
+      updatedCount++
+
+      // Smooth UI rendering pause
+      await new Promise(res => setTimeout(res, 80))
+    }
+
+    return { total, updated: updatedCount }
+  } catch (error) {
+    console.error('Error re-adapting all recipes:', error)
     return { total: 0, updated: 0 }
   }
 }

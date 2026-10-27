@@ -5,6 +5,8 @@ import type {
   NutritionalValues,
   NutritionProfile,
   MealPlan,
+  FoodGroup,
+  FoodOption,
   TargetMealType,
   RecipeMealVariant,
   DishType,
@@ -12,27 +14,45 @@ import type {
 
 // ─── Classification Dictionaries ──────────────────────────────────────────────
 
-const PROTEIN_KEYWORDS = [
+const FISH_KEYWORDS = [
+  'salmone', 'tonno', 'merluzzo', 'orata', 'spigola', 'pesce',
+  'pescespada', 'gamberi', 'gamberetti', 'calamari', 'polpo', 'trota', 'sarde',
+  'alici', 'platessa', 'nasello', 'baccalà', 'seppie', 'rombo', 'dentice'
+]
+
+const MEAT_KEYWORDS = [
   'pollo', 'tacchino', 'coniglio', 'manzo', 'vitello', 'maiale', 'bistecca',
   'macinato', 'hamburger', 'straccetti', 'lonza', 'speck', 'bresaola',
-  'prosciutto', 'salmone', 'tonno', 'merluzzo', 'orata', 'spigola', 'pesce',
-  'pescespada', 'gamberi', 'gamberetti', 'calamari', 'polpo', 'trota', 'sarde',
-  'alici', 'platessa', 'nasello', 'baccalà', 'uova', 'uovo', 'albume',
-  'tofu', 'tempeh', 'soia', 'lupini', 'edamame',
-  // Formaggi ad alto apporto proteico
-  'parmigiano', 'grana', 'pecorino', 'feta', 'ricotta', 'mozzarella',
-  'fiocchi di latte', 'primosale', 'quartirolo', 'yogurt greco'
+  'prosciutto', 'fesa'
+]
+
+const LEGUME_KEYWORDS = [
+  'lenticchie', 'lenticchia', 'ceci', 'cece', 'fagioli', 'fagiolo',
+  'piselli', 'pisello', 'cicerchie', 'cicerchia', 'fave', 'fava',
+  'edamame', 'soia', 'lupini', 'tofu', 'tempeh'
+]
+
+const EGG_KEYWORDS = [
+  'uova', 'uovo', 'albume', 'albumi'
 ]
 
 const CHEESE_PROTEIN_KEYWORDS = [
   'parmigiano', 'grana', 'pecorino', 'feta', 'ricotta', 'mozzarella',
-  'fiocchi di latte', 'primosale', 'formaggio'
+  'fiocchi di latte', 'primosale', 'quartirolo', 'yogurt greco', 'formaggio'
+]
+
+const PROTEIN_KEYWORDS = [
+  ...FISH_KEYWORDS,
+  ...MEAT_KEYWORDS,
+  ...LEGUME_KEYWORDS,
+  ...EGG_KEYWORDS,
+  ...CHEESE_PROTEIN_KEYWORDS,
 ]
 
 const CARB_KEYWORDS = [
   'pasta', 'riso', 'avena', 'farina', 'pane', 'patate', 'patata', 'gnocchi',
   'piadina', 'couscous', 'quinoa', 'polenta', 'mais', 'gallette', 'fette biscottate',
-  'cereali', 'spaghetti', 'penne', 'fusilli', 'riso basmati'
+  'cereali', 'spaghetti', 'penne', 'fusilli', 'riso basmati', 'pangrattato', 'pan grattato'
 ]
 
 const VEGETABLE_KEYWORDS = [
@@ -47,13 +67,17 @@ const FAT_KEYWORDS = [
   'nocciole', 'avocado', 'semi di lino', 'semi di chia', 'burro di arachidi', 'maionese'
 ]
 
+const BINDING_KEYWORDS = [
+  'pangrattato', 'pan grattato', 'farina', 'fecola', 'amido', 'farina d\'avena'
+]
+
 export function classifyIngredientCategory(name: string): RecipeIngredient['category'] {
   const lower = name.toLowerCase().trim()
 
   if (FAT_KEYWORDS.some(k => lower.includes(k))) return 'fats'
   if (VEGETABLE_KEYWORDS.some(k => lower.includes(k))) return 'vegetables'
-  if (CARB_KEYWORDS.some(k => lower.includes(k))) return 'carbs'
   if (PROTEIN_KEYWORDS.some(k => lower.includes(k))) return 'proteins'
+  if (CARB_KEYWORDS.some(k => lower.includes(k))) return 'carbs'
 
   return 'other'
 }
@@ -61,6 +85,128 @@ export function classifyIngredientCategory(name: string): RecipeIngredient['cate
 export function isCheeseProtein(name: string): boolean {
   const lower = name.toLowerCase().trim()
   return CHEESE_PROTEIN_KEYWORDS.some(k => lower.includes(k))
+}
+
+export function isLegume(name: string): boolean {
+  const lower = name.toLowerCase().trim()
+  return LEGUME_KEYWORDS.some(k => lower.includes(k))
+}
+
+export function isEgg(name: string): boolean {
+  const lower = name.toLowerCase().trim()
+  return EGG_KEYWORDS.some(k => lower.includes(k))
+}
+
+export function isBindingIngredient(name: string): boolean {
+  const lower = name.toLowerCase().trim()
+  return BINDING_KEYWORDS.some(k => lower.includes(k))
+}
+
+// ─── Quantity Parser (Prevents "10g (circa 1 cucchiaio)" -> 101 bug) ───────────
+
+export function parseQuantityInGrams(qtyStr: string): number {
+  if (!qtyStr) return 0
+  const clean = String(qtyStr).trim()
+
+  // 1. Bracketed grams: "1 intero (50g)" or "(200g)"
+  const bracketMatch = clean.match(/\((\d+(?:\.\d+)?)\s*g\)/i)
+  if (bracketMatch) return parseFloat(bracketMatch[1])
+
+  // 2. Specific unit: "200g", "200 g", "100ml"
+  const gMatch = clean.match(/^(\d+(?:\.\d+)?)\s*(?:g|ml)\b/i)
+  if (gMatch) return parseFloat(gMatch[1])
+
+  const innerGMatch = clean.match(/(\d+(?:\.\d+)?)\s*(?:g|ml)\b/i)
+  if (innerGMatch) return parseFloat(innerGMatch[1])
+
+  // 3. Egg pieces: "1 uovo", "2 uova", "1 intero"
+  const eggMatch = clean.match(/^(\d+(?:\.\d+)?)\s*(?:uov|intero|pezzo|pezzi)\b/i)
+  if (eggMatch) return parseFloat(eggMatch[1]) * 50
+
+  // 4. Fallback: match leading number only
+  const firstNumMatch = clean.match(/^(\d+(?:\.\d+)?)/)
+  if (firstNumMatch) return parseFloat(firstNumMatch[1])
+
+  return 0
+}
+
+// ─── Plan Option Matcher ──────────────────────────────────────────────────────
+
+interface MatchedFoodResult {
+  quantity: number
+  unit: string
+  optionName?: string
+}
+
+export function findMatchingFoodOption(
+  mealPlan: MealPlan | undefined,
+  ingredientName: string,
+  category: RecipeIngredient['category']
+): MatchedFoodResult | null {
+  if (!mealPlan || !mealPlan.groups) return null
+
+  const ingLower = ingredientName.toLowerCase().trim()
+  const relevantGroups = mealPlan.groups.filter(g => {
+    if (category === 'proteins') return g.category === 'proteins' || g.category === 'dairy'
+    if (category === 'carbs') return g.category === 'carbs'
+    if (category === 'vegetables') return g.category === 'vegetables'
+    if (category === 'fats') return g.category === 'fats'
+    return g.category === category
+  })
+
+  // 1. Exact or keyword match inside group.options
+  for (const group of relevantGroups) {
+    if (!group.options) continue
+
+    for (const opt of group.options) {
+      const optLower = opt.name.toLowerCase().trim()
+      // Direct substring match
+      if (ingLower.includes(optLower) || optLower.includes(ingLower)) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+
+      // Semantic keyword matches
+      if (ingLower.includes('salmone') && (optLower.includes('salmone') || optLower.includes('pesce'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if (ingLower.includes('tonno') && (optLower.includes('tonno') || optLower.includes('pesce'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if (isLegume(ingLower) && (isLegume(optLower) || optLower.includes('legum'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if (isEgg(ingLower) && (isEgg(optLower) || optLower.includes('uov'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if (ingLower.includes('pollo') && (optLower.includes('pollo') || optLower.includes('carne bianca'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if ((ingLower.includes('manzo') || ingLower.includes('hamburger')) && (optLower.includes('manzo') || optLower.includes('carne rossa'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if (ingLower.includes('parmigiano') && (optLower.includes('parmigiano') || optLower.includes('grana') || optLower.includes('formaggio'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if ((ingLower.includes('riso') || ingLower.includes('basmati')) && (optLower.includes('riso') || optLower.includes('cereali'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+      if (ingLower.includes('pasta') && (optLower.includes('pasta') || optLower.includes('cereali'))) {
+        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+      }
+    }
+  }
+
+  // 2. Fallback to group min/max quantity
+  for (const group of relevantGroups) {
+    if (group.minQuantity || group.maxQuantity) {
+      return {
+        quantity: group.minQuantity || group.maxQuantity || 0,
+        unit: group.unit || 'g',
+      }
+    }
+  }
+
+  return null
 }
 
 // ─── Dish Type Classifier ─────────────────────────────────────────────────────
@@ -91,7 +237,7 @@ export function detectDishType(ingredients: { name: string; category?: string }[
 
 // ─── Deterministic Dose Calculation ───────────────────────────────────────────
 
-interface InputIngredient {
+export interface InputIngredient {
   name: string
   originalQuantity?: string | number
   unit?: string
@@ -114,11 +260,11 @@ export function adaptIngredientsDeterministically(
   const vegGroup = mealPlan?.groups.find(g => g.category === 'vegetables')
   const fatGroup = mealPlan?.groups.find(g => g.category === 'fats')
 
-  // Target values from plan
-  const targetProteinGrams = protGroup?.minQuantity || protGroup?.maxQuantity || 150
-  const targetCarbGrams = carbGroup?.minQuantity || carbGroup?.maxQuantity || 70
+  // Target values from plan fallback
+  const defaultProteinGrams = protGroup?.minQuantity || protGroup?.maxQuantity || 150
+  const defaultCarbGrams = carbGroup?.minQuantity || carbGroup?.maxQuantity || 70
   const defaultVegGrams = options?.vegetableQuotaOverride ?? (vegGroup?.minQuantity || vegGroup?.maxQuantity || 200)
-  const targetFatGrams = fatGroup?.minQuantity || fatGroup?.maxQuantity || 10
+  const defaultFatGrams = fatGroup?.minQuantity || fatGroup?.maxQuantity || 10
 
   // 1. Classify all ingredients
   const classified = ingredients.map(ing => {
@@ -127,6 +273,9 @@ export function adaptIngredientsDeterministically(
       ...ing,
       category: cat,
       isCheese: isCheeseProtein(ing.name),
+      isLegume: isLegume(ing.name),
+      isEgg: isEgg(ing.name),
+      isBinding: isBindingIngredient(ing.name),
     }
   })
 
@@ -140,8 +289,8 @@ export function adaptIngredientsDeterministically(
   const vegCount = vegItems.length
 
   // Calculate splitting factors
-  // Rule: If multiple protein sources (e.g. Uova + Parmigiano):
-  // Split factor = 1 / proteinCount (e.g. 50% each for 2 sources, 33% each for 3)
+  // Rule: If multiple protein sources (e.g. Lenticchie + Uova, or Uova + Parmigiano):
+  // Split factor = 1 / proteinCount (50% each for 2 sources, 33% each for 3)
   const proteinSplitFactor = proteinCount > 1 ? 1 / proteinCount : 1
   const carbSplitFactor = carbCount > 1 ? 1 / carbCount : 1
   const vegPerItemGrams = vegCount > 0 ? Math.round(defaultVegGrams / vegCount) : 0
@@ -150,33 +299,38 @@ export function adaptIngredientsDeterministically(
     let adaptedQty = ''
     const unit = ing.unit || 'g'
     const origQtyStr = ing.originalQuantity ? String(ing.originalQuantity) : ''
+    const lowerName = ing.name.toLowerCase()
 
     switch (ing.category) {
       case 'proteins': {
-        const lowerName = ing.name.toLowerCase()
-        const isEgg = lowerName.includes('uov') || lowerName.includes('uovo')
-        const isEggWhite = lowerName.includes('albume')
-        const isCheese = ing.isCheese
+        const matched = findMatchingFoodOption(mealPlan, ing.name, 'proteins')
 
-        if (isEgg) {
-          // Standard full portion of eggs: 2 eggs (~100g)
-          // With 2 protein sources (e.g. Uova + Parmigiano): 1 egg (50g)!
-          const baseEggs = 2
+        if (ing.isEgg) {
+          // Eggs handling: plan usually gives 2 eggs (100g)
+          // With 2 protein sources (e.g. Lenticchie + Uova, or Uova + Parmigiano): 1 egg (50g)!
+          const baseEggs = matched?.quantity ? matched.quantity : 2
           const finalEggs = Math.max(1, Math.round(baseEggs * proteinSplitFactor))
           adaptedQty = `${finalEggs} intero (${finalEggs * 50}g)`
-        } else if (isEggWhite) {
-          const baseGrams = 150
-          const finalGrams = Math.round(baseGrams * proteinSplitFactor)
+        } else if (lowerName.includes('albume') || lowerName.includes('albumi')) {
+          const baseAlbume = matched?.quantity ? matched.quantity : 150
+          const finalGrams = Math.round(baseAlbume * proteinSplitFactor)
           adaptedQty = `${finalGrams}g`
-        } else if (isCheese) {
-          // Parmigiano / Formaggio: target usually 30-40g in plan.
-          // If combined with eggs or meat: split 50% -> 20g!
-          const baseCheese = 40
+        } else if (ing.isLegume) {
+          // Legumes handling: plan gives specific grams (e.g. 80g dry lenticchie)
+          // If combined with eggs: 80g * 0.5 = 40g!
+          const baseLegumeGrams = matched?.quantity ? matched.quantity : 80
+          const finalGrams = Math.round(baseLegumeGrams * proteinSplitFactor)
+          adaptedQty = `${finalGrams}g`
+        } else if (ing.isCheese) {
+          // Cheese / Parmigiano: usually 30-40g in plan.
+          // If combined with eggs or meat: 40g * 0.5 = 20g!
+          const baseCheese = matched?.quantity ? matched.quantity : 40
           const finalGrams = Math.max(15, Math.round(baseCheese * proteinSplitFactor))
           adaptedQty = `${finalGrams}g (porzione calibrata proteica)`
         } else {
-          // Meat or Fish or other protein
-          const finalGrams = Math.round(targetProteinGrams * proteinSplitFactor)
+          // Meat or Fish (e.g. Salmone: 200g at lunch, 250g at dinner, 280g post workout)
+          const baseGrams = matched?.quantity ? matched.quantity : defaultProteinGrams
+          const finalGrams = Math.round(baseGrams * proteinSplitFactor)
           adaptedQty = `${finalGrams}g`
         }
         break
@@ -189,13 +343,25 @@ export function adaptIngredientsDeterministically(
       }
 
       case 'carbs': {
-        const finalGrams = Math.round(targetCarbGrams * carbSplitFactor)
-        adaptedQty = `${finalGrams}g`
+        const matched = findMatchingFoodOption(mealPlan, ing.name, 'carbs')
+        const baseCarbGrams = matched?.quantity ? matched.quantity : defaultCarbGrams
+
+        if (ing.isBinding && proteinCount > 1) {
+          // Binding ingredients (e.g. pangrattato in lentil meatballs with eggs):
+          // Scale proportionately to the reduced protein dough (~20-25g), not full carb quota
+          const bindingGrams = Math.min(30, Math.round(baseCarbGrams * proteinSplitFactor))
+          adaptedQty = `${bindingGrams}g`
+        } else {
+          const finalGrams = Math.round(baseCarbGrams * carbSplitFactor)
+          adaptedQty = `${finalGrams}g`
+        }
         break
       }
 
       case 'fats': {
-        adaptedQty = `${targetFatGrams}g (circa 1 cucchiaio)`
+        const matched = findMatchingFoodOption(mealPlan, ing.name, 'fats')
+        const baseFatGrams = matched?.quantity ? matched.quantity : defaultFatGrams
+        adaptedQty = `${baseFatGrams}g (circa 1 cucchiaio)`
         break
       }
 
@@ -218,6 +384,152 @@ export function adaptIngredientsDeterministically(
   })
 }
 
+// ─── Accurate Nutritional Values Calculator ───────────────────────────────────
+
+export function calculateNutritionalValues(ingredients: RecipeIngredient[]): NutritionalValues {
+  let calories = 0
+  let proteins = 0
+  let carbs = 0
+  let fats = 0
+
+  ingredients.forEach(ing => {
+    const grams = parseQuantityInGrams(ing.adaptedQuantity)
+    if (grams <= 0) return
+
+    const lower = ing.name.toLowerCase()
+
+    if (ing.category === 'fats') {
+      // 10g of olive oil = 9.2g fat, ~82 kcal (never 99g!)
+      const fatG = Math.round(grams * 0.92)
+      fats += fatG
+      calories += fatG * 9
+    } else if (ing.category === 'proteins') {
+      if (lower.includes('salmone')) {
+        // Salmone fresco: ~20% protein, ~12% healthy fats
+        const p = Math.round(grams * 0.20)
+        const f = Math.round(grams * 0.12)
+        proteins += p
+        fats += f
+        calories += p * 4 + f * 9
+      } else if (isLegume(lower)) {
+        // Legumi secchi (lenticchie, ceci): ~23% protein, ~55% carbs, ~1.5% fat
+        const p = Math.round(grams * 0.23)
+        const c = Math.round(grams * 0.55)
+        const f = Math.round(grams * 0.015)
+        proteins += p
+        carbs += c
+        fats += f
+        calories += p * 4 + c * 4 + f * 9
+      } else if (isEgg(lower)) {
+        // Uova: ~13% protein, ~10% fat (1 egg 50g = 6.5g protein, 5g fat, ~72 kcal)
+        const p = Math.round(grams * 0.13)
+        const f = Math.round(grams * 0.10)
+        proteins += p
+        fats += f
+        calories += p * 4 + f * 9
+      } else if (isCheeseProtein(lower)) {
+        // Parmigiano: ~33% protein, ~28% fat
+        const p = Math.round(grams * 0.33)
+        const f = Math.round(grams * 0.28)
+        proteins += p
+        fats += f
+        calories += p * 4 + f * 9
+      } else {
+        // Standard lean protein (pollo, merluzzo, tonno nat.): ~22% protein, ~2% fat
+        const p = Math.round(grams * 0.22)
+        const f = Math.round(grams * 0.02)
+        proteins += p
+        fats += f
+        calories += p * 4 + f * 9
+      }
+    } else if (ing.category === 'carbs') {
+      // Carbs (pasta, riso, pangrattato): ~10% protein, ~70% carbs, ~1.5% fat
+      const p = Math.round(grams * 0.10)
+      const c = Math.round(grams * 0.70)
+      const f = Math.round(grams * 0.015)
+      proteins += p
+      carbs += c
+      fats += f
+      calories += p * 4 + c * 4 + f * 9
+    } else if (ing.category === 'vegetables') {
+      // Vegetables: ~1.5% protein, ~3% carbs, ~0.2% fat
+      const p = Math.round(grams * 0.015)
+      const c = Math.round(grams * 0.03)
+      proteins += p
+      carbs += c
+      calories += p * 4 + c * 4
+    }
+  })
+
+  return {
+    calories: Math.max(50, Math.round(calories)),
+    proteins: Math.max(5, Math.round(proteins)),
+    carbs: Math.max(0, Math.round(carbs)),
+    fats: Math.max(1, Math.round(fats)),
+  }
+}
+
+// ─── Multi-Variant Generator ──────────────────────────────────────────────────
+
+export function generateVariantsDeterministically(
+  profileOrTitle: NutritionProfile | string | undefined,
+  ingredients: InputIngredient[],
+  stepsOrProfile: RecipeStep[] | NutritionProfile | undefined,
+  targetMeal: TargetMealType,
+  stepsIfTitle?: RecipeStep[]
+): RecipeMealVariant[] {
+  let profile: NutritionProfile | undefined
+  let steps: RecipeStep[] = []
+
+  if (typeof profileOrTitle === 'string') {
+    // Called as (title, ingredients, profile, targetMeal, steps)
+    profile = stepsOrProfile as NutritionProfile | undefined
+    steps = stepsIfTitle || []
+  } else {
+    // Called as (profile, ingredients, steps, targetMeal)
+    profile = profileOrTitle
+    steps = (stepsOrProfile as RecipeStep[]) || []
+  }
+
+  if (!profile || !profile.meals || profile.meals.length === 0) {
+    return []
+  }
+
+  let mealsToGenerate: MealPlan[] = []
+
+  if (targetMeal === 'lunch_dinner') {
+    mealsToGenerate = profile.meals.filter(
+      m => m.mealType === 'lunch' || m.mealType === 'dinner'
+    )
+  } else if (targetMeal === 'lunch') {
+    mealsToGenerate = profile.meals.filter(m => m.mealType === 'lunch')
+  } else if (targetMeal === 'dinner') {
+    mealsToGenerate = profile.meals.filter(m => m.mealType === 'dinner')
+  }
+
+  if (mealsToGenerate.length === 0) {
+    return []
+  }
+
+  return mealsToGenerate.map(m => {
+    const adapted = adaptIngredientsDeterministically(ingredients, m)
+    const nutritionalValues = calculateNutritionalValues(adapted)
+
+    return {
+      id: m.mealType + (m.isVariant ? `_${m.id || 'variant'}` : ''),
+      label: m.label || (m.mealType === 'lunch' ? 'Pranzo' : 'Cena'),
+      mealType: m.mealType,
+      isVariant: m.isVariant,
+      adaptedIngredients: adapted,
+      steps: steps.map(s => ({
+        ...s,
+        description: s.description,
+      })),
+      nutritionalValues,
+    }
+  })
+}
+
 // ─── Combined Multi-Dish Meal Partitioning ────────────────────────────────────
 
 export function adaptCombinedMeals(
@@ -230,7 +542,6 @@ export function adaptCombinedMeals(
   sideAdapted: RecipeIngredient[]
   notes: string
 } {
-  // Find meal plan for this target
   const applicableMeals = profile.meals.filter(
     m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
   )
@@ -239,7 +550,6 @@ export function adaptCombinedMeals(
   const vegGroup = mealPlan?.groups.find(g => g.category === 'vegetables')
   const totalVegTarget = vegGroup?.minQuantity || vegGroup?.maxQuantity || 200
 
-  // Count vegetables across both recipes
   const mainVegCount = mainRecipe.adaptedIngredients.filter(i => i.category === 'vegetables').length
   const sideVegCount = sideRecipe.adaptedIngredients.filter(i => i.category === 'vegetables').length
   const totalVegItems = mainVegCount + sideVegCount
@@ -248,99 +558,30 @@ export function adaptCombinedMeals(
   let sideVegGrams = totalVegTarget
 
   if (mainVegCount > 0 && sideVegCount > 0) {
-    // Both have vegetables: split 50%/50% (e.g. 100g contorno, 100g piatto principale)
-    mainVegGrams = Math.round(totalVegTarget / 2)
-    sideVegGrams = totalVegTarget - mainVegGrams
+    sideVegGrams = 100
+    mainVegGrams = Math.max(50, totalVegTarget - sideVegGrams)
+  } else if (sideVegCount > 0) {
+    sideVegGrams = totalVegTarget
   }
 
-  const mainAdapted = adaptIngredientsDeterministically(mainRecipe.originalIngredients, mealPlan, {
-    vegetableQuotaOverride: mainVegGrams > 0 ? mainVegGrams : undefined,
-  })
+  const mainAdapted = adaptIngredientsDeterministically(
+    mainRecipe.adaptedIngredients,
+    mealPlan,
+    { vegetableQuotaOverride: mainVegGrams > 0 ? mainVegGrams : undefined }
+  )
 
-  const sideAdapted = adaptIngredientsDeterministically(sideRecipe.originalIngredients, mealPlan, {
-    sideDishMode: true,
-    vegetableQuotaOverride: sideVegGrams,
-  })
+  const sideAdapted = adaptIngredientsDeterministically(
+    sideRecipe.adaptedIngredients,
+    mealPlan,
+    { vegetableQuotaOverride: sideVegGrams, sideDishMode: true }
+  )
 
-  return {
-    mainAdapted,
-    sideAdapted,
-    notes: `Pasto combinato bilanciato: la quota di verdure (${totalVegTarget}g) è stata ripartita tra ${mainRecipe.title} (${mainVegGrams}g) e il contorno ${sideRecipe.title} (${sideVegGrams}g).`,
-  }
-}
+  const notes =
+    mainVegCount > 0
+      ? `Dosi ripartite: ${sideRecipe.title} impostato a ${sideVegGrams}g di verdure, ${mainRecipe.title} ridotto a ${mainVegGrams}g di verdure per rispettare il tetto totale di ${totalVegTarget}g.`
+      : `${sideRecipe.title} copre interamente la quota verdure di ${totalVegTarget}g per il pasto.`
 
-// ─── Generate Multi-Variants Deterministically ────────────────────────────────
-
-export function generateVariantsDeterministically(
-  title: string,
-  ingredients: InputIngredient[],
-  profile: NutritionProfile,
-  targetMeal: TargetMealType,
-  steps: RecipeStep[] = []
-): RecipeMealVariant[] {
-  const mealsToGenerate: MealPlan[] = []
-
-  if (targetMeal === 'lunch_dinner') {
-    const lunch = profile.meals.find(m => m.mealType === 'lunch' && !m.isVariant)
-    const dinner = profile.meals.find(m => m.mealType === 'dinner' && !m.isVariant)
-    const variants = profile.meals.filter(m => m.isVariant && (m.mealType === 'dinner' || m.mealType === 'lunch'))
-
-    if (lunch) mealsToGenerate.push(lunch)
-    if (dinner) mealsToGenerate.push(dinner)
-    variants.forEach(v => mealsToGenerate.push(v))
-  } else {
-    const main = profile.meals.find(m => m.mealType === targetMeal && !m.isVariant)
-    const variants = profile.meals.filter(m => m.mealType === targetMeal && m.isVariant)
-
-    if (main) mealsToGenerate.push(main)
-    variants.forEach(v => mealsToGenerate.push(v))
-  }
-
-  if (mealsToGenerate.length <= 1) {
-    return []
-  }
-
-  return mealsToGenerate.map(m => {
-    const adapted = adaptIngredientsDeterministically(ingredients, m)
-
-    // Calculate approximate nutritional values
-    let calories = 0
-    let proteins = 0
-    let carbs = 0
-    let fats = 0
-
-    adapted.forEach(ing => {
-      const num = parseFloat(ing.adaptedQuantity.replace(/[^0-9.]/g, '')) || 0
-      if (ing.category === 'proteins') {
-        proteins += Math.round(num * 0.22)
-        fats += Math.round(num * 0.05)
-      } else if (ing.category === 'carbs') {
-        carbs += Math.round(num * 0.7)
-      } else if (ing.category === 'fats') {
-        fats += Math.round(num * 0.9)
-      }
-    })
-
-    calories = proteins * 4 + carbs * 4 + fats * 9
-
-    return {
-      id: m.mealType + (m.isVariant ? `_${m.id}` : ''),
-      label: m.label,
-      mealType: m.mealType,
-      isVariant: m.isVariant,
-      adaptedIngredients: adapted,
-      steps: steps.map(s => ({
-        ...s,
-        description: s.description, // Steps stay clean without fake essays
-      })),
-      nutritionalValues: {
-        calories: Math.max(100, calories),
-        proteins: Math.max(10, proteins),
-        carbs: Math.max(5, carbs),
-        fats: Math.max(2, fats),
-      },
-    }
-  })
+  return { mainAdapted, sideAdapted, notes }
 }
 
 // ─── Fast Intelligent Ingredient Suggester from Title ─────────────────────────
@@ -361,7 +602,13 @@ export function suggestIngredientsFromTitle(
   else if (text.includes('tacchino')) suggested.push({ name: 'Fesa di tacchino', category: 'proteins' })
   else if (text.includes('manzo') || text.includes('hamburger') || text.includes('bistecca')) {
     suggested.push({ name: 'Carne macinata magra di manzo', category: 'proteins' })
-  } else if (text.includes('frittata') || text.includes('uov') || text.includes('uovo') || text.includes('omelette') || text.includes('crêpe')) {
+  } else if (text.includes('lenticchie') || text.includes('polpette di lenticchie')) {
+    suggested.push({ name: 'Lenticchie secche', category: 'proteins' })
+  } else if (text.includes('ceci') || text.includes('hummus')) {
+    suggested.push({ name: 'Ceci secchi', category: 'proteins' })
+  } else if (text.includes('fagioli')) {
+    suggested.push({ name: 'Fagioli borlotti o cannellini', category: 'proteins' })
+  } else if (text.includes('frittata') || text.includes('uov') || text.includes('uovo') || text.includes('omelette') || text.includes('crêpe') || text.includes('polpette')) {
     suggested.push({ name: 'Uova intere', category: 'proteins' })
   }
 
@@ -374,6 +621,11 @@ export function suggestIngredientsFromTitle(
     suggested.push({ name: 'Ricotta fresca', category: 'proteins' })
   } else if (text.includes('mozzarella')) {
     suggested.push({ name: 'Mozzarella light', category: 'proteins' })
+  }
+
+  // Binding carbs for meatballs / burgers / dough
+  if (text.includes('polpette') || text.includes('burger') || text.includes('cotolett')) {
+    suggested.push({ name: 'Pangrattato', category: 'carbs' })
   }
 
   // Vegetables
@@ -391,8 +643,8 @@ export function suggestIngredientsFromTitle(
   if (text.includes('riso')) suggested.push({ name: 'Riso basmati', category: 'carbs' })
   if (text.includes('avena') || text.includes('pancake')) suggested.push({ name: 'Farina d\'avena', category: 'carbs' })
   if (text.includes('patate') || text.includes('patata')) suggested.push({ name: 'Patate', category: 'carbs' })
-  if (text.includes('pane') || text.includes('panino') || text.includes('toast') || text.includes('burger')) {
-    suggested.push({ name: 'Pane o Panino per hamburger', category: 'carbs' })
+  if (text.includes('pane') || text.includes('panino') || text.includes('toast')) {
+    suggested.push({ name: 'Pane o Panino', category: 'carbs' })
   }
 
   // Fats

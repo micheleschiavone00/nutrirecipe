@@ -6,7 +6,10 @@ import { getRecipeVariants } from '@/lib/recipeVariants'
 import { MEAL_LABELS, MEAL_ICONS, CATEGORY_LABELS, CATEGORY_ICONS, formatDate } from '@/lib/utils'
 import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
 import AddToPlannerModal from '@/components/AddToPlannerModal'
-import type { MealType, TargetMealType, RecipeIngredient } from '@/types'
+import RecalibrateModal from '@/components/RecalibrateModal'
+import { reAdaptSingleRecipe } from '@/lib/recipeEnricher'
+import { calculateNutritionalValues } from '@/lib/deterministicRecipeAdapter'
+import type { Recipe, MealType, TargetMealType, RecipeIngredient } from '@/types'
 
 const MEAL_OPTIONS: { value: MealType; label: string }[] = [
   { value: 'breakfast', label: '🌅 Colazione' },
@@ -42,6 +45,12 @@ export default function RecipeDetailPage() {
 
   const [multiVariantView, setMultiVariantView] = useState<'boxes' | 'single'>('boxes')
   const [activeVariantId, setActiveVariantId] = useState<string>('')
+  const [showRecalibrateModal, setShowRecalibrateModal] = useState(false)
+  const [candidateRecipe, setCandidateRecipe] = useState<Recipe | null>(null)
+  const [recalibrating, setRecalibrating] = useState(false)
+  const [isManualEditing, setIsManualEditing] = useState(false)
+  const [editedIngredients, setEditedIngredients] = useState<RecipeIngredient[]>([])
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState('')
 
   const activeVariant = useMemo(() => {
     if (variants.length === 0) {
@@ -81,6 +90,54 @@ export default function RecipeDetailPage() {
 
   const openAddToPlanner = () => {
     setShowAddToPlanner(true)
+  }
+
+  const handleOpenRecalibrate = async () => {
+    if (!recipe) return
+    setRecalibrating(true)
+    try {
+      const candidate = await reAdaptSingleRecipe(recipe, activeProfile)
+      setCandidateRecipe(candidate)
+      setShowRecalibrateModal(true)
+    } finally {
+      setRecalibrating(false)
+    }
+  }
+
+  const handleApplyRecalibrate = async (updated: Recipe) => {
+    await db.recipes.put(updated)
+    setSaveSuccessMsg('✅ Ricetta ricalibrata con successo!')
+    setTimeout(() => setSaveSuccessMsg(''), 4000)
+  }
+
+  const handleProceedAI = () => {
+    navigate(`/import?recalRecipeId=${recipe?.id}`)
+  }
+
+  const handleStartManualEdit = () => {
+    if (recipe) {
+      setEditedIngredients([...(recipe.adaptedIngredients || [])])
+      setIsManualEditing(true)
+    }
+  }
+
+  const handleSaveManualEdit = async () => {
+    if (!recipe) return
+    const newNutri = calculateNutritionalValues(editedIngredients)
+    await db.recipes.update(recipe.id, {
+      adaptedIngredients: editedIngredients,
+      nutritionalValues: newNutri,
+      updatedAt: new Date(),
+    })
+    setIsManualEditing(false)
+    setSaveSuccessMsg('✅ Dosi salvate con successo!')
+    setTimeout(() => setSaveSuccessMsg(''), 4000)
+  }
+
+  const handleIngredientQtyChange = (ingName: string, newQty: string) => {
+    setEditedIngredients(prev =>
+      prev.map(i => (i.name === ingName ? { ...i, adaptedQuantity: newQty } : i))
+    )
   }
 
   const renderIngredientItems = (ingredients: RecipeIngredient[]) => {
@@ -132,9 +189,20 @@ export default function RecipeDetailPage() {
                         )}
                         {ing.isOptional && <span className="text-[10px] text-gray-400">(opz.)</span>}
                       </div>
-                      <span className="font-extrabold text-primary-700 text-xs sm:text-sm whitespace-nowrap">
-                        {ing.adaptedQuantity}
-                      </span>
+                      {isManualEditing ? (
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <input
+                            type="text"
+                            value={editedIngredients.find(e => e.name === ing.name)?.adaptedQuantity ?? ing.adaptedQuantity}
+                            onChange={(e) => handleIngredientQtyChange(ing.name, e.target.value)}
+                            className="w-24 sm:w-28 text-right font-extrabold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-300 dark:border-primary-700 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+                      ) : (
+                        <span className="font-extrabold text-primary-700 dark:text-primary-400 text-xs sm:text-sm whitespace-nowrap">
+                          {ing.adaptedQuantity}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -350,7 +418,7 @@ export default function RecipeDetailPage() {
 
           {/* NutriBar */}
           {(activeVariant?.nutritionalValues || recipe.nutritionalValues) && (
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
               <NutriBar
                 calories={(activeVariant?.nutritionalValues || recipe.nutritionalValues)!.calories}
                 proteins={(activeVariant?.nutritionalValues || recipe.nutritionalValues)!.proteins}
@@ -359,6 +427,48 @@ export default function RecipeDetailPage() {
               />
             </div>
           )}
+
+          {/* Toast Notification */}
+          {saveSuccessMsg && (
+            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center text-xs font-bold text-emerald-800 dark:text-emerald-300 animate-fade-in">
+              {saveSuccessMsg}
+            </div>
+          )}
+
+          {/* Recalibration & Manual Edit Action Bar */}
+          <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={handleOpenRecalibrate}
+              disabled={recalibrating}
+              className="flex-1 py-2 px-3 rounded-xl bg-primary-50 dark:bg-primary-950/50 hover:bg-primary-100 dark:hover:bg-primary-900/60 text-primary-800 dark:text-primary-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-primary-200 dark:border-primary-800 transition-all active:scale-[0.98] shadow-2xs"
+              title="Ricalibra dosi e macro con algoritmo basandoti sul tuo piano nutrizionale"
+            >
+              <span>⚡</span>
+              <span>{recalibrating ? 'Calcolo in corso…' : 'Ricalibra Dosi con Algoritmo'}</span>
+            </button>
+
+            {isManualEditing ? (
+              <button
+                type="button"
+                onClick={handleSaveManualEdit}
+                className="py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] shadow-sm"
+              >
+                <span>💾</span>
+                <span>Salva Dosi</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStartManualEdit}
+                className="py-2 px-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-[0.98]"
+                title="Modifica manualmente le grammature degli ingredienti"
+              >
+                <span>✏️</span>
+                <span>Modifica</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Side Dish / Incomplete Meal Advice Box */}
@@ -727,6 +837,17 @@ export default function RecipeDetailPage() {
         recipe={recipe}
         variants={variants}
         onSuccess={() => navigate('/planner')}
+      />
+
+      {/* ── Recalibrate Modal ────────────────────────────────────────── */}
+      <RecalibrateModal
+        isOpen={showRecalibrateModal}
+        onClose={() => setShowRecalibrateModal(false)}
+        recipe={recipe}
+        candidateRecipe={candidateRecipe}
+        onApply={handleApplyRecalibrate}
+        onProceedAI={handleProceedAI}
+        onManualEdit={handleStartManualEdit}
       />
     </div>
   )

@@ -186,8 +186,46 @@ export default function SelectRecipeModal({
           <>
             <form onSubmit={handleCustomSubmit} className="flex-1 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 [-webkit-overflow-scrolling:touch]">
+                {/* 1-Click Fast Cheat Meal Action */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onAddCustomMeal('Pasto Libero / Sgarro 🍕')
+                    onClose()
+                  }}
+                  className="w-full p-3.5 rounded-2xl border-2 border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-900 dark:text-purple-200 font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98]"
+                >
+                  <span className="text-xl">🍕</span>
+                  <span>Imposta come Pasto Libero / Cheat Meal</span>
+                </button>
+
+                {/* Popular Cheat Meal Quick Chips */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                    Oppure seleziona un&apos;idea veloce:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      '🍕 Pizza e Birra',
+                      '🍔 Hamburger Gourmet',
+                      '🍣 Sushi All-you-can-eat',
+                      '🍝 Pranzo al Ristorante',
+                      '🍦 Gelato o Dessert',
+                    ].map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => setCustomText(tag)}
+                        className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     Nome o descrizione del pasto
                   </label>
                   <input
@@ -199,13 +237,13 @@ export default function SelectRecipeModal({
                     autoFocus
                   />
                   <p className="text-[11px] text-gray-400">
-                    Utile per pasti fuori casa o combinazioni veloci senza creare una ricetta completa.
+                    Utile per pasti liberi, cene fuori casa o combinazioni veloci.
                   </p>
                 </div>
               </div>
 
               {/* Fixed Footer for Custom Meal */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+              <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
                 <button
                   type="button"
                   onClick={() => setIsCustomMode(false)}
