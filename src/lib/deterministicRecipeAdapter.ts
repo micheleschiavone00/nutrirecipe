@@ -164,10 +164,74 @@ export function parseQuantityInGrams(qtyStr: string): number {
 
 // ─── Plan Option Matcher ──────────────────────────────────────────────────────
 
-interface MatchedFoodResult {
+export interface MatchedFoodResult {
   quantity: number
   unit: string
   optionName?: string
+  isEgg?: boolean
+}
+
+export function parseFoodQuantityAndUnit(
+  foodName: string,
+  qtyStr?: string | number
+): {
+  grams: number
+  eggCount: number
+  quantity: number
+  unit: string
+  raw: string
+} {
+  const clean = String(qtyStr || '').trim()
+  const lowerName = (foodName || '').toLowerCase()
+  const isFoodEgg = isEgg(lowerName) || lowerName.includes('uov')
+
+  if (!clean || clean === '0') {
+    return { grams: 0, eggCount: 0, quantity: 0, unit: isFoodEgg ? 'uova' : 'g', raw: clean }
+  }
+
+  // 1. Bracketed grams: e.g. "1 intero (50g)", "1 uovo (50g)", "(200g)"
+  const bracketMatch = clean.match(/\((\d+(?:\.\d+)?)\s*g\)/i)
+  const bracketGrams = bracketMatch ? parseFloat(bracketMatch[1]) : 0
+
+  // 2. Direct grams: "200g", "40 g", "100ml"
+  const gMatch = clean.match(/^(\d+(?:\.\d+)?)\s*(?:g|ml)\b/i) || clean.match(/(\d+(?:\.\d+)?)\s*(?:g|ml)\b/i)
+  const directGrams = gMatch ? parseFloat(gMatch[1]) : 0
+
+  if (isFoodEgg) {
+    let eggCount = 0
+    let grams = bracketGrams || directGrams
+
+    if (clean.match(/^(\d+(?:\.\d+)?)\s*(?:uov|intero|pezzo|pezzi|pz)\b/i)) {
+      eggCount = parseFloat(clean.match(/^(\d+(?:\.\d+)?)/)![1])
+      if (!grams) grams = eggCount * 50
+    } else if (grams > 0) {
+      eggCount = grams / 50
+    } else {
+      const firstNum = clean.match(/^(\d+(?:\.\d+)?)/)
+      if (firstNum && parseFloat(firstNum[1]) <= 10) {
+        eggCount = parseFloat(firstNum[1])
+        grams = eggCount * 50
+      }
+    }
+
+    return {
+      grams: grams || eggCount * 50,
+      eggCount,
+      quantity: eggCount > 0 ? eggCount : (grams / 50),
+      unit: (eggCount === 1 || eggCount === 0) ? 'uovo' : 'uova',
+      raw: clean,
+    }
+  }
+
+  const effectiveGrams = bracketGrams || directGrams || (clean.match(/^(\d+(?:\.\d+)?)/) ? parseFloat(clean.match(/^(\d+(?:\.\d+)?)/)![1]) : 0)
+
+  return {
+    grams: effectiveGrams,
+    eggCount: 0,
+    quantity: effectiveGrams,
+    unit: 'g',
+    raw: clean,
+  }
 }
 
 export function findMatchingFoodOption(
@@ -183,88 +247,176 @@ export function findMatchingFoodOption(
     if (category === 'carbs') return g.category === 'carbs'
     if (category === 'vegetables') return g.category === 'vegetables'
     if (category === 'fats') return g.category === 'fats'
+    if (category === 'dairy') return g.category === 'dairy' || g.category === 'proteins'
     return g.category === category
   })
 
-  // 1. Exact or keyword match inside group.options
+  // Collect all options from relevant groups
+  const allOptions: { opt: FoodOption; group: FoodGroup }[] = []
   for (const group of relevantGroups) {
-    if (!group.options) continue
-
-    for (const opt of group.options) {
-      const optLower = opt.name.toLowerCase().trim()
-      // Direct substring match
-      if (ingLower.includes(optLower) || optLower.includes(ingLower)) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-
-      // Semantic keyword matches
-      // Patate / Patata: cerca opzione patate nel gruppo carbs
-      if (ingLower.includes('patat') && optLower.includes('patat')) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (ingLower.includes('salmone') && (optLower.includes('salmone') || optLower.includes('pesce'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (ingLower.includes('tonno') && (optLower.includes('tonno') || optLower.includes('pesce'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (ingLower.includes('feta') && (optLower.includes('feta') || optLower.includes('formaggio') || optLower.includes('latticini'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (isLegume(ingLower) && (isLegume(optLower) || optLower.includes('legum'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (isEgg(ingLower) && (isEgg(optLower) || optLower.includes('uov'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (ingLower.includes('pollo') && (optLower.includes('pollo') || optLower.includes('carne bianca'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if ((ingLower.includes('manzo') || ingLower.includes('hamburger')) && (optLower.includes('manzo') || optLower.includes('carne rossa'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (ingLower.includes('parmigiano') && (optLower.includes('parmigiano') || optLower.includes('grana') || optLower.includes('formaggio'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if ((ingLower.includes('riso') || ingLower.includes('basmati')) && (optLower.includes('riso') || optLower.includes('cereali'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (ingLower.includes('pasta') && (optLower.includes('pasta') || optLower.includes('cereali'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
-      }
-      if (ingLower.includes('cioccolat') && (optLower.includes('cioccolat') || optLower.includes('fondente'))) {
-        return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+    if (group.options) {
+      for (const opt of group.options) {
+        allOptions.push({ opt, group })
       }
     }
   }
 
-  // Specific semantic fallbacks if not explicitly listed in group options
+  // TIER 1: Exact or specific food token matches (highest priority)
+  // Feta: match specific feta option
+  if (ingLower.includes('feta')) {
+    const fetaOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('feta'))
+    if (fetaOpt) {
+      return { quantity: fetaOpt.opt.quantity, unit: fetaOpt.opt.unit, optionName: fetaOpt.opt.name }
+    }
+  }
+
+  // Uova / Uovo
+  if (isEgg(ingLower) || ingLower.includes('uov') || ingLower.includes('uovo') || ingLower.includes('uova')) {
+    const eggOpt = allOptions.find(o => isEgg(o.opt.name) || o.opt.name.toLowerCase().includes('uov'))
+    if (eggOpt) {
+      return { quantity: eggOpt.opt.quantity, unit: eggOpt.opt.unit, optionName: eggOpt.opt.name, isEgg: true }
+    }
+  }
+
+  // Albumi
+  if (ingLower.includes('album')) {
+    const albOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('album'))
+    if (albOpt) {
+      return { quantity: albOpt.opt.quantity, unit: albOpt.opt.unit, optionName: albOpt.opt.name }
+    }
+  }
+
+  // Patate
+  if (ingLower.includes('patat')) {
+    const patatOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('patat'))
+    if (patatOpt) {
+      return { quantity: patatOpt.opt.quantity, unit: patatOpt.opt.unit, optionName: patatOpt.opt.name }
+    }
+  }
+
+  // Salmone
+  if (ingLower.includes('salmone')) {
+    const salmonOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('salmone'))
+    if (salmonOpt) {
+      return { quantity: salmonOpt.opt.quantity, unit: salmonOpt.opt.unit, optionName: salmonOpt.opt.name }
+    }
+  }
+
+  // Tonno
+  if (ingLower.includes('tonno')) {
+    const tonnoOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('tonno'))
+    if (tonnoOpt) {
+      return { quantity: tonnoOpt.opt.quantity, unit: tonnoOpt.opt.unit, optionName: tonnoOpt.opt.name }
+    }
+  }
+
+  // Pollo / Tacchino / Carne bianca
+  if (ingLower.includes('pollo') || ingLower.includes('tacchin') || ingLower.includes('carne bianca')) {
+    const whiteMeatOpt = allOptions.find(o => {
+      const n = o.opt.name.toLowerCase()
+      return n.includes('pollo') || n.includes('tacchin') || n.includes('carne bianca')
+    })
+    if (whiteMeatOpt) {
+      return { quantity: whiteMeatOpt.opt.quantity, unit: whiteMeatOpt.opt.unit, optionName: whiteMeatOpt.opt.name }
+    }
+  }
+
+  // Manzo / Hamburger / Carne rossa
+  if (ingLower.includes('manzo') || ingLower.includes('vitell') || ingLower.includes('hamburger') || ingLower.includes('carne rossa')) {
+    const redMeatOpt = allOptions.find(o => {
+      const n = o.opt.name.toLowerCase()
+      return n.includes('manzo') || n.includes('vitell') || n.includes('hamburger') || n.includes('carne rossa')
+    })
+    if (redMeatOpt) {
+      return { quantity: redMeatOpt.opt.quantity, unit: redMeatOpt.opt.unit, optionName: redMeatOpt.opt.name }
+    }
+  }
+
+  // Parmigiano / Grana
+  if (ingLower.includes('parmigiano') || ingLower.includes('grana') || ingLower.includes('pecorino')) {
+    const parmOpt = allOptions.find(o => {
+      const n = o.opt.name.toLowerCase()
+      return n.includes('parmigiano') || n.includes('grana') || n.includes('pecorino')
+    })
+    if (parmOpt) {
+      return { quantity: parmOpt.opt.quantity, unit: parmOpt.opt.unit, optionName: parmOpt.opt.name }
+    }
+  }
+
+  // Ricotta
+  if (ingLower.includes('ricotta')) {
+    const ricOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('ricotta'))
+    if (ricOpt) {
+      return { quantity: ricOpt.opt.quantity, unit: ricOpt.opt.unit, optionName: ricOpt.opt.name }
+    }
+  }
+
+  // Mozzarella
+  if (ingLower.includes('mozzarella')) {
+    const mozzOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('mozzarella'))
+    if (mozzOpt) {
+      return { quantity: mozzOpt.opt.quantity, unit: mozzOpt.opt.unit, optionName: mozzOpt.opt.name }
+    }
+  }
+
+  // Cioccolato fondente
   if (ingLower.includes('cioccolat')) {
+    const chocoOpt = allOptions.find(o => o.opt.name.toLowerCase().includes('cioccolat'))
+    if (chocoOpt) {
+      return { quantity: chocoOpt.opt.quantity, unit: chocoOpt.opt.unit, optionName: chocoOpt.opt.name }
+    }
     return { quantity: 15, unit: 'g', optionName: 'Cioccolato fondente (limite piano)' }
   }
 
-  // 2. Fallback to group min/max quantity with food-specific conversions
+  // Direct substring match with option names
+  for (const { opt } of allOptions) {
+    const optLower = opt.name.toLowerCase().trim()
+    if (ingLower === optLower || ingLower.includes(optLower) || optLower.includes(ingLower)) {
+      return { quantity: opt.quantity, unit: opt.unit, optionName: opt.name }
+    }
+  }
+
+  // TIER 2: Broader semantic food category matches (fallback)
+  if (isFish(ingLower)) {
+    const fishOpt = allOptions.find(o => isFish(o.opt.name) || o.opt.name.toLowerCase().includes('pesce'))
+    if (fishOpt) {
+      return { quantity: fishOpt.opt.quantity, unit: fishOpt.opt.unit, optionName: fishOpt.opt.name }
+    }
+  }
+
+  if (isMeat(ingLower)) {
+    const meatOpt = allOptions.find(o => isMeat(o.opt.name) || o.opt.name.toLowerCase().includes('carne'))
+    if (meatOpt) {
+      return { quantity: meatOpt.opt.quantity, unit: meatOpt.opt.unit, optionName: meatOpt.opt.name }
+    }
+  }
+
+  if (isLegume(ingLower)) {
+    const legOpt = allOptions.find(o => isLegume(o.opt.name) || o.opt.name.toLowerCase().includes('legum'))
+    if (legOpt) {
+      return { quantity: legOpt.opt.quantity, unit: legOpt.opt.unit, optionName: legOpt.opt.name }
+    }
+  }
+
+  if (isCheeseProtein(ingLower)) {
+    const cheeseOpt = allOptions.find(o => isCheeseProtein(o.opt.name) || o.opt.name.toLowerCase().includes('formaggi') || o.opt.name.toLowerCase().includes('latticin'))
+    if (cheeseOpt) {
+      return { quantity: cheeseOpt.opt.quantity, unit: cheeseOpt.opt.unit, optionName: cheeseOpt.opt.name }
+    }
+  }
+
+  // TIER 3: Group min/max quantity with food conversions
   for (const group of relevantGroups) {
     if (group.minQuantity || group.maxQuantity) {
       const baseQty = group.minQuantity || group.maxQuantity || 0
 
-      // Se l'alimento sono patate e il gruppo carboidrati ha la quota per pasta/riso (<= 95g),
-      // applichiamo la conversione nutrizionale clinica (2.85x, 70g pasta = 200g patate, 80g = 230g)
+      // Se patate e base carboidrati <= 95g (pasta/riso), conversione clinica (2.85x)
       if (ingLower.includes('patat') && baseQty <= 95) {
         const potatoEquiv = Math.round((baseQty * 2.85) / 10) * 10
         return {
           quantity: potatoEquiv,
           unit: 'g',
           optionName: 'Patate (quota equivalente carbo)'
-        }
-      }
-
-      // Se l'alimento è Feta o formaggio fresco proteico da secondo piatto e group ha minQuantity generico
-      if (ingLower.includes('feta') && baseQty < 80) {
-        return {
-          quantity: 90,
-          unit: 'g',
-          optionName: 'Feta greca (quota secondo piatto)'
         }
       }
 
@@ -275,14 +427,10 @@ export function findMatchingFoodOption(
     }
   }
 
-  // Fallback per patate se nessun gruppo carbs ha minQuantity
-  if (ingLower.includes('patat')) {
-    return { quantity: 200, unit: 'g', optionName: 'Patate (fabbisogno standard)' }
-  }
-
-  if (ingLower.includes('feta')) {
-    return { quantity: 90, unit: 'g', optionName: 'Feta greca (fabbisogno secondo piatto)' }
-  }
+  // Clinical standard fallbacks
+  if (ingLower.includes('patat')) return { quantity: 200, unit: 'g', optionName: 'Patate' }
+  if (ingLower.includes('feta')) return { quantity: 50, unit: 'g', optionName: 'Feta' }
+  if (isEgg(ingLower)) return { quantity: 2, unit: 'pieces', optionName: 'Uova', isEgg: true }
 
   return null
 }
@@ -825,6 +973,26 @@ export function suggestIngredientsFromTitle(
 
 // ─── Group Allowance and Capacity Tracker ─────────────────────────────────────
 
+export interface GroupCapacityItem {
+  name: string
+  rawQuantity: string
+  numericQuantity: number
+  unit: string
+  baselineQuantity: number
+  baselineUnit: string
+  baselineFoodName: string
+  percentUsed: number
+  exactPercent: number
+  otherItemsPercent: number
+  remainingQuotaPercent: number
+  maxAllowedQuantity: number
+  maxAllowedLabel: string
+  baselineLabel: string
+  isExceeded: boolean
+  isEgg?: boolean
+  statusText?: string
+}
+
 export interface GroupCapacityInfo {
   category: RecipeIngredient['category']
   categoryLabel: string
@@ -835,7 +1003,8 @@ export interface GroupCapacityInfo {
   percentUsed: number
   isExceeded: boolean
   hintText: string
-  items: { name: string; grams: number; percent: number }[]
+  items: GroupCapacityItem[]
+  getItemCapacity: (name: string) => GroupCapacityItem | undefined
 }
 
 export function getGroupAllowanceAndUsage(
@@ -868,75 +1037,124 @@ export function getGroupAllowanceAndUsage(
     return c === category
   })
 
-  // Compute reference max allowance from plan
+  // Group default max allowance (fallback)
   let maxAllowanceGrams = relevantGroup?.maxQuantity || relevantGroup?.minQuantity || 100
   if (category === 'fats') maxAllowanceGrams = relevantGroup?.minQuantity || 10
   if (category === 'vegetables') maxAllowanceGrams = relevantGroup?.minQuantity || 200
 
-  // Special checks for carbs: if potatoes are in the group
-  const hasPotatoes = groupItems.some(i => i.name.toLowerCase().includes('patat'))
-  if (category === 'carbs' && hasPotatoes) {
-    const potatoOption = relevantGroup?.options?.find(o => o.name.toLowerCase().includes('patat'))
-    if (potatoOption?.quantity) {
-      maxAllowanceGrams = potatoOption.quantity
-    } else {
-      // 200g standard potato allowance corresponding to ~70g pasta
-      maxAllowanceGrams = Math.round(((relevantGroup?.minQuantity || 70) * 2.85) / 10) * 10
-    }
-  }
-
-  // Parse grams for each item
+  // 1. Analyze each item and compute its baseline and percent of group quota
   let currentTotalGrams = 0
-  let totalNormalizedPercent = 0
 
-  const items = groupItems.map(item => {
-    const grams = parseQuantityInGrams(item.adaptedQuantity || '0')
-    currentTotalGrams += grams
+  const analyzedItems = groupItems.map(item => {
+    const rawQty = item.adaptedQuantity || '0'
+    const parsed = parseFoodQuantityAndUnit(item.name, rawQty)
+    currentTotalGrams += parsed.grams
 
-    // Calculate individual food baseline in plan
     const matched = findMatchingFoodOption(mealPlan, item.name, category)
-    let itemBaseline = matched?.quantity || maxAllowanceGrams
-    if (item.name.toLowerCase().includes('patat') && itemBaseline <= 95) {
-      itemBaseline = Math.round((itemBaseline * 2.85) / 10) * 10
-    }
-    if (item.name.toLowerCase().includes('feta') && itemBaseline < 80) {
-      itemBaseline = 90
+    const isFoodEgg = isEgg(item.name) || matched?.isEgg || false
+
+    let baselineQty = matched?.quantity || maxAllowanceGrams
+    let baselineUnit = matched?.unit || (isFoodEgg ? 'uova' : 'g')
+    let baselineName = matched?.optionName || item.name
+
+    // Clinical conversions if group generic
+    if (item.name.toLowerCase().includes('patat') && baselineQty <= 95 && category === 'carbs') {
+      baselineQty = Math.round((baselineQty * 2.85) / 10) * 10
+      baselineUnit = 'g'
+      baselineName = 'Patate'
     }
 
-    const percent = itemBaseline > 0 ? Math.round((grams / itemBaseline) * 100) : 100
-    totalNormalizedPercent += percent
+    let exactPercent = 0
+    let numericQty = parsed.quantity
+    let unit = parsed.unit
+
+    if (isFoodEgg && (baselineUnit === 'pieces' || baselineUnit === 'uova' || baselineUnit === 'pz')) {
+      exactPercent = baselineQty > 0 ? (parsed.eggCount / baselineQty) * 100 : 100
+      numericQty = parsed.eggCount
+      unit = numericQty === 1 ? 'uovo' : 'uova'
+      baselineUnit = baselineQty === 1 ? 'uovo' : 'uova'
+    } else {
+      exactPercent = baselineQty > 0 ? (parsed.grams / baselineQty) * 100 : 100
+      numericQty = parsed.grams
+      unit = 'g'
+      baselineUnit = 'g'
+    }
 
     return {
       name: item.name,
-      grams,
-      percent,
+      rawQuantity: rawQty,
+      numericQuantity: numericQty,
+      unit,
+      baselineQuantity: baselineQty,
+      baselineUnit,
+      baselineFoodName: baselineName,
+      exactPercent,
+      percentUsed: Math.round(exactPercent),
+      isEgg: isFoodEgg,
     }
   })
 
-  const percentUsed = groupItems.length <= 1
-    ? (maxAllowanceGrams > 0 ? Math.round((currentTotalGrams / maxAllowanceGrams) * 100) : 100)
-    : totalNormalizedPercent
+  // 2. Sum of group percentage
+  const totalExactPercent = analyzedItems.reduce((acc, it) => acc + it.exactPercent, 0)
+  const percentUsed = Math.round(totalExactPercent)
+  const isExceeded = percentUsed > 105
 
-  const isExceeded = percentUsed > 115
+  // 3. For each item, compute max allowed quantity accounting for the other items in this group
+  const items: GroupCapacityItem[] = analyzedItems.map(it => {
+    const otherItemsPercent = Math.max(0, Math.round(totalExactPercent - it.exactPercent))
+    const remainingQuotaPercent = Math.max(0, 100 - otherItemsPercent)
 
-  // Helpful hint text for UI
+    let maxAllowed = (it.baselineQuantity * remainingQuotaPercent) / 100
+    if (it.unit === 'g') {
+      maxAllowed = Math.round(maxAllowed)
+    } else {
+      maxAllowed = Math.round(maxAllowed * 10) / 10
+    }
+
+    const baselineLabel = `${it.baselineQuantity}${it.baselineUnit === 'g' ? 'g' : ' ' + it.baselineUnit}`
+    const maxAllowedLabel = `${maxAllowed}${it.unit === 'g' ? 'g' : ' ' + (maxAllowed === 1 ? 'uovo' : 'uova')}`
+    const itemIsExceeded = isExceeded && it.numericQuantity > maxAllowed
+
+    let statusText = ''
+    if (otherItemsPercent > 0) {
+      if (remainingQuotaPercent === 0) {
+        statusText = `Quota coperta al 100% dagli altri alimenti`
+      } else {
+        statusText = `Max ${maxAllowedLabel} con gli altri alimenti (${remainingQuotaPercent}% residuo)`
+      }
+    } else {
+      statusText = `Fabbisogno piano: max ${baselineLabel}`
+    }
+
+    return {
+      name: it.name,
+      rawQuantity: it.rawQuantity,
+      numericQuantity: it.numericQuantity,
+      unit: it.unit,
+      baselineQuantity: it.baselineQuantity,
+      baselineUnit: it.baselineUnit,
+      baselineFoodName: it.baselineFoodName,
+      percentUsed: it.percentUsed,
+      exactPercent: it.exactPercent,
+      otherItemsPercent,
+      remainingQuotaPercent,
+      maxAllowedQuantity: maxAllowed,
+      maxAllowedLabel,
+      baselineLabel,
+      isExceeded: itemIsExceeded,
+      isEgg: it.isEgg,
+      statusText,
+    }
+  })
+
+  // 4. Group Hint Text
   let hintText = `Limite piano: ${maxAllowanceGrams}g`
-  if (category === 'carbs') {
-    if (hasPotatoes) {
-      hintText = `Patate: limite piano ${maxAllowanceGrams}g (quota attuale ${percentUsed}%)`
-    } else {
-      hintText = `Carboidrati: limite piano ${maxAllowanceGrams}g (copertura ${percentUsed}%)`
-    }
-  } else if (category === 'proteins') {
-    if (groupItems.length > 1) {
-      hintText = `Fonti proteiche combinate: bilanciate al 50/50 (${percentUsed}% quota coperta)`
-    } else {
-      hintText = `Proteine: limite piano ${maxAllowanceGrams}g (${percentUsed}% quota)`
-    }
-  } else if (category === 'fats') {
-    hintText = `Grassi / Olio EVO: quota piano ${maxAllowanceGrams}g (circa 1 cucchiaio)`
-  } else if (category === 'vegetables') {
-    hintText = `Verdure: quota consigliata ${maxAllowanceGrams}g`
+  if (items.length === 1) {
+    const single = items[0]
+    hintText = `${single.name}: ${single.rawQuantity} su max ${single.baselineLabel} (${single.percentUsed}% quota)`
+  } else if (items.length > 1) {
+    const breakdown = items.map(i => `${i.rawQuantity} ${i.name} (${i.percentUsed}%)`).join(' + ')
+    hintText = `${meta.label}: ${percentUsed}% quota • ${breakdown}`
   }
 
   if (isExceeded) {
@@ -954,6 +1172,8 @@ export function getGroupAllowanceAndUsage(
     isExceeded,
     hintText,
     items,
+    getItemCapacity: (name: string) =>
+      items.find(i => i.name.toLowerCase().trim() === name.toLowerCase().trim()),
   }
 }
 

@@ -16,14 +16,45 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.0.0'
+export const APP_VERSION = '2.0.1'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.0.1',
+    date: '27 Ottobre 2026',
+    title: 'Quote Proporzionali su Alimenti Specifici & Promemoria Real-Time del Limite Massimo Consentito',
+    isLatest: true,
+    summary:
+      'Versione 2.0.1: perfezionamento radicale del calcolo dei limiti di fabbisogno per gruppo nutrizionale. Il sistema ora riconosce il fabbisogno del singolo alimento modificato (es. se nel piano nutrizionale sono previsti 50g di feta o 2 uova, 40g di feta corrispondono esattamente all\'80% della quota proteica e non a un 40% generico su 100g). Con più alimenti dello stesso gruppo (es. 10g di feta e 1 uovo), calcola la ripartizione proporzionale esatta (20% + 50% = 70% totale). Durante la modifica manuale, l\'app indica in tempo reale il fabbisogno specifico del piano e il massimo inseribile per quell\'alimento tenendo conto della quota già occupata dagli altri ingredienti, con il pulsante rapido ⚡ Max per allineare la dose in un tocco.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Calcolo Quote Proporzionali sui Singoli Alimenti (Feta, Uova, Patate, ecc.)',
+        description:
+          'La percentuale di copertura del gruppo nutrizionale viene ora calcolata rigorosamente sul valore specifico assegnato a ciascun alimento nel tuo piano nutrizionale. Esempio: se hai 50g di feta o 2 uova nel piano, 40g di feta corrispondono all\'80% della quota proteica; 10g di feta (20%) + 1 uovo (50%) danno un totale esatto del 70%.',
+        howToUse: 'Apri qualsiasi ricetta con alimenti combinati o alternativi: il banner del gruppo e ogni singolo alimento mostrano la percentuale precisa.',
+      },
+      {
+        type: 'feat',
+        title: 'Promemoria Dinamico del Massimo Inseribile per Ingrediente',
+        description:
+          'Sia nella schermata di dettaglio ricetta che nella creazione ad-hoc, ogni ingrediente mostra il limite del piano e calcola dinamicamente quanto ne puoi ancora inserire al massimo senza sforare, sottraendo la quota già assorbita dagli altri alimenti dello stesso gruppo (es. con 1 uovo presente, il massimo inseribile per la feta è 25g).',
+        howToUse: 'Tocca "Modifica Dosi": vedrai "Piano: max 50g • Max con altri: 25g" e potrai cliccare "⚡ Max 25g" per applicare subito la dose ideale.',
+      },
+      {
+        type: 'fix',
+        title: 'Regolazione Intelligente delle Uova & Matching Multi-Livello',
+        description:
+          'I tasti +/- nella modifica dosi ora riconoscono automaticamente le uova intere regolando per 1 uovo alla volta (e non per 5g generici). Il motore di matching adotta un algoritmo a due livelli che privilegia sempre le opzioni specifiche del tuo piano (es. "Feta 50g") prima di ricorrere a categorie generali.',
+        howToUse: 'Usa i tasti + e - accanto alle uova per aumentare o ridurre di 1 pezzo alla volta.',
+      },
+    ],
+  },
   {
     version: '2.0.0',
     date: '27 Ottobre 2026',
     title: 'NutriRecipe 2.0: Spesa & Dispensa Intelligente, Buoni Pasto Automatici, Memoria Prezzi e Monitoraggio Scadenze',
-    isLatest: true,
+    isLatest: false,
     summary:
       'NutriRecipe 2.0 segna una svolta fondamentale nell\'applicazione introducendo il modulo completo Spesa & Dispensa. La schermata della spesa è ora suddivisa in due sezioni integrate: la classica Lista della Spesa arricchita con aggiunta rapida e suggerimenti automatici dal Meal Planner (settimana corrente e della settimana prossima verso il weekend); un totale di spesa in alto a destra che cresce man mano che depenni gli articoli nel carrello; la gestione facoltativa dei Buoni Pasto (con calcolo istantaneo, es. "4 BP + 2.00 €"); la memoria dei prezzi con modale rapida di conferma quando spunti un alimento; il Checkout che azzera il conto e trasferisce gli alimenti direttamente nella tua Dispensa; e il nuovo tab Dispensa per monitorare scadenze, quantità residue e suggerire automaticamente di riordinare i cibi che stanno per scadere o esaurirsi.',
     changes: [

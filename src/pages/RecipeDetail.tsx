@@ -12,6 +12,8 @@ import {
   calculateNutritionalValues,
   getGroupAllowanceAndUsage,
   parseQuantityInGrams,
+  parseFoodQuantityAndUnit,
+  isEgg,
 } from '@/lib/deterministicRecipeAdapter'
 import type { Recipe, MealType, TargetMealType, RecipeIngredient, RecipeMealVariant } from '@/types'
 
@@ -75,7 +77,20 @@ export default function RecipeDetailPage() {
   const matchingMealPlan = useMemo(() => {
     if (!activeProfile) return undefined
     const mealType = activeVariant.mealType || recipe?.targetMeal || 'lunch'
-    return activeProfile.meals.find(m => m.mealType === mealType) || activeProfile.meals[0]
+
+    // 1. If variant is active, try to match variant in activeProfile
+    if (activeVariant.isVariant) {
+      const match = activeProfile.meals.find(
+        m => m.id === activeVariant.id ||
+             (m.variantName && activeVariant.label?.toLowerCase().includes(m.variantName.toLowerCase())) ||
+             (m.label && activeVariant.label?.toLowerCase().includes(m.label.toLowerCase()))
+      )
+      if (match) return match
+    }
+
+    return activeProfile.meals.find(m => m.mealType === mealType && !m.isVariant) ||
+           activeProfile.meals.find(m => m.mealType === mealType) ||
+           activeProfile.meals[0]
   }, [activeProfile, activeVariant, recipe])
 
   if (recipe === undefined) return (
@@ -136,12 +151,24 @@ export default function RecipeDetailPage() {
     setEditedIngredients(prev =>
       prev.map(i => {
         if (i.name !== ingName) return i
-        const currentGrams = parseQuantityInGrams(i.adaptedQuantity || '0')
-        const nextGrams = Math.max(0, currentGrams + delta)
-        const unit = i.unit || 'g'
+        const parsed = parseFoodQuantityAndUnit(i.name, i.adaptedQuantity || '0')
+        const lower = i.name.toLowerCase()
+        const isEggFood = isEgg(lower) || lower.includes('uov')
+
+        if (isEggFood && (parsed.unit.includes('uov') || !String(i.adaptedQuantity).includes('g'))) {
+          const stepDelta = delta > 0 ? 1 : -1
+          const nextEggs = Math.max(0, parsed.eggCount + stepDelta)
+          const unitLabel = nextEggs === 1 ? '1 uovo' : `${nextEggs} uova`
+          return {
+            ...i,
+            adaptedQuantity: unitLabel,
+          }
+        }
+
+        const nextGrams = Math.max(0, parsed.grams + delta)
         return {
           ...i,
-          adaptedQuantity: `${nextGrams}${unit}`,
+          adaptedQuantity: `${nextGrams}g`,
         }
       })
     )
@@ -253,53 +280,117 @@ export default function RecipeDetailPage() {
                   </span>
                 </div>
 
-                <div className="space-y-1">
-                  {items.map((ing, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between py-1 border-b border-gray-50 dark:border-gray-800/60 last:border-0"
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
-                        <span className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 font-medium truncate">{ing.name}</span>
-                        {ing.component && ing.component !== 'Principale' && (
-                          <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
-                            {ing.component}
-                          </span>
-                        )}
-                        {ing.isOptional && <span className="text-[10px] text-gray-400 dark:text-gray-500">(opz.)</span>}
-                      </div>
-                      {isManualEditing ? (
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleIngredientStepAdjust(ing.name, -5)}
-                            className="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-extrabold text-xs flex items-center justify-center transition-all active:scale-90"
-                            title="Diminuisci 5g"
-                          >
-                            -
-                          </button>
-                          <input
-                            type="text"
-                            value={editedIngredients.find(e => e.name === ing.name)?.adaptedQuantity ?? ing.adaptedQuantity}
-                            onChange={(e) => handleIngredientQtyChange(ing.name, e.target.value)}
-                            className="w-20 text-center font-extrabold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-300 dark:border-primary-700 rounded-lg px-1.5 py-1 text-xs focus:ring-2 focus:ring-primary-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleIngredientStepAdjust(ing.name, 5)}
-                            className="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-extrabold text-xs flex items-center justify-center transition-all active:scale-90"
-                            title="Aumenta 5g"
-                          >
-                            +
-                          </button>
+                <div className="space-y-1.5">
+                  {items.map((ing, idx) => {
+                    const itemCap = groupCap.getItemCapacity(ing.name)
+                    const isExceeded = itemCap?.isExceeded || false
+
+                    return (
+                      <div
+                        key={idx}
+                        className="py-1.5 border-b border-gray-50 dark:border-gray-800/60 last:border-0 space-y-1"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 font-medium truncate">
+                                {ing.name}
+                              </span>
+                              {ing.component && ing.component !== 'Principale' && (
+                                <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
+                                  {ing.component}
+                                </span>
+                              )}
+                              {ing.isOptional && <span className="text-[10px] text-gray-400 dark:text-gray-500">(opz.)</span>}
+                            </div>
+
+                            {/* Food-specific allowance and quota feedback */}
+                            {itemCap && (
+                              <div className="flex items-center gap-1.5 flex-wrap text-[10.5px] mt-0.5">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  Piano: <strong>{itemCap.baselineLabel}</strong>
+                                </span>
+                                {groupCap.items.length > 1 && (
+                                  <>
+                                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                                    <span
+                                      className={
+                                        isExceeded
+                                          ? 'text-amber-600 dark:text-amber-400 font-bold'
+                                          : 'text-emerald-700 dark:text-emerald-400 font-semibold'
+                                      }
+                                    >
+                                      Max con altri: <strong>{itemCap.maxAllowedLabel}</strong>
+                                    </span>
+                                  </>
+                                )}
+                                <span
+                                  className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded ${
+                                    isExceeded
+                                      ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300'
+                                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                  }`}
+                                >
+                                  {itemCap.percentUsed}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {isManualEditing ? (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {itemCap && groupCap.items.length > 1 && itemCap.maxAllowedQuantity > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleIngredientQtyChange(ing.name, itemCap.maxAllowedLabel)}
+                                  className="text-[9px] font-extrabold text-primary-700 dark:text-primary-300 hover:text-primary-800 bg-primary-50 dark:bg-primary-950/80 px-1.5 py-1 rounded-md border border-primary-200 dark:border-primary-800 transition-all active:scale-95"
+                                  title={`Imposta dose massima consentita (${itemCap.maxAllowedLabel})`}
+                                >
+                                  ⚡ Max {itemCap.maxAllowedLabel}
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleIngredientStepAdjust(ing.name, -5)}
+                                className="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-extrabold text-xs flex items-center justify-center transition-all active:scale-90"
+                                title="Diminuisci"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="text"
+                                value={editedIngredients.find(e => e.name === ing.name)?.adaptedQuantity ?? ing.adaptedQuantity}
+                                onChange={(e) => handleIngredientQtyChange(ing.name, e.target.value)}
+                                className="w-20 text-center font-extrabold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-300 dark:border-primary-700 rounded-lg px-1.5 py-1 text-xs focus:ring-2 focus:ring-primary-500"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleIngredientStepAdjust(ing.name, 5)}
+                                className="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-extrabold text-xs flex items-center justify-center transition-all active:scale-90"
+                                title="Aumenta"
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="font-extrabold text-primary-700 dark:text-primary-400 text-xs sm:text-sm whitespace-nowrap">
+                              {ing.adaptedQuantity}
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <span className="font-extrabold text-primary-700 dark:text-primary-400 text-xs sm:text-sm whitespace-nowrap">
-                          {ing.adaptedQuantity}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+
+                        {/* Exceeded warning banner if individual item exceeds max allowed with other items */}
+                        {isExceeded && itemCap && (
+                          <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-900/60 flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>
+                              Supera il fabbisogno: con gli altri alimenti puoi inserire al massimo <strong>{itemCap.maxAllowedLabel}</strong> (quota totale {itemCap.percentUsed}%).
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )

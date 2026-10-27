@@ -510,18 +510,37 @@ export default function ImportPage() {
                 <div className="space-y-1.5">
                   {adHocIngredients.map((ing, idx) => {
                     const preview = adHocAdaptedPreview[idx]
+                    const groupCap = adHocGroupCapacities.find(c => c.category === ing.category)
+                    const itemCap = groupCap?.getItemCapacity(ing.name)
+
                     return (
                       <div
                         key={idx}
                         className="bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-2.5 flex items-center justify-between gap-2"
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
-                            {ing.name}
-                          </span>
-                          <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">
-                            {ing.category}
-                          </span>
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
+                              {ing.name}
+                            </span>
+                            <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">
+                              {ing.category}
+                            </span>
+                          </div>
+
+                          {itemCap && (
+                            <div className="flex items-center gap-1.5 text-[10.5px] text-gray-500 dark:text-gray-400 mt-0.5">
+                              <span>Piano: <strong>{itemCap.baselineLabel}</strong></span>
+                              {itemCap.otherItemsPercent > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                                    Max con altri: <strong>{itemCap.maxAllowedLabel}</strong>
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0">
