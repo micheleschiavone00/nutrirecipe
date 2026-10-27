@@ -3,6 +3,7 @@ import { CONFIG } from '@/config'
 import { getApplicableMealsForTarget, getRecipeVariants } from './recipeVariants'
 import { getUserAiConfig, callGeminiDirect } from './userAiSettings'
 import { isAdminLoggedIn, getAdminKey } from './adminAuth'
+import { expandCompoundIngredients } from './deterministicSocialExtractor'
 
 async function chatCompletion(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
@@ -342,14 +343,29 @@ export async function extractRecipeFromText(
   ingredients: string[]
   steps: string[]
 }> {
-  const systemPrompt = `Sei un AI esperto in cucina. Estrai le informazioni della ricetta dal testo/trascrizione fornita.
+  const systemPrompt = `Sei un AI esperto in cucina e nutrizione. Estrai accuratamente le informazioni della ricetta dal testo o trascrizione fornita.
   
-Restituisci SOLO JSON:
+REGOLE FONDAMENTALI SULLA LISTA DEGLI INGREDIENTI:
+1. SEPARAZIONE TASSATIVA DEGLI INGREDIENTI COMPOSTI:
+   - Se nel testo social o nella trascrizione più ingredienti sono elencati sulla stessa riga o separati da slash '/', barre '|', virgole ',', più '+' o elenchi (ad esempio: '600gr pollo/ sale / origano /aglio' oppure 'pollo, sale, pepe e aglio'):
+   - DEVI TASSATIVAMENTE SEPARARLI in elementi distinti della lista 'ingredients':
+     * "600g petto di pollo"
+     * "sale q.b."
+     * "origano q.b."
+     * "1 spicchio d'aglio" (o "aglio q.b.")
+   - È SEVERAMENTE VIETATO accorpare o lasciare più ingredienti o spezie uniti in una sola riga!
+
+2. OGNI INGREDIENTE DEVE ESSERE UNA STRINGA AUTONOMA:
+   - Un elemento per l'alimento principale (carne, pesce, uova, pasta, riso, legumi).
+   - Un elemento per ogni verdura o ortaggio.
+   - Un elemento separato per ogni spezia o aroma (sale, origano, pepe, aglio, etc.).
+
+Restituisci SOLO un JSON valido con questa struttura:
 {
   "title": "Titolo ricetta",
   "description": "Breve descrizione del piatto",
-  "ingredients": ["200g pasta", "2 uova", "100g guanciale"],
-  "steps": ["Cuoci la pasta", "Rosola il guanciale", "Mescola con le uova"]
+  "ingredients": ["600g petto di pollo", "sale q.b.", "origano q.b.", "1 spicchio d'aglio"],
+  "steps": ["Frulla il pollo con le spezie...", "Forma i burger...", "Cuoci in friggitrice ad aria..."]
 }
 
 Se le informazioni sono incomplete, stima dalla descrizione del video.
@@ -360,7 +376,22 @@ Traduci tutto in italiano.`
     { role: 'user', content: `Testo/Trascrizione del video (${url}):\n\n${text}` },
   ])
 
-  return JSON.parse(result)
+  let parsed: any
+  try {
+    parsed = JSON.parse(result)
+  } catch {
+    throw new Error('Risposta AI non valida durante l\'estrazione della ricetta.')
+  }
+
+  const rawIngredients = Array.isArray(parsed?.ingredients) ? parsed.ingredients.map(String) : []
+  const expandedIngredients = expandCompoundIngredients(rawIngredients)
+
+  return {
+    title: parsed?.title || 'Ricetta importata',
+    description: parsed?.description || '',
+    ingredients: expandedIngredients,
+    steps: Array.isArray(parsed?.steps) && parsed.steps.length > 0 ? parsed.steps : ['Preparare la ricetta secondo le indicazioni.'],
+  }
 }
 
 // ─── Reformat steps with doses using AI ──────────────────────────────────────

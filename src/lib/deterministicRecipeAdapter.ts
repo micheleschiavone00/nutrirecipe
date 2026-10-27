@@ -11,6 +11,7 @@ import type {
   RecipeMealVariant,
   DishType,
 } from '@/types'
+import { splitCompoundIngredientString } from './deterministicSocialExtractor'
 
 // ─── Classification Dictionaries ──────────────────────────────────────────────
 
@@ -63,7 +64,8 @@ const VEGETABLE_KEYWORDS = [
   'zucchine', 'zucchina', 'carote', 'carota', 'pomodori', 'pomodoro', 'pomodorini',
   'spinaci', 'melanzane', 'melanzana', 'peperoni', 'peperone', 'finocchi', 'finocchio',
   'broccoli', 'broccolo', 'cavolfiore', 'insalata', 'lattuga', 'rucola', 'radicchio',
-  'bietole', 'funghi', 'asparagi', 'cipolla', 'cipollotto', 'fagiolini', 'zucca', 'cetrioli'
+  'bietole', 'funghi', 'asparagi', 'cipolla', 'cipollotto', 'scalogno', 'porro', 'porri',
+  'sedano', 'carciofi', 'carciofo', 'verza', 'cavolo', 'cavoletti', 'fagiolini', 'zucca', 'cetrioli'
 ]
 
 const FAT_KEYWORDS = [
@@ -75,8 +77,22 @@ const BINDING_KEYWORDS = [
   'pangrattato', 'pan grattato', 'farina', 'fecola', 'amido', 'farina d\'avena'
 ]
 
+export const SPICE_AND_AROMA_KEYWORDS = [
+  'sale', 'pepe', 'origano', 'rosmarino', 'basilico', 'prezzemolo', 'timo',
+  'salvia', 'menta', 'curcuma', 'paprika', 'peperoncino', 'noce moscata',
+  'zenzero', 'cannella', 'alloro', 'aneto', 'maggiorana', 'coriandolo',
+  'cumino', 'erba cipollina', 'curry', 'zafferano', 'chiodi di garofano',
+  'cardamomo', 'vaniglia', 'lievito', 'bicarbonato', 'aceto', 'succo di limone',
+  'scorza di limone', 'aromi', 'spezie', 'aglio', 'spicchio d\'aglio'
+]
+
 export function classifyIngredientCategory(name: string): RecipeIngredient['category'] {
   const lower = name.toLowerCase().trim()
+
+  // Spices, herbs, aromatics (sale, origano, aglio, pepe, etc.) are seasoning/other
+  if (SPICE_AND_AROMA_KEYWORDS.some(k => lower.includes(k)) && !lower.includes('vellutata') && !lower.includes('zuppa')) {
+    return 'other'
+  }
 
   if (FAT_KEYWORDS.some(k => lower.includes(k))) return 'fats'
   if (VEGETABLE_KEYWORDS.some(k => lower.includes(k))) return 'vegetables'
@@ -715,6 +731,96 @@ export interface InputIngredient {
   isOptional?: boolean
 }
 
+/**
+ * Parses a raw ingredient string into name, quantity, unit, and category.
+ * e.g. "600gr pollo" -> { name: "pollo", quantity: "600gr", unit: "gr", category: "proteins" }
+ * e.g. "origano" -> { name: "origano", quantity: "q.b.", unit: "q.b.", category: "other" }
+ */
+export function parseRawIngredientString(raw: string): {
+  name: string
+  quantity: string
+  unit: string
+  category: RecipeIngredient['category']
+} {
+  let clean = raw.trim()
+  // Clean any leading bullet or numbering
+  clean = clean.replace(/^(?:[-•*▪️▫️🔹~✓>]|\d+[\.)]|\d+\s*[-–])\s*/, '').trim()
+
+  let quantity = ''
+  let unit = 'g'
+  let name = clean
+
+  // Match fraction, decimal or integer: "1/2", "1,5", "600", "2"
+  const qtyMatch = clean.match(
+    /^((?:\d+\/\d+|\d+(?:[.,]\d+)?))\s*(kg|g|gr|ml|cl|dl|l|uov[ao]|spicchi[o]?|cucchia[io]|cucchiain[io]|fett[ae]|bustin[ae]|pizzic[o]?|pz|pezzi)?\b\s*(?:di\s+)?(.*)$/i
+  )
+
+  if (qtyMatch) {
+    const num = qtyMatch[1]
+    const u = qtyMatch[2] || ''
+    const rest = qtyMatch[3]?.trim() || ''
+
+    quantity = u ? `${num}${u}` : num
+    unit = u || 'pz'
+    name = rest || clean
+  } else if (/(?:\bq\.?b\.?|\bquanto basta\b)/i.test(clean)) {
+    quantity = 'q.b.'
+    unit = 'q.b.'
+    name = clean
+      .replace(/(?:q\.?b\.?|quanto basta)/gi, '')
+      .replace(/^di\s+/i, '')
+      .replace(/[\s.,]+$/, '')
+      .trim()
+  } else {
+    const lower = clean.toLowerCase()
+    if (SPICE_AND_AROMA_KEYWORDS.some(k => lower.includes(k))) {
+      quantity = 'q.b.'
+      unit = 'q.b.'
+      name = clean
+    } else {
+      quantity = ''
+      unit = 'g'
+      name = clean
+    }
+  }
+
+  const category = classifyIngredientCategory(name)
+  return { name, quantity, unit, category }
+}
+
+/**
+ * Expands any compound input ingredients (e.g. "600gr pollo/ sale / origano /aglio")
+ * into distinct individual InputIngredient objects.
+ */
+export function expandCompoundInputIngredients(ingredients: InputIngredient[]): InputIngredient[] {
+  const result: InputIngredient[] = []
+
+  for (const ing of ingredients) {
+    if (
+      /[/|•▪️▫️🔹;]/.test(ing.name) ||
+      /\s+\+\s+/.test(ing.name) ||
+      (ing.name.includes(',') && ing.name.split(/,\s*(?![0-9])/).length > 1)
+    ) {
+      const parts = splitCompoundIngredientString(ing.name)
+      for (const part of parts) {
+        const parsed = parseRawIngredientString(part)
+        result.push({
+          name: parsed.name,
+          originalQuantity: parsed.quantity || ing.originalQuantity,
+          unit: parsed.unit || ing.unit,
+          category: parsed.category,
+          component: ing.component,
+          isOptional: ing.isOptional,
+        })
+      }
+    } else {
+      result.push(ing)
+    }
+  }
+
+  return result
+}
+
 export function adaptIngredientsDeterministically(
   ingredients: InputIngredient[],
   mealPlan?: MealPlan,
@@ -723,6 +829,9 @@ export function adaptIngredientsDeterministically(
     vegetableQuotaOverride?: number
   }
 ): RecipeIngredient[] {
+  // Pre-process: split any compound ingredients into distinct items
+  const expandedIngredients = expandCompoundInputIngredients(ingredients)
+
   // Extract groups from the user's meal plan
   const protGroup = mealPlan?.groups.find(g => g.category === 'proteins' || g.category === 'dairy')
   const carbGroup = mealPlan?.groups.find(g => g.category === 'carbs')
@@ -736,7 +845,7 @@ export function adaptIngredientsDeterministically(
   const defaultFatGrams = fatGroup?.minQuantity || fatGroup?.maxQuantity || 10
 
   // 1. Classify all ingredients
-  const classified = ingredients.map(ing => {
+  const classified = expandedIngredients.map(ing => {
     const planMatch = findFoodInNutritionPlan(ing.name, mealPlan)
     let cat = ing.category || planMatch?.category || classifyIngredientCategory(ing.name)
     // Se è formaggio, uova, legumi, carne, pesce -> consideriamo sempre proteins per il bilanciamento pasto

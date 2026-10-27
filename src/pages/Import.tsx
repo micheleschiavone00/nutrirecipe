@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { db, getActiveProfile } from '@/lib/db'
 import { extractVideoMetadata, detectSource } from '@/lib/social'
 import { extractRecipeFromText, adaptRecipeToProfile } from '@/lib/ai'
-import { extractRecipeDeterministically } from '@/lib/deterministicSocialExtractor'
+import { extractRecipeDeterministically, expandCompoundIngredients } from '@/lib/deterministicSocialExtractor'
 import { getUserAiConfig } from '@/lib/userAiSettings'
 import { isAdminLoggedIn } from '@/lib/adminAuth'
 import { generateId, MEAL_LABELS, MEAL_ICONS } from '@/lib/utils'
@@ -22,6 +22,7 @@ import {
   parseFoodQuantityAndUnit,
   findFoodInNutritionPlan,
   isEgg,
+  parseRawIngredientString,
   type GroupCapacityInfo,
 } from '@/lib/deterministicRecipeAdapter'
 import type {
@@ -335,10 +336,16 @@ export default function ImportPage() {
     applicableMeal: any,
     meal: TargetMealType
   ): Recipe => {
-    const rawIngredientsList = rawRecipe.ingredients.map(ing => ({
-      name: ing,
-      category: classifyIngredientCategory(ing),
-    }))
+    const expandedIngredients = expandCompoundIngredients(rawRecipe.ingredients || [])
+    const rawIngredientsList = expandedIngredients.map(ing => {
+      const parsed = parseRawIngredientString(ing)
+      return {
+        name: parsed.name,
+        originalQuantity: parsed.quantity,
+        unit: parsed.unit,
+        category: parsed.category,
+      }
+    })
 
     const deterministicIngredients = adaptIngredientsDeterministically(
       rawIngredientsList,
@@ -411,7 +418,12 @@ export default function ImportPage() {
 
       const userAiConfig = getUserAiConfig()
       const isAdmin = isAdminLoggedIn()
-      const canUseAI = isAdmin || (userAiConfig.provider === 'gemini' && Boolean(userAiConfig.geminiApiKey)) || (userAiConfig.provider === 'openai' && Boolean(userAiConfig.openaiApiKey))
+      // Se l'utente è Admin, USA SEMPRE L'AI con RapidAPI + OpenAI Vercel!
+      // Se è un utente normale, usa l'AI se ha configurato una chiave personale Gemini o OpenAI
+      const shouldUseAI =
+        isAdmin ||
+        (userAiConfig.provider === 'gemini' && Boolean(userAiConfig.geminiApiKey)) ||
+        (userAiConfig.provider === 'openai' && Boolean(userAiConfig.openaiApiKey))
 
       let rawRecipe: {
         title: string
@@ -420,7 +432,7 @@ export default function ImportPage() {
         steps: string[]
       }
 
-      if (canUseAI && userAiConfig.provider !== 'deterministic') {
+      if (shouldUseAI) {
         try {
           rawRecipe = await extractRecipeFromText(rawText, cleanUrl)
         } catch (aiErr) {
@@ -431,6 +443,9 @@ export default function ImportPage() {
         // Pure Deterministic extraction from Instagram caption!
         rawRecipe = extractRecipeDeterministically(rawText, cleanUrl)
       }
+
+      // Normalizzazione difensiva: espande sempre gli ingredienti composti
+      rawRecipe.ingredients = expandCompoundIngredients(rawRecipe.ingredients || [])
 
       // Fallback if ingredients list is empty
       if (!rawRecipe.ingredients || rawRecipe.ingredients.length === 0) {
@@ -450,7 +465,7 @@ export default function ImportPage() {
         m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
       ) || profile?.meals[0]
 
-      if (canUseAI && userAiConfig.provider !== 'deterministic' && profile && profile.meals?.length > 0) {
+      if (shouldUseAI && profile && profile.meals?.length > 0) {
         try {
           const adapted = await adaptRecipeToProfile(
             {
@@ -478,8 +493,8 @@ export default function ImportPage() {
             createdAt: new Date(),
             updatedAt: new Date(),
           }
-        } catch {
-          // Fallback to Deterministic Adapter
+        } catch (adaptErr) {
+          console.warn('AI adaptation failed, fallback to deterministic adapter:', adaptErr)
           finalRecipe = buildDeterministicImportedRecipe(rawRecipe, metadata, cleanUrl, source, applicableMeal, targetMeal)
         }
       } else {

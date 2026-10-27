@@ -16,14 +16,44 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.1.3'
+export const APP_VERSION = '2.1.4'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.1.4',
+    date: '27 Ottobre 2026',
+    title: 'Priorità Assoluta AI per Admin nell\'Import Social & Separatore Intelligente di Ingredienti Composti',
+    isLatest: true,
+    summary:
+      'Versione 2.1.4: ripristinato l\'utilizzo nativo e prioritario dell\'AI (OpenAI GPT-4o su Vercel con RapidAPI) per l\'utente Amministratore durante l\'import da Instagram, TikTok e YouTube; introdotto il nuovo algoritmo avanzato che scompone automaticamente gli ingredienti scritti sulla stessa riga o concatenati (es. "600gr pollo/ sale / origano /aglio"), separando proteine, spezie, erbe aromatiche e aromi q.b. ed evitando fusioni o classificazioni errate.',
+    changes: [
+      {
+        type: 'ai',
+        title: 'Esecuzione AI Nativa e Automatica per l\'Admin dopo RapidAPI',
+        description:
+          'Risolto il problema per cui l\'utente amministratore veniva erroneamente instradato verso il flusso puramente deterministico. Da ora, quando Michele è loggato come Admin, l\'importazione da Instagram e social invia sempre i dati alla pipeline AI (OpenAI GPT-4o su Vercel sbloccata con x-admin-key), garantendo l\'estrazione e l\'adattamento completi e intelligenti come in precedenza, con fallback controllato sul deterministico in caso di anomalie di rete.',
+        howToUse: 'Effettua il login come Admin in Impostazioni e incolla qualsiasi link social: l\'AI analizzerà e adatterà la ricetta all\'istante.',
+      },
+      {
+        type: 'feat',
+        title: 'Separatore Intelligente di Ingredienti Composti ("pollo / sale / origano / aglio")',
+        description:
+          'Potenziato sia l\'algoritmo deterministico sia il prompt dell\'AI per riconoscere e suddividere qualsiasi riga contenente più ingredienti separati da slash (/), pipe (|), più (+), virgole o elenchi. Nell\'esempio "600gr pollo/ sale / origano /aglio", l\'app estrae distintamente 4 ingredienti: 600g petto di pollo (proteine, adattato alla grammatura del piano es. 150g), sale (altro, q.b.), origano (altro, q.b.) e aglio (altro, q.b.), senza più accorparli al pollo.',
+        howToUse: 'Funziona automaticamente durante l\'import social e la creazione ricette, sia con l\'AI sia con l\'estrattore deterministico.',
+      },
+      {
+        type: 'fix',
+        title: 'Dizionario Spezie, Erbe Aromatiche e Condimenti q.b.',
+        description:
+          'Aggiunto supporto specifico per aglio, sale, pepe, origano, rosmarino, basilico, timo e spezie varie, classificate correttamente come condimenti "other" q.b. senza intaccare le quote obbligatorie di verdure pesate o macronutrienti del piano.',
+      },
+    ],
+  },
   {
     version: '2.1.3',
     date: '27 Ottobre 2026',
     title: 'Login Amministratore (Michele), Protezione Chiavi Vercel & Estrattore Social Deterministico',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.1.3: implementazione del Login Amministratore con master password per Michele, che sblocca l\'accesso alle chiavi API configurate sul server Vercel proteggendole da accessi non autorizzati; e rilascio del nuovo Estrattore Deterministico Social che analizza le didascalie di Instagram, TikTok e YouTube estraendo titolo, ingredienti e passaggi al 100% in locale e a 0€ anche senza AI attiva.',
     changes: [
