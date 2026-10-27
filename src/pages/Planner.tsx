@@ -16,6 +16,15 @@ export default function PlannerPage() {
   const weekDays = getWeekDays(weekStart)
   const [slotToSelect, setSlotToSelect] = useState<{ date: string; mealType: MealType } | null>(null)
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
+  const [selectedDayFocus, setSelectedDayFocus] = useState<string | null>(null)
+
+  const scrollToDay = (day: string) => {
+    setSelectedDayFocus(day)
+    const element = document.getElementById(`day-card-${day}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   const plannedMeals = useLiveQuery(
     () => db.plannedMeals.where('date').between(weekDays[0], weekDays[6], true, true).toArray(),
@@ -91,36 +100,49 @@ export default function PlannerPage() {
         }
       />
 
-      {/* Week navigation */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+      {/* Sticky Week Navigation & Interactive Tappable Days Bar */}
+      <div className="sticky top-14 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-4 py-2.5 transition-colors shadow-2xs">
         <div className="flex items-center justify-between">
-          <button onClick={prevWeek} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">
+          <button onClick={prevWeek} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">
             ←
           </button>
           <div className="text-center">
-            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+            <p className="font-extrabold text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
               {formatDayLabel(weekDays[0], true)} – {formatDayLabel(weekDays[6], true)}
             </p>
           </div>
-          <button onClick={nextWeek} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">
+          <button onClick={nextWeek} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">
             →
           </button>
         </div>
 
-        {/* Day tabs */}
-        <div className="flex gap-1 mt-3 overflow-x-auto scrollbar-hide">
-          {weekDays.map(day => (
-            <div
-              key={day}
-              className={cn(
-                'flex-shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl text-xs font-medium',
-                isToday(day) ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-              )}
-            >
-              <span>{new Date(day).toLocaleDateString('it-IT', { weekday: 'short' })}</span>
-              <span className="font-bold text-sm">{new Date(day).getDate()}</span>
-            </div>
-          ))}
+        {/* Day tabs - Interactive and Smooth Scrollable */}
+        <div className="flex gap-1.5 mt-2 overflow-x-auto scrollbar-hide py-0.5">
+          {weekDays.map(day => {
+            const isDayToday = isToday(day)
+            const isFocused = selectedDayFocus === day
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => scrollToDay(day)}
+                className={cn(
+                  'flex-1 min-w-[42px] flex flex-col items-center px-1.5 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer',
+                  isFocused
+                    ? 'bg-primary-600 text-white ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900 shadow-xs'
+                    : isDayToday
+                    ? 'bg-primary-500 text-white shadow-2xs'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                )}
+                title={`Scorri fino a ${formatDayLabel(day)}`}
+              >
+                <span className="text-[10px] uppercase font-bold tracking-wider opacity-90">
+                  {new Date(day).toLocaleDateString('it-IT', { weekday: 'short' })}
+                </span>
+                <span className="font-extrabold text-xs sm:text-sm">{new Date(day).getDate()}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -131,6 +153,7 @@ export default function PlannerPage() {
             key={day}
             day={day}
             isToday={isToday(day)}
+            isFocused={selectedDayFocus === day}
             plannedMeals={plannedMeals ?? []}
             recipesMap={recipesMap ?? {}}
             onRemove={removeMeal}
@@ -198,10 +221,11 @@ export default function PlannerPage() {
 }
 
 function DayCard({
-  day, isToday, plannedMeals, recipesMap, onRemove, onToggle, onAdd, onQuickCheat, onRecipeClick,
+  day, isToday, isFocused, plannedMeals, recipesMap, onRemove, onToggle, onAdd, onQuickCheat, onRecipeClick,
 }: {
   day: string
   isToday: boolean
+  isFocused?: boolean
   plannedMeals: PlannedMeal[]
   recipesMap: Record<string, Recipe>
   onRemove: (id: string) => void
@@ -214,7 +238,14 @@ function DayCard({
   const dayMeals = plannedMeals.filter(m => m.date === day)
 
   return (
-    <div className={cn('card overflow-hidden', isToday && 'ring-2 ring-primary-400')}>
+    <div
+      id={`day-card-${day}`}
+      className={cn(
+        'card overflow-hidden scroll-mt-36 transition-all duration-300',
+        isToday && 'ring-2 ring-primary-400',
+        isFocused && 'ring-2 ring-primary-500 shadow-md'
+      )}
+    >
       <div className={cn(
         'px-4 py-2.5 flex items-center justify-between',
         isToday ? 'bg-primary-500 text-white' : 'bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200'

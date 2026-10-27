@@ -11,6 +11,10 @@ import {
   suggestIngredientsFromTitle,
   detectDishType,
   classifyIngredientCategory,
+  calculateNutritionalValues,
+  getGroupAllowanceAndUsage,
+  getMealSpecificIngredientSuggestions,
+  type GroupCapacityInfo,
 } from '@/lib/deterministicRecipeAdapter'
 import type {
   Recipe,
@@ -87,56 +91,53 @@ export default function ImportPage() {
     getActiveProfile().then(p => p && setProfile(p))
   }, [location])
 
-  // Suggested ingredients based on adHocTitle
+  // Active Meal Plan reference based on targetMeal
+  const activeMealPlan = useMemo(() => {
+    return profile?.meals.find(
+      m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
+    ) || profile?.meals[0]
+  }, [profile, targetMeal])
+
+  // Suggested ingredients based on meal type (colazione -> latte, yogurt, avena, cioccolato fondente 15g; pranzo -> salmone, patate 200g, ecc.)
   const suggestedIngredients = useMemo(() => {
-    if (!adHocTitle.trim() || adHocTitle.length < 3) return []
-    const all = suggestIngredientsFromTitle(adHocTitle, profile || undefined)
-    // Filter out already added
+    const all = getMealSpecificIngredientSuggestions(targetMeal, profile || undefined, adHocTitle)
+    // Filter out already added ingredients
     return all.filter(
       s => !adHocIngredients.some(existing => existing.name.toLowerCase() === s.name.toLowerCase())
     )
-  }, [adHocTitle, profile, adHocIngredients])
+  }, [targetMeal, profile, adHocTitle, adHocIngredients])
 
   // Deterministic live adaptation preview for Ad-Hoc creation
   const adHocAdaptedPreview = useMemo(() => {
     if (adHocIngredients.length === 0) return []
-    const applicable = profile?.meals.find(
-      m => m.mealType === targetMeal || (targetMeal === 'lunch_dinner' && (m.mealType === 'lunch' || m.mealType === 'dinner'))
-    ) || profile?.meals[0]
 
     return adaptIngredientsDeterministically(
       adHocIngredients.map(i => ({ name: i.name, category: i.category })),
-      applicable,
+      activeMealPlan,
       { sideDishMode: adHocDishType === 'side' }
     )
-  }, [adHocIngredients, profile, targetMeal, adHocDishType])
+  }, [adHocIngredients, activeMealPlan, adHocDishType])
 
-  // Live nutritional values calculation for Ad-Hoc
+  // Live accurate nutritional values calculation using centralized deterministic logic
+  // (Prevents the 1023 kcal salmon bug caused by string regex concatenation)
   const adHocNutritionalValues = useMemo(() => {
-    let proteins = 0
-    let carbs = 0
-    let fats = 0
-
-    adHocAdaptedPreview.forEach(ing => {
-      const num = parseFloat(ing.adaptedQuantity.replace(/[^0-9.]/g, '')) || 0
-      if (ing.category === 'proteins') {
-        proteins += Math.round(num * 0.22)
-        fats += Math.round(num * 0.05)
-      } else if (ing.category === 'carbs') {
-        carbs += Math.round(num * 0.7)
-      } else if (ing.category === 'fats') {
-        fats += Math.round(num * 0.9)
-      }
-    })
-
-    const calories = proteins * 4 + carbs * 4 + fats * 9
-    return {
-      calories: Math.max(0, calories),
-      proteins: Math.max(0, proteins),
-      carbs: Math.max(0, carbs),
-      fats: Math.max(0, fats),
+    if (adHocAdaptedPreview.length === 0) {
+      return { calories: 0, proteins: 0, carbs: 0, fats: 0 }
     }
+    return calculateNutritionalValues(adHocAdaptedPreview)
   }, [adHocAdaptedPreview])
+
+  // Group allowance and capacity feedback for user awareness
+  const adHocGroupCapacities = useMemo(() => {
+    if (adHocAdaptedPreview.length === 0 || !activeMealPlan) return []
+    const categoriesPresent = Array.from(
+      new Set(adHocAdaptedPreview.map(i => i.category || 'other'))
+    ).filter(c => c !== 'other')
+
+    return categoriesPresent.map(cat =>
+      getGroupAllowanceAndUsage(activeMealPlan, cat, adHocAdaptedPreview)
+    )
+  }, [adHocAdaptedPreview, activeMealPlan])
 
   // Add ingredient to ad-hoc list
   const handleAddIngredient = (name: string, category?: RecipeIngredient['category']) => {
@@ -484,7 +485,7 @@ export default function ImportPage() {
                 <div className="bg-primary-50/80 dark:bg-primary-950/40 border border-primary-200/70 dark:border-primary-800/80 rounded-2xl p-3 space-y-1.5">
                   <p className="text-[11px] font-bold text-primary-950 dark:text-primary-200 flex items-center gap-1">
                     <span>✨</span>
-                    <span>Ingredienti suggeriti dal titolo (tocca per aggiungere):</span>
+                    <span>Ingredienti suggeriti per {targetMeal === 'breakfast' ? 'la Colazione' : targetMeal === 'lunch' ? 'il Pranzo' : targetMeal === 'dinner' ? 'la Cena' : 'questo pasto'}:</span>
                   </p>
                   <div className="flex gap-1.5 flex-wrap">
                     {suggestedIngredients.map(sugg => (
@@ -495,6 +496,9 @@ export default function ImportPage() {
                         className="bg-white dark:bg-gray-800 hover:bg-primary-100 dark:hover:bg-primary-900/60 text-primary-900 dark:text-primary-200 border border-primary-200 dark:border-primary-800 text-xs font-bold px-2.5 py-1 rounded-xl shadow-2xs transition-all active:scale-95 flex items-center gap-1"
                       >
                         <span>+ {sugg.name}</span>
+                        {sugg.defaultGrams && (
+                          <span className="text-[10px] text-primary-600 dark:text-primary-400 font-semibold">({sugg.defaultGrams})</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -540,6 +544,49 @@ export default function ImportPage() {
                 <p className="text-xs text-gray-400 dark:text-gray-500 py-2 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
                   Nessun ingrediente ancora aggiunto. Usa i suggerimenti o scrivine uno qui sotto.
                 </p>
+              )}
+
+              {/* Group Limits and Capacity Feedback */}
+              {adHocGroupCapacities.length > 0 && (
+                <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200/90 dark:border-gray-800 rounded-2xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                      <span>⚖️</span>
+                      <span>Limiti Fabbisogno del tuo Piano Nutrizionale</span>
+                    </span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                      Auto-calibrati per {activeMealPlan?.label || 'il pasto'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {adHocGroupCapacities.map(cap => (
+                      <div
+                        key={cap.category}
+                        className={`p-2 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                          cap.isExceeded
+                            ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200'
+                            : 'bg-white dark:bg-gray-800 border-gray-200/70 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span>{cap.icon}</span>
+                          <span className="font-bold truncate">{cap.categoryLabel}:</span>
+                          <span className="text-[11px] opacity-90 truncate">{cap.hintText}</span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                            cap.isExceeded
+                              ? 'bg-amber-200 dark:bg-amber-900/80 text-amber-900 dark:text-amber-100'
+                              : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                          }`}
+                        >
+                          {cap.percentUsed}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Add Custom Ingredient Input */}

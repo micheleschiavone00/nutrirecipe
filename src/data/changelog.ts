@@ -16,14 +16,73 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '1.7.2'
+export const APP_VERSION = '1.7.3'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.7.3',
+    date: '27 Ottobre 2026',
+    title: 'Adattamento Nutrizionale Deterministico Avanzato, Fix Macro Salmone, Multi-Proteina Legumi+Feta, Limiti Fabbisogno in Real-Time & Planner Sticky',
+    isLatest: true,
+    summary:
+      'Versione 1.7.3: potenziamento dell\'algoritmo deterministico e risoluzione di tutti i casi limite di fabbisogno. Le patate vengono ora calcolate esattamente sui 200g previsti dal piano nutrizionale per il pranzo (e modulate su cena o post-workout); eliminato alla radice il bug delle 1023 kcal sul salmone; integrato il dimezzamento 50/50 per abbinamenti multi-proteina come Legumi e Feta; aggiunti i promemoria del limite massimo consentito per gruppo durante la modifica manuale; suggerimenti ingredienti intelligenti divisi per tipologia di pasto (Colazione con latte, yogurt e cioccolato fondente max 15g; Pranzo/Cena con salmone, verdure e patate); salvataggio manuale istantaneo e garantito in Recipe Detail con bottoni +/-; e barra settimanale del Meal Planner sticky con scorrimento fluido al tocco del giorno.',
+    changes: [
+      {
+        type: 'ai',
+        title: 'Calcolo Fabbisogno Patate & Carboidrati Specifici per Pasto',
+        description:
+          'L\'algoritmo deterministico ora riconosce specificamente le opzioni di patate all\'interno del piano nutrizionale e le calcola a 200g per il pranzo (oppure applica la proporzione equivalente ufficiale di 2.85x rispetto alla pasta), differenziando tra pranzo, cena e cena post-workout ed evitando che venga assegnata la dose base da 70g.',
+        howToUse: 'Crea o aggiungi ricette con patate (es. Frittata patate e cipolla o Salmone con patate): le dosi rifletteranno fedelmente il tuo fabbisogno per quel momento della giornata.',
+      },
+      {
+        type: 'fix',
+        title: 'Risoluzione Definitiva Macro Salmone (Addio 1023 kcal)',
+        description:
+          'Risolto il bug nel calcolatore nutrizionale ad-hoc in cui le stringhe descrittive dell\'olio venivano erroneamente concatenate trasformando 10g in 101g. Il calcolo di calorie e macronutrienti per il salmone e tutti gli altri alimenti è ora rigoroso, centralizzato e conforme ai valori nutrizionali ufficiali.',
+        howToUse: 'I valori nutrizionali calcolati per il salmone (circa 188 kcal/100g) e per l\'olio EVO (82 kcal/10g) sono ora precisi e visualizzati in tempo reale.',
+      },
+      {
+        type: 'feat',
+        title: 'Dimezzamento Multi-Proteina 50/50 per Legumi e Feta',
+        description:
+          'La Feta (e i formaggi freschi proteici da secondo piatto) e i legumi vengono ora riconosciuti entrambi come fonti proteiche principali del pasto: in presenza di entrambi, l\'algoritmo dimezza automaticamente al 50% la dose di ciascuno (es. 40g legumi secchi e 45g feta), garantendo il perfetto equilibrio dell\'apporto proteico.',
+        howToUse: 'Componi piatti con legumi e formaggio o uova e formaggio: il sistema bilancerà le dosi al 50% di ciascun alimento in automatico.',
+      },
+      {
+        type: 'feat',
+        title: 'Promemoria Limite Massimo Fabbisogno per Gruppo in Real-Time',
+        description:
+          'Sia nella composizione ad-hoc che nella schermata di dettaglio ricetta, ogni gruppo nutrizionale (Carboidrati, Proteine, Verdure, Grassi) mostra ora il limite massimo previsto dal piano e la percentuale totale utilizzata dagli alimenti inseriti, con un avviso visivo immediato se la quota viene superata.',
+        howToUse: 'Durante la modifica delle dosi, osserva l\'indicatore colorato sotto ciascun gruppo per sapere subito quanto margine hai dal tuo fabbisogno.',
+      },
+      {
+        type: 'feat',
+        title: 'Suggerimenti Ingredienti Contestuali al Pasto (Colazione vs Pranzo/Cena)',
+        description:
+          'I suggerimenti rapidi per le ricette ad-hoc cambiano dinamicamente in base al momento del giorno selezionato: per la Colazione appaiono latte, yogurt greco, avena, fette biscottate, marmellata e cioccolato fondente (con dose massima fissata a 15g e mai "q.b."); per Pranzo e Cena appaiono salmone, petto di pollo, legumi, uova, feta, patate, verdure fresche e olio EVO.',
+        howToUse: 'In Aggiungi Ricetta > Crea Pietanza ad hoc, seleziona il momento del pasto e tocca i chip degli ingredienti consigliati per aggiungerli con un solo tap.',
+      },
+      {
+        type: 'fix',
+        title: 'Salvataggio Manuale Garantito in Recipe Detail con Tasti +/-',
+        description:
+          'Risolto il problema di salvataggio delle modifiche manuali sulle ricette con varianti: ora la modifica agisce esattamente sulla variante selezionata, aggiorna sia i grammi che i macronutrienti nel database Dexie e fornisce bottoni [-] e [+] per incrementare o decrementare rapidamente le dosi senza blocchi su mobile.',
+        howToUse: 'In Dettaglio Ricetta tocca "Modifica", regola le dosi con i tasti +/- o scrivendo il valore e clicca "Salva Dosi".',
+      },
+      {
+        type: 'design',
+        title: 'Planner con Barra Settimana Sticky e Giorni Tappabili con Scroll Fluido',
+        description:
+          'Nel Meal Planner la barra di navigazione settimanale con la striscia dei giorni rimane ora fissa in alto durante lo scorrimento; toccando un giorno specifico (es. Mercoledì), la pagina scrolla fluidamente e posiziona la card del giorno direttamente sotto la barra, evidenziando il giorno selezionato.',
+        howToUse: 'Apri il Planner, tocca un giorno qualsiasi nella barra superiore per raggiungerlo all\'istante.',
+      },
+    ],
+  },
   {
     version: '1.7.2',
     date: '27 Ottobre 2026',
     title: 'Perfezionamento Dark Mode OLED Eye-Care & Audit Totale Superfici',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 1.7.2: revisione completa e capillare del tema scuro in tutta l\'app per eliminare qualsiasi bagliore bianco o affaticamento visivo. Introdotte superfici profonde nero/slate OLED (#030712 / gray-950) con elevazioni morbide su tonalità grafite e titanio, testi attenuati ad alta leggibilità, e dark styling integrale su modali, cassetti, selettori dei giorni, tabelle grammature, riquadri pasti e liste della spesa.',
     changes: [

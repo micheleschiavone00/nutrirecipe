@@ -8,8 +8,12 @@ import { Badge, NutriBar, LoadingSpinner, EmptyState } from '@/components/ui'
 import AddToPlannerModal from '@/components/AddToPlannerModal'
 import RecalibrateModal from '@/components/RecalibrateModal'
 import { reAdaptSingleRecipe } from '@/lib/recipeEnricher'
-import { calculateNutritionalValues } from '@/lib/deterministicRecipeAdapter'
-import type { Recipe, MealType, TargetMealType, RecipeIngredient } from '@/types'
+import {
+  calculateNutritionalValues,
+  getGroupAllowanceAndUsage,
+  parseQuantityInGrams,
+} from '@/lib/deterministicRecipeAdapter'
+import type { Recipe, MealType, TargetMealType, RecipeIngredient, RecipeMealVariant } from '@/types'
 
 const MEAL_OPTIONS: { value: MealType; label: string }[] = [
   { value: 'breakfast', label: '🌅 Colazione' },
@@ -49,6 +53,7 @@ export default function RecipeDetailPage() {
   const [candidateRecipe, setCandidateRecipe] = useState<Recipe | null>(null)
   const [recalibrating, setRecalibrating] = useState(false)
   const [isManualEditing, setIsManualEditing] = useState(false)
+  const [editingVariantId, setEditingVariantId] = useState<string>('default')
   const [editedIngredients, setEditedIngredients] = useState<RecipeIngredient[]>([])
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('')
 
@@ -66,6 +71,12 @@ export default function RecipeDetailPage() {
     }
     return variants.find(v => v.id === activeVariantId) || variants[0]
   }, [variants, activeVariantId, recipe])
+
+  const matchingMealPlan = useMemo(() => {
+    if (!activeProfile) return undefined
+    const mealType = activeVariant.mealType || recipe?.targetMeal || 'lunch'
+    return activeProfile.meals.find(m => m.mealType === mealType) || activeProfile.meals[0]
+  }, [activeProfile, activeVariant, recipe])
 
   if (recipe === undefined) return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -114,24 +125,67 @@ export default function RecipeDetailPage() {
     navigate(`/import?recalRecipeId=${recipe?.id}`)
   }
 
-  const handleStartManualEdit = () => {
-    if (recipe) {
-      setEditedIngredients([...(recipe.adaptedIngredients || [])])
-      setIsManualEditing(true)
-    }
+  const handleStartManualEdit = (variantToEdit?: RecipeMealVariant) => {
+    const target = variantToEdit || activeVariant
+    setEditingVariantId(target.id)
+    setEditedIngredients((target.adaptedIngredients || []).map(i => ({ ...i })))
+    setIsManualEditing(true)
+  }
+
+  const handleIngredientStepAdjust = (ingName: string, delta: number) => {
+    setEditedIngredients(prev =>
+      prev.map(i => {
+        if (i.name !== ingName) return i
+        const currentGrams = parseQuantityInGrams(i.adaptedQuantity || '0')
+        const nextGrams = Math.max(0, currentGrams + delta)
+        const unit = i.unit || 'g'
+        return {
+          ...i,
+          adaptedQuantity: `${nextGrams}${unit}`,
+        }
+      })
+    )
   }
 
   const handleSaveManualEdit = async () => {
     if (!recipe) return
-    const newNutri = calculateNutritionalValues(editedIngredients)
-    await db.recipes.update(recipe.id, {
-      adaptedIngredients: editedIngredients,
-      nutritionalValues: newNutri,
-      updatedAt: new Date(),
-    })
-    setIsManualEditing(false)
-    setSaveSuccessMsg('✅ Dosi salvate con successo!')
-    setTimeout(() => setSaveSuccessMsg(''), 4000)
+    try {
+      const newNutri = calculateNutritionalValues(editedIngredients)
+
+      let updatedVariants = recipe.variants
+      if (recipe.variants && recipe.variants.length > 0) {
+        updatedVariants = recipe.variants.map(v => {
+          if (v.id === editingVariantId || (editingVariantId === 'default' && v === recipe.variants![0])) {
+            return {
+              ...v,
+              adaptedIngredients: editedIngredients,
+              nutritionalValues: newNutri,
+            }
+          }
+          return v
+        })
+      }
+
+      await db.recipes.update(recipe.id, {
+        adaptedIngredients:
+          editingVariantId === 'default' || editingVariantId === recipe.variants?.[0]?.id
+            ? editedIngredients
+            : recipe.adaptedIngredients,
+        variants: updatedVariants,
+        nutritionalValues:
+          editingVariantId === 'default' || editingVariantId === recipe.variants?.[0]?.id
+            ? newNutri
+            : recipe.nutritionalValues,
+        updatedAt: new Date(),
+      })
+
+      setIsManualEditing(false)
+      setSaveSuccessMsg('✅ Dosi e macro salvati con successo!')
+      setTimeout(() => setSaveSuccessMsg(''), 4000)
+    } catch (err) {
+      console.error('Errore salvataggio dosi:', err)
+      alert('Errore nel salvataggio: ' + err)
+    }
   }
 
   const handleIngredientQtyChange = (ingName: string, newQty: string) => {
@@ -141,18 +195,21 @@ export default function RecipeDetailPage() {
   }
 
   const renderIngredientItems = (ingredients: RecipeIngredient[]) => {
+    const displayItems = isManualEditing ? editedIngredients : ingredients
+
     if (ingredientView === 'category') {
       return (
         <div className="space-y-3">
           {(['proteins', 'carbs', 'vegetables', 'fats', 'dairy', 'fruits', 'other'] as const).map(cat => {
-            const items = ingredients.filter(ing => ing.category === cat)
+            const items = displayItems.filter(ing => (ing.category || 'other') === cat)
             if (items.length === 0) return null
             const label = CATEGORY_LABELS[cat] || cat
             const icon = CATEGORY_ICONS[cat] || '🍴'
+            const groupCap = getGroupAllowanceAndUsage(matchingMealPlan, cat, displayItems)
 
             return (
-              <div key={cat} className="bg-white dark:bg-gray-800/70 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-gray-800">
+              <div key={cat} className="bg-white dark:bg-gray-800/70 border border-gray-100 dark:border-gray-800 rounded-2xl p-3 space-y-2 shadow-2xs">
+                <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-gray-800 flex-wrap gap-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm">{icon}</span>
                     <h4 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
@@ -174,6 +231,28 @@ export default function RecipeDetailPage() {
                   )}
                 </div>
 
+                {/* Group Capacity and Allowance Limit Info */}
+                <div
+                  className={`px-2.5 py-1.5 rounded-xl text-[11px] flex items-center justify-between gap-1.5 border ${
+                    groupCap.isExceeded
+                      ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200'
+                      : 'bg-gray-50 dark:bg-gray-800/60 border-gray-100 dark:border-gray-700/60 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="truncate">{groupCap.hintText}</span>
+                  </div>
+                  <span
+                    className={`font-extrabold text-[10px] px-1.5 py-0.5 rounded-md flex-shrink-0 ${
+                      groupCap.isExceeded
+                        ? 'bg-amber-200 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100'
+                        : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                    }`}
+                  >
+                    {groupCap.percentUsed}%
+                  </span>
+                </div>
+
                 <div className="space-y-1">
                   {items.map((ing, idx) => (
                     <div
@@ -190,13 +269,29 @@ export default function RecipeDetailPage() {
                         {ing.isOptional && <span className="text-[10px] text-gray-400 dark:text-gray-500">(opz.)</span>}
                       </div>
                       {isManualEditing ? (
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleIngredientStepAdjust(ing.name, -5)}
+                            className="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-extrabold text-xs flex items-center justify-center transition-all active:scale-90"
+                            title="Diminuisci 5g"
+                          >
+                            -
+                          </button>
                           <input
                             type="text"
                             value={editedIngredients.find(e => e.name === ing.name)?.adaptedQuantity ?? ing.adaptedQuantity}
                             onChange={(e) => handleIngredientQtyChange(ing.name, e.target.value)}
-                            className="w-24 sm:w-28 text-right font-extrabold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-300 dark:border-primary-700 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-primary-500"
+                            className="w-20 text-center font-extrabold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-300 dark:border-primary-700 rounded-lg px-1.5 py-1 text-xs focus:ring-2 focus:ring-primary-500"
                           />
+                          <button
+                            type="button"
+                            onClick={() => handleIngredientStepAdjust(ing.name, 5)}
+                            className="w-6 h-6 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-extrabold text-xs flex items-center justify-center transition-all active:scale-90"
+                            title="Aumenta 5g"
+                          >
+                            +
+                          </button>
                         </div>
                       ) : (
                         <span className="font-extrabold text-primary-700 dark:text-primary-400 text-xs sm:text-sm whitespace-nowrap">
@@ -449,18 +544,27 @@ export default function RecipeDetailPage() {
             </button>
 
             {isManualEditing ? (
-              <button
-                type="button"
-                onClick={handleSaveManualEdit}
-                className="py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] shadow-sm"
-              >
-                <span>💾</span>
-                <span>Salva Dosi</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsManualEditing(false)}
+                  className="py-2 px-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveManualEdit}
+                  className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] shadow-sm"
+                >
+                  <span>💾</span>
+                  <span>Salva Dosi</span>
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
-                onClick={handleStartManualEdit}
+                onClick={() => handleStartManualEdit()}
                 className="py-2 px-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-[0.98]"
                 title="Modifica manualmente le grammature degli ingredienti"
               >
@@ -599,6 +703,35 @@ export default function RecipeDetailPage() {
         {/* ── Tab: Ingredients ────────────────────────────────────── */}
         {tab === 'ingredients' && (
           <div className="space-y-4 mb-4">
+            {/* Active Manual Edit Banner */}
+            {isManualEditing && (
+              <div className="bg-primary-50 dark:bg-primary-950/60 border border-primary-300 dark:border-primary-700 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-xs animate-fade-in">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base">✏️</span>
+                  <div>
+                    <p className="text-xs font-extrabold text-primary-900 dark:text-primary-100">
+                      Modifica manuale grammature
+                    </p>
+                    <p className="text-[11px] text-primary-700 dark:text-primary-300 truncate">
+                      Pasto in modifica:{' '}
+                      <strong>
+                        {editingVariantId === 'default'
+                          ? 'Standard'
+                          : variants.find(v => v.id === editingVariantId)?.label || editingVariantId}
+                      </strong>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveManualEdit}
+                  className="btn-primary text-xs py-1.5 px-3 font-bold flex-shrink-0 shadow-sm"
+                >
+                  💾 Salva
+                </button>
+              </div>
+            )}
+
             {/* View Mode Switcher */}
             <div className="card p-3 space-y-2">
               <div className="flex items-center justify-between">
@@ -681,6 +814,20 @@ export default function RecipeDetailPage() {
                           <span className="text-gray-300 dark:text-gray-600">•</span>
                           <span className="text-gray-500 dark:text-gray-400">{v.nutritionalValues.fats}g F</span>
                         </div>
+                      )}
+                      {!isManualEditing && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveVariantId(v.id)
+                            handleStartManualEdit(v)
+                          }}
+                          className="py-1 px-2.5 rounded-lg text-xs font-bold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-2xs flex items-center gap-1 transition-all active:scale-95 ml-auto sm:ml-0"
+                          title={`Modifica dosi specifiche per ${v.label}`}
+                        >
+                          <span>✏️</span>
+                          <span>Modifica {v.label}</span>
+                        </button>
                       )}
                     </div>
 
