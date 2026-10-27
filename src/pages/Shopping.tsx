@@ -14,6 +14,7 @@ import { PageHeader, EmptyState } from '@/components/ui'
 import PriceConfirmModal from '@/components/shopping/PriceConfirmModal'
 import MealVoucherModal from '@/components/shopping/MealVoucherModal'
 import CheckoutModal from '@/components/shopping/CheckoutModal'
+import ItemQuantityModal from '@/components/shopping/ItemQuantityModal'
 import PantryView from '@/components/shopping/PantryView'
 import type { ShoppingList, ShoppingItem, FoodGroup, AppSettings } from '@/types'
 
@@ -26,6 +27,7 @@ export default function ShoppingPage() {
   // Modali
   const [itemForPriceModal, setItemForPriceModal] = useState<ShoppingItem | null>(null)
   const [historicalPriceForModal, setHistoricalPriceForModal] = useState<number | undefined>(undefined)
+  const [itemForQuantityModal, setItemForQuantityModal] = useState<ShoppingItem | null>(null)
   const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false)
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
@@ -221,6 +223,30 @@ export default function ShoppingPage() {
     setItemForPriceModal(null)
   }
 
+  const handleSaveItemQuantity = async (itemId: string, newQuantity: number, newUnit: string) => {
+    if (!currentList) return
+    const updated = currentList.items.map(i =>
+      i.id === itemId ? { ...i, quantity: newQuantity, unit: newUnit } : i
+    )
+    await db.shoppingLists.update(currentList.id, {
+      items: updated,
+      updatedAt: new Date(),
+    })
+    setToastMsg('✏️ Quantità aggiornata!')
+    setTimeout(() => setToastMsg(''), 2500)
+  }
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!currentList) return
+    const updated = currentList.items.filter(i => i.id !== itemId)
+    await db.shoppingLists.update(currentList.id, {
+      items: updated,
+      updatedAt: new Date(),
+    })
+    setToastMsg('🗑️ Articolo rimosso dalla spesa')
+    setTimeout(() => setToastMsg(''), 2500)
+  }
+
   const handleAddManualItem = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!manualName.trim() || !currentList) return
@@ -381,7 +407,7 @@ export default function ShoppingPage() {
         }
       />
 
-      <div className="px-4 pt-3 max-w-lg mx-auto space-y-4">
+      <div className="px-4 pt-3 max-w-lg mx-auto space-y-4 pb-44">
         {/* Toast Notifica */}
         {toastMsg && (
           <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-center text-xs font-bold text-emerald-800 dark:text-emerald-300 animate-fade-in shadow-xs">
@@ -603,28 +629,44 @@ export default function ShoppingPage() {
                               )}
                             </div>
 
-                            {/* Quantità e Prezzo */}
-                            <div className="text-right flex-shrink-0">
-                              <p
-                                className={cn(
-                                  'text-xs sm:text-sm font-bold',
-                                  item.isChecked
-                                    ? 'text-gray-400 dark:text-gray-500'
-                                    : 'text-primary-600 dark:text-primary-400'
-                                )}
+                            {/* Quantità (modificabile con tap) e Prezzo */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setItemForQuantityModal(item)
+                                }}
+                                title="Tocca per modificare la quantità o l'unità"
+                                className="group px-2 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-left transition-all active:scale-95 flex items-center gap-1 border border-gray-200/60 dark:border-gray-700/60"
                               >
-                                {item.quantity}{item.unit}
-                              </p>
-                              {item.isChecked && item.price !== undefined && item.price > 0 && (
-                                <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
-                                  {item.price.toFixed(2)} €
+                                <span
+                                  className={cn(
+                                    'text-xs sm:text-sm font-bold',
+                                    item.isChecked
+                                      ? 'text-gray-400 dark:text-gray-500'
+                                      : 'text-primary-700 dark:text-primary-300'
+                                  )}
+                                >
+                                  {item.quantity}{item.unit}
                                 </span>
-                              )}
-                              {!item.isChecked && item.estimatedPrice && item.estimatedPrice > 0 && (
-                                <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                                  ~{item.estimatedPrice.toFixed(2)} €
+                                <span className="text-[10px] text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 opacity-60 group-hover:opacity-100">
+                                  ✏️
                                 </span>
-                              )}
+                              </button>
+
+                              <div className="text-right min-w-[48px]">
+                                {item.isChecked && item.price !== undefined && item.price > 0 && (
+                                  <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-800 block">
+                                    {item.price.toFixed(2)} €
+                                  </span>
+                                )}
+                                {!item.isChecked && item.estimatedPrice && item.estimatedPrice > 0 && (
+                                  <span className="text-[10px] text-gray-400 dark:text-gray-500 block">
+                                    ~{item.estimatedPrice.toFixed(2)} €
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -720,14 +762,14 @@ export default function ShoppingPage() {
         )}
       </div>
 
-      {/* ── BARRA FLUTTUANTE CHECKOUT (Attiva quando ci sono elementi spuntati nel carrello) ── */}
+      {/* ── BARRA FLUTTUANTE CHECKOUT (Posizionata rigorosamente sopra la BottomNav e la safe area) ── */}
       {activeTab === 'shopping' && checkedItems.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 p-3 z-40 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-950 dark:via-gray-950/95">
-          <div className="max-w-lg mx-auto">
+        <div className="fixed bottom-[calc(4.75rem+max(0.75rem,env(safe-area-inset-bottom,0px)))] left-0 right-0 p-3 z-40 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 pointer-events-none">
+          <div className="max-w-lg mx-auto pointer-events-auto">
             <button
               type="button"
               onClick={() => setIsCheckoutModalOpen(true)}
-              className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm flex items-center justify-between shadow-xl transition-all active:scale-[0.99]"
+              className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm flex items-center justify-between shadow-2xl transition-all active:scale-[0.99] border border-emerald-500/40"
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">🛍️</span>
@@ -751,6 +793,14 @@ export default function ShoppingPage() {
       )}
 
       {/* ── MODALI ── */}
+      <ItemQuantityModal
+        isOpen={Boolean(itemForQuantityModal)}
+        item={itemForQuantityModal}
+        onSave={handleSaveItemQuantity}
+        onDelete={handleDeleteItem}
+        onClose={() => setItemForQuantityModal(null)}
+      />
+
       <PriceConfirmModal
         isOpen={Boolean(itemForPriceModal)}
         item={itemForPriceModal}

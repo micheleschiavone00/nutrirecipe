@@ -16,14 +16,52 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.0.3'
+export const APP_VERSION = '2.1.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.1.0',
+    date: '27 Ottobre 2026',
+    title: 'Modifica Quantità Spesa, Scadenza Dispensa, Fix Barra Checkout & Nuove Impostazioni Categorizzate',
+    isLatest: true,
+    summary:
+      'Versione 2.1.0: introdotta la modifica delle quantità e delle unità di misura per ciascun articolo della lista della spesa; aggiunta la gestione e modifica rapida della data di scadenza per gli alimenti in dispensa; risolta la sovrapposizione tra il pulsante "Completa Spesa" e la barra di navigazione con calcolo dinamico della safe area; e riorganizzata radicalmente la schermata Impostazioni in sezioni categorizzate e pagine dedicate a schermo intero (Piano Nutrizionale, Privacy & Sicurezza, Altre Info, Buoni Pasto, Aspetto & Tema).',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Modifica Quantità per i Singoli Articoli della Spesa',
+        description:
+          'Toccando la quantità o l\'icona matita su qualsiasi alimento della lista spesa si apre un dialog per modificare il valore numerico (con tasti rapidi +/-) e l\'unità di misura (g, kg, pz, ml, conf), oltre a poter eliminare l\'articolo.',
+        howToUse: 'Tocca il badge della quantità (es. "200g ✏️") accanto a un articolo nella lista della spesa per regolarne la dose.',
+      },
+      {
+        type: 'feat',
+        title: 'Modifica Scadenza Singoli Elementi in Dispensa',
+        description:
+          'Nel tab Dispensa è ora possibile modificare o impostare al volo la data di scadenza di qualsiasi alimento tramite selettore di data e pulsanti veloci (+3 gg, +1 sett, +2 sett, +1 mese).',
+        howToUse: 'Nella Dispensa, tocca il badge della data di scadenza o il pulsante "+ Scadenza 📅" su un alimento.',
+      },
+      {
+        type: 'fix',
+        title: 'Fix Sovrapposizione Bottone "Completa Spesa" con la Navbar',
+        description:
+          'La barra fluttuante di completamento spesa e riepilogo buoni pasto è stata posizionata rigorosamente al di sopra della barra di navigazione inferiore (tenendo conto della safe area di iOS e Android). Aggiunto anche il corretto padding inferiore per garantire lo scroll completo di tutta la lista.',
+        howToUse: 'Il pulsante "Completa Spesa" è ora perfettamente visibile e reattivo in ogni condizione di navigazione.',
+      },
+      {
+        type: 'design',
+        title: 'Nuova Schermata Impostazioni & Info Categorizzata a Sezioni',
+        description:
+          'La pagina delle Impostazioni è stata riprogettata con una struttura pulita in stile iOS Settings: sezioni ordinate e righe con chevron (›) che aprono schermate dedicate per Piano Nutrizionale, Privacy & Sicurezza Dati, Altre Info sull\'App, Buoni Pasto, Aspetto e Icone.',
+        howToUse: 'Vai su Impostazioni: tocca "Piano Nutrizionale >", "Privacy & Sicurezza >" o "Altre Info >" per accedere alle schermate dedicate.',
+      },
+    ],
+  },
   {
     version: '2.0.3',
     date: '27 Ottobre 2026',
     title: 'Classificazione Feta nei Formaggi Stagionati (Limite Rigoroso 50g)',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.0.3: la Feta viene ora classificata rigorosamente come formaggio stagionato ad alta densità proteica con limite di riferimento fissato a 50g (e mai ricadente sui 100g generici delle proteine). Se la ricetta contiene 40g di feta, l\'app calcola esattamente l\'80% del fabbisogno (40g su 50g); se abbinata ad un uovo (es. 10g di feta e 1 uovo), calcola la percentuale esatta del 70% (20% + 50%) e segnala come quota massima consentita 25g. Nel suggeritore rapido e nell\'adattamento automatico, la dose singola di riferimento per la feta è categoricamente 50g.',
     changes: [

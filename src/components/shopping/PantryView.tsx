@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import type { PantryItem, FoodGroup } from '@/types'
 import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS, cn } from '@/lib/utils'
 import { addPantryItem, updatePantryItem, deletePantryItem } from '@/lib/db'
+import EditExpiryModal from '@/components/shopping/EditExpiryModal'
 
 interface PantryViewProps {
   pantryItems: PantryItem[]
@@ -20,6 +21,7 @@ export default function PantryView({
   const [newExpiry, setNewExpiry] = useState('')
   const [isAddingOpen, setIsAddingOpen] = useState(false)
   const [actionMsg, setActionMsg] = useState('')
+  const [itemForExpiryModal, setItemForExpiryModal] = useState<PantryItem | null>(null)
 
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -117,6 +119,12 @@ export default function PantryView({
   const handleMoveToShopping = async (item: PantryItem) => {
     await onAddBackToShoppingList(item.name, item.category, item.quantity || 100, item.unit)
     setActionMsg(`🛒 "${item.name}" aggiunto alla lista della spesa!`)
+    setTimeout(() => setActionMsg(''), 3000)
+  }
+
+  const handleSaveExpiry = async (itemId: string, newExpiryDate?: string) => {
+    await updatePantryItem(itemId, { expiryDate: newExpiryDate })
+    setActionMsg(newExpiryDate ? `📅 Scadenza aggiornata al ${newExpiryDate}` : '📅 Scadenza rimossa')
     setTimeout(() => setActionMsg(''), 3000)
   }
 
@@ -326,21 +334,35 @@ export default function PantryView({
                     </div>
                   </div>
 
-                  {/* Badge Scadenza */}
+                  {/* Badge Scadenza - Cliccabile per modifica */}
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    {isExpired ? (
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">
-                        Scaduto!
-                      </span>
-                    ) : isExpiring ? (
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                        Scade {item.daysLeft === 0 ? 'oggi' : item.daysLeft === 1 ? 'domani' : `tra ${item.daysLeft} gg`}
-                      </span>
-                    ) : item.expiryDate ? (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                        Scade il {item.expiryDate}
-                      </span>
-                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setItemForExpiryModal(item)}
+                      title="Tocca per modificare o impostare la data di scadenza"
+                      className="group flex items-center gap-1 cursor-pointer transition-transform active:scale-95"
+                    >
+                      {isExpired ? (
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 flex items-center gap-1">
+                          <span>Scaduto!</span>
+                          <span className="opacity-70 group-hover:opacity-100">✏️</span>
+                        </span>
+                      ) : isExpiring ? (
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                          <span>Scade {item.daysLeft === 0 ? 'oggi' : item.daysLeft === 1 ? 'domani' : `tra ${item.daysLeft} gg`}</span>
+                          <span className="opacity-70 group-hover:opacity-100">✏️</span>
+                        </span>
+                      ) : item.expiryDate ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                          <span>Scade il {item.expiryDate}</span>
+                          <span className="opacity-70 group-hover:opacity-100">✏️</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-dashed border-gray-300 dark:border-gray-700 flex items-center gap-1">
+                          <span>+ Scadenza 📅</span>
+                        </span>
+                      )}
+                    </button>
                   </div>
                 </div>
 
@@ -409,6 +431,13 @@ export default function PantryView({
           })}
         </div>
       )}
+      {/* Modale Modifica Scadenza */}
+      <EditExpiryModal
+        isOpen={Boolean(itemForExpiryModal)}
+        item={itemForExpiryModal}
+        onSave={handleSaveExpiry}
+        onClose={() => setItemForExpiryModal(null)}
+      />
     </div>
   )
 }
