@@ -12,6 +12,7 @@ import NutritionPlanPage from '@/pages/NutritionPlan'
 import ShareHandler from '@/pages/ShareHandler'
 import CreateTemplateWizardPage from '@/pages/CreateTemplateWizard'
 import ChangelogModal from '@/components/ChangelogModal'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { getSettings } from '@/lib/db'
 import { hasUnseenUpdate } from '@/data/changelog'
 import { migrateAllRecipesSteps } from '@/lib/recipeEnricher'
@@ -24,20 +25,22 @@ function AppContent() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <main className={`flex-1 ${showNav ? 'pb-nav' : ''}`}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/recipes" replace />} />
-          <Route path="/setup" element={<SetupPage />} />
-          <Route path="/profile" element={<NutritionPlanPage />} />
-          <Route path="/nutrition-plan" element={<Navigate to="/profile" replace />} />
-          <Route path="/import" element={<ImportPage />} />
-          <Route path="/recipes" element={<RecipesPage />} />
-          <Route path="/recipes/:id" element={<RecipeDetailPage />} />
-          <Route path="/planner" element={<PlannerPage />} />
-          <Route path="/planner/create-template" element={<CreateTemplateWizardPage />} />
-          <Route path="/shopping" element={<ShoppingPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/share" element={<ShareHandler />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Navigate to="/recipes" replace />} />
+            <Route path="/setup" element={<SetupPage />} />
+            <Route path="/profile" element={<NutritionPlanPage />} />
+            <Route path="/nutrition-plan" element={<Navigate to="/profile" replace />} />
+            <Route path="/import" element={<ImportPage />} />
+            <Route path="/recipes" element={<RecipesPage />} />
+            <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+            <Route path="/planner" element={<PlannerPage />} />
+            <Route path="/planner/create-template" element={<CreateTemplateWizardPage />} />
+            <Route path="/shopping" element={<ShoppingPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/share" element={<ShareHandler />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
       {showNav && <BottomNav />}
     </div>

@@ -16,14 +16,45 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.0.1'
+export const APP_VERSION = '2.0.2'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.0.2',
+    date: '27 Ottobre 2026',
+    title: 'Fix Schermata Nera nel Tab Spesa & Protezione Globale con ErrorBoundary',
+    isLatest: true,
+    summary:
+      'Versione 2.0.2: risolto il problema di rendering per cui la schermata Spesa diventava completamente nera. È stato eliminato l\'ordinamento su campi IndexedDB non indicizzati (SchemaError su createdAt in Dexie) passando a un caricamento resiliente con toArray() e sort in memoria; aggiunte protezioni null-safe per gli ingredienti dei pasti pianificati; introdotta la migrazione versione 4 del database; ed integrato un ErrorBoundary globale a livello di applicazione per prevenire qualsiasi crash dell\'interfaccia.',
+    changes: [
+      {
+        type: 'fix',
+        title: 'Risoluzione Schermata Nera nel Tab Spesa (Dexie SchemaError)',
+        description:
+          'Il caricamento delle liste della spesa e degli alimenti in dispensa non tenta più di eseguire ordinamenti su proprietà non indicizzate nel database IndexedDB, causa della schermata nera all\'apertura della tab. I record vengono ora caricati ed ordinati istantaneamente in memoria in modo totalmente sicuro.',
+        howToUse: 'Tocca "Spesa" dalla barra inferiore: la pagina si apre istantaneamente senza alcun blocco o schermo nero.',
+      },
+      {
+        type: 'fix',
+        title: 'Protezione Null-Safe per i Suggerimenti dal Meal Planner',
+        description:
+          'Aggiunti controlli di sicurezza su tutte le ricette pianificate e sulle relative grammature degli ingredienti (prevenendo eccezioni su adaptedQuantity non definita).',
+        howToUse: 'I suggerimenti automatici dal Meal Planner appaiono in fondo alla lista spesa in modo stabile.',
+      },
+      {
+        type: 'feat',
+        title: 'ErrorBoundary Globale Anti-Crash',
+        description:
+          'Introdotto un componente ErrorBoundary che avvolge l\'intero albero di navigazione: se dovesse verificarsi un errore imprevisto, l\'app non collassa più a schermo nero ma mostra una schermata di recupero con pulsanti di ripristino immediato.',
+        howToUse: 'Garantisce massima affidabilità e zero interruzioni di servizio durante la navigazione.',
+      },
+    ],
+  },
   {
     version: '2.0.1',
     date: '27 Ottobre 2026',
     title: 'Quote Proporzionali su Alimenti Specifici & Promemoria Real-Time del Limite Massimo Consentito',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.0.1: perfezionamento radicale del calcolo dei limiti di fabbisogno per gruppo nutrizionale. Il sistema ora riconosce il fabbisogno del singolo alimento modificato (es. se nel piano nutrizionale sono previsti 50g di feta o 2 uova, 40g di feta corrispondono esattamente all\'80% della quota proteica e non a un 40% generico su 100g). Con più alimenti dello stesso gruppo (es. 10g di feta e 1 uovo), calcola la ripartizione proporzionale esatta (20% + 50% = 70% totale). Durante la modifica manuale, l\'app indica in tempo reale il fabbisogno specifico del piano e il massimo inseribile per quell\'alimento tenendo conto della quota già occupata dagli altri ingredienti, con il pulsante rapido ⚡ Max per allineare la dose in un tocco.',
     changes: [

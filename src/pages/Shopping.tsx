@@ -38,13 +38,29 @@ export default function ShoppingPage() {
 
   // Live queries
   const shoppingLists = useLiveQuery(
-    () => db.shoppingLists.orderBy('createdAt').reverse().limit(5).toArray(),
+    async () => {
+      try {
+        const lists = await db.shoppingLists.toArray()
+        return lists.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      } catch (e) {
+        console.error('Error fetching shopping lists:', e)
+        return []
+      }
+    },
     []
   )
   const currentList = shoppingLists?.[0]
 
   const pantryItems = useLiveQuery(
-    () => db.pantryItems.orderBy('createdAt').reverse().toArray(),
+    async () => {
+      try {
+        const items = await db.pantryItems.toArray()
+        return items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      } catch (e) {
+        console.error('Error fetching pantry items:', e)
+        return []
+      }
+    },
     []
   ) ?? []
 
@@ -73,47 +89,56 @@ export default function ShoppingPage() {
 
   const plannedMealsForSuggestions = useLiveQuery(
     async () => {
-      const endOffset = isWeekendApproach ? 13 : 6
-      const endDate = new Date(weekStart)
-      endDate.setDate(endDate.getDate() + endOffset)
-      const endStr = endDate.toISOString().split('T')[0]
+      try {
+        const endOffset = isWeekendApproach ? 13 : 6
+        const endDate = new Date(weekStart)
+        endDate.setDate(endDate.getDate() + endOffset)
+        const endStr = endDate.toISOString().split('T')[0]
 
-      const meals = await db.plannedMeals
-        .where('date')
-        .between(weekStart, endStr, true, true)
-        .toArray()
+        const meals = await db.plannedMeals
+          .where('date')
+          .between(weekStart, endStr, true, true)
+          .toArray()
 
-      const recipeIds = [...new Set(meals.map(m => m.recipeId).filter(Boolean) as string[])]
-      const recipes = await db.recipes.bulkGet(recipeIds)
+        const recipeIds = [...new Set(meals.map(m => m.recipeId).filter(Boolean) as string[])]
+        if (recipeIds.length === 0) return []
 
-      const needed: { name: string; quantity: number; unit: string; category: FoodGroup['category']; week: 'current' | 'next' }[] = []
+        const recipes = await db.recipes.bulkGet(recipeIds)
 
-      for (const meal of meals) {
-        if (!meal.recipeId) continue
-        const recipe = recipes.find(r => r?.id === meal.recipeId)
-        if (!recipe) continue
+        const needed: { name: string; quantity: number; unit: string; category: FoodGroup['category']; week: 'current' | 'next' }[] = []
 
-        const isNextWeek = meal.date >= nextWeekStart
-        for (const ing of recipe.adaptedIngredients) {
-          const num = parseFloat(ing.adaptedQuantity.replace(/[^0-9.]/g, '')) || 100
-          needed.push({
-            name: ing.name,
-            quantity: Math.ceil(num),
-            unit: ing.unit || 'g',
-            category: (ing.category || 'other') as FoodGroup['category'],
-            week: isNextWeek ? 'next' : 'current',
-          })
+        for (const meal of meals) {
+          if (!meal.recipeId) continue
+          const recipe = recipes.find(r => r?.id === meal.recipeId)
+          if (!recipe || !recipe.adaptedIngredients) continue
+
+          const isNextWeek = meal.date >= nextWeekStart
+          for (const ing of (recipe.adaptedIngredients || [])) {
+            if (!ing || !ing.name) continue
+            const rawQty = ing.adaptedQuantity ? String(ing.adaptedQuantity) : ''
+            const num = parseFloat(rawQty.replace(/[^0-9.]/g, '')) || 100
+            needed.push({
+              name: ing.name,
+              quantity: Math.ceil(num),
+              unit: ing.unit || 'g',
+              category: (ing.category || 'other') as FoodGroup['category'],
+              week: isNextWeek ? 'next' : 'current',
+            })
+          }
         }
-      }
 
-      return needed
+        return needed
+      } catch (err) {
+        console.error('Errore calcolo suggerimenti spesa:', err)
+        return []
+      }
     },
     [weekStart, isWeekendApproach, nextWeekStart]
   ) ?? []
 
   // Calcolo Totale nel carrello (solo elementi spuntati/depennati!)
   const checkedItems = useMemo(() => {
-    return currentList?.items.filter(i => i.isChecked) || []
+    return (currentList?.items || []).filter(i => i && i.isChecked)
   }, [currentList])
 
   const cartTotal = useMemo(() => {
@@ -121,14 +146,15 @@ export default function ShoppingPage() {
   }, [checkedItems])
 
   const voucherSplit = useMemo(() => {
-    return calculateVoucherSplit(cartTotal, settings.mealVoucherValue || 8.0)
-  }, [cartTotal, settings.mealVoucherValue])
+    return calculateVoucherSplit(cartTotal, settings?.mealVoucherValue || 8.0)
+  }, [cartTotal, settings?.mealVoucherValue])
 
   // Rilevamento alimenti dalla dispensa da suggerire
   const pantrySuggestions = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
-    return pantryItems.filter(item => {
-      if (item.isDepleted || item.quantity <= 0) return true
+    return (pantryItems || []).filter(item => {
+      if (!item) return false
+      if (item.isDepleted || (item.quantity ?? 0) <= 0) return true
       if (item.expiryDate) {
         const diffMs = new Date(item.expiryDate).getTime() - new Date(today).getTime()
         const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
@@ -140,10 +166,11 @@ export default function ShoppingPage() {
 
   // Suggerimenti da Meal Planner filtrati da quelli già in lista
   const plannerSuggestions = useMemo(() => {
-    const existingNames = new Set((currentList?.items || []).map(i => i.name.toLowerCase().trim()))
+    const existingNames = new Set((currentList?.items || []).map(i => i?.name?.toLowerCase().trim()).filter(Boolean))
     const deduplicated = new Map<string, { name: string; quantity: number; unit: string; category: FoodGroup['category']; week: 'current' | 'next' }>()
 
-    for (const item of plannedMealsForSuggestions) {
+    for (const item of (plannedMealsForSuggestions || [])) {
+      if (!item || !item.name) continue
       const key = item.name.toLowerCase().trim()
       if (!existingNames.has(key) && !deduplicated.has(key)) {
         deduplicated.set(key, item)
@@ -273,13 +300,14 @@ export default function ShoppingPage() {
   }
 
   const exportList = (list: ShoppingList) => {
+    if (!list || !list.items) return
     const text = CATEGORY_ORDER
-      .filter(cat => list.items.some(i => i.category === cat))
+      .filter(cat => list.items.some(i => i && (i.category || 'other') === cat))
       .map(cat => {
-        const catItems = list.items.filter(i => i.category === cat)
-        const header = `\n${CATEGORY_LABELS[cat].toUpperCase()}\n${'─'.repeat(20)}`
+        const catItems = list.items.filter(i => i && (i.category || 'other') === cat)
+        const header = `\n${(CATEGORY_LABELS[cat] || cat).toUpperCase()}\n${'─'.repeat(20)}`
         const rows = catItems.map(
-          i => `${i.isChecked ? '✓' : '☐'} ${i.name} — ${i.quantity}${i.unit}${i.price ? ` (${i.price.toFixed(2)}€)` : ''}`
+          i => `${i.isChecked ? '✓' : '☐'} ${i.name} — ${i.quantity}${i.unit || ''}${i.price ? ` (${i.price.toFixed(2)}€)` : ''}`
         )
         return [header, ...rows].join('\n')
       })
@@ -295,11 +323,12 @@ export default function ShoppingPage() {
     }
   }
 
-  const groupedItems = (items: ShoppingItem[]) => {
+  const groupedItems = (items: ShoppingItem[] = []) => {
+    const safeItems = Array.isArray(items) ? items : []
     return CATEGORY_ORDER
       .map(cat => ({
         category: cat,
-        items: items.filter(i => i.category === cat),
+        items: safeItems.filter(i => i && (i.category || 'other') === cat),
       }))
       .filter(g => g.items.length > 0)
   }
@@ -529,10 +558,10 @@ export default function ShoppingPage() {
                 <div className="space-y-3">
                   {groupedItems(currentList.items).map(({ category, items }) => (
                     <div key={category} className="card overflow-hidden border border-gray-100 dark:border-gray-800">
-                      <div className={cn('px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between', CATEGORY_COLORS[category])}>
+                      <div className={cn('px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between', CATEGORY_COLORS[category] || CATEGORY_COLORS.other)}>
                         <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wide">
                           <span>{CATEGORY_ICONS[category] || '🍴'}</span>
-                          <span>{CATEGORY_LABELS[category]}</span>
+                          <span>{CATEGORY_LABELS[category] || category}</span>
                         </div>
                         <span className="text-[10px] font-semibold opacity-75">
                           {items.length} {items.length === 1 ? 'alimento' : 'alimenti'}

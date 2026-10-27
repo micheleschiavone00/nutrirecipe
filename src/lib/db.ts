@@ -41,6 +41,10 @@ export class NutriRecipeDB extends Dexie {
       pantryItems: 'id, name, category, expiryDate, purchaseDate, isDepleted',
       foodPrices: 'name, updatedAt',
     })
+    this.version(4).stores({
+      shoppingLists: 'id, weekStart, createdAt',
+      pantryItems: 'id, name, category, expiryDate, purchaseDate, isDepleted, createdAt',
+    })
   }
 }
 
@@ -250,10 +254,12 @@ export async function generateShoppingList(weekStart: string, includeNextWeek = 
   const itemMap = new Map<string, { qty: number; unit: string; category: string; recipeIds: string[] }>()
 
   for (const recipe of recipes) {
-    if (!recipe) continue
-    for (const ing of recipe.adaptedIngredients) {
+    if (!recipe || !recipe.adaptedIngredients) continue
+    for (const ing of (recipe.adaptedIngredients || [])) {
+      if (!ing || !ing.name) continue
       const key = ing.name.toLowerCase().trim()
-      const qty = parseFloat(ing.adaptedQuantity.replace(/[^0-9.]/g, '')) || 0
+      const rawQty = ing.adaptedQuantity ? String(ing.adaptedQuantity) : ''
+      const qty = parseFloat(rawQty.replace(/[^0-9.]/g, '')) || 0
       if (itemMap.has(key)) {
         const existing = itemMap.get(key)!
         existing.qty += qty
@@ -264,7 +270,7 @@ export async function generateShoppingList(weekStart: string, includeNextWeek = 
         itemMap.set(key, {
           qty,
           unit: ing.unit || 'g',
-          category: ing.category,
+          category: ing.category || 'other',
           recipeIds: [recipe.id],
         })
       }
