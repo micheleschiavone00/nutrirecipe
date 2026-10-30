@@ -23,8 +23,8 @@ function AppContent() {
   const showNav = !noNavRoutes.some(r => location.pathname.startsWith(r))
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-      <main className={`flex-1 ${showNav ? 'pb-nav' : ''}`}>
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 w-full max-w-full overflow-x-hidden">
+      <main className={`flex-1 min-w-0 w-full max-w-full overflow-x-hidden ${showNav ? 'pb-nav' : ''}`}>
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Navigate to="/recipes" replace />} />

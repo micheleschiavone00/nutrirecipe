@@ -129,7 +129,7 @@ export default function PantryView({
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4 animate-fade-in w-full min-w-0 overflow-x-hidden">
       {/* Toast Notifica */}
       {actionMsg && (
         <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-center text-xs font-bold text-emerald-800 dark:text-emerald-300 animate-fade-in shadow-xs">
@@ -138,22 +138,22 @@ export default function PantryView({
       )}
 
       {/* Overview Cards & Scadenze */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-2.5 text-center shadow-2xs">
-          <p className="text-[10px] font-bold text-gray-400 uppercase">Totale</p>
-          <p className="text-lg font-black text-gray-900 dark:text-gray-100">{stats.total}</p>
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full min-w-0">
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-1.5 sm:p-2.5 text-center shadow-2xs min-w-0">
+          <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase truncate">Totale</p>
+          <p className="text-base sm:text-lg font-black text-gray-900 dark:text-gray-100">{stats.total}</p>
         </div>
-        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-2.5 text-center shadow-2xs">
-          <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">In scadenza</p>
-          <p className="text-lg font-black text-amber-700 dark:text-amber-300">{stats.expiring}</p>
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-1.5 sm:p-2.5 text-center shadow-2xs min-w-0">
+          <p className="text-[9px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase truncate">In scadenza</p>
+          <p className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300">{stats.expiring}</p>
         </div>
-        <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/80 rounded-2xl p-2.5 text-center shadow-2xs">
-          <p className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase">Scaduti</p>
-          <p className="text-lg font-black text-red-700 dark:text-red-300">{stats.expired}</p>
+        <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/80 rounded-2xl p-1.5 sm:p-2.5 text-center shadow-2xs min-w-0">
+          <p className="text-[9px] sm:text-[10px] font-bold text-red-600 dark:text-red-400 uppercase truncate">Scaduti</p>
+          <p className="text-base sm:text-lg font-black text-red-700 dark:text-red-300">{stats.expired}</p>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-2.5 text-center shadow-2xs">
-          <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">Esauriti</p>
-          <p className="text-lg font-black text-gray-700 dark:text-gray-300">{stats.depleted}</p>
+        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-1.5 sm:p-2.5 text-center shadow-2xs min-w-0">
+          <p className="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase truncate">Esauriti</p>
+          <p className="text-base sm:text-lg font-black text-gray-700 dark:text-gray-300">{stats.depleted}</p>
         </div>
       </div>
 

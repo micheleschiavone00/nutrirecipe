@@ -13,14 +13,22 @@
   }
 
   html {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    overflow-x: hidden;
     height: -webkit-fill-available;
     scroll-behavior: smooth;
   }
 
   body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    overflow-x: hidden;
     min-height: 100vh;
     min-height: -webkit-fill-available;
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
     -webkit-font-smoothing: antialiased;
     @apply bg-gray-50 text-gray-900 transition-colors duration-150;
   }
@@ -30,6 +38,10 @@
   }
 
   #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    overflow-x: hidden;
     min-height: 100vh;
     min-height: -webkit-fill-available;
   }

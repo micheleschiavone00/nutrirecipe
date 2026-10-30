@@ -475,34 +475,34 @@ export default function ShoppingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-28">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-28 max-w-full overflow-x-hidden">
       {/* Page Header con Totale in Alto a Destra */}
       <PageHeader
         title="Spesa & Dispensa"
         action={
           activeTab === 'shopping' ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               {/* Totale Carrello & Buoni Pasto Widget */}
               <div
                 onClick={() => setIsVoucherModalOpen(true)}
-                className="bg-primary-50 dark:bg-gray-800/90 border border-primary-200 dark:border-gray-700 rounded-2xl px-3 py-1.5 cursor-pointer hover:border-primary-400 transition-all text-right shadow-2xs group"
+                className="bg-primary-50 dark:bg-gray-800/90 border border-primary-200 dark:border-gray-700 rounded-2xl px-2.5 sm:px-3 py-1 sm:py-1.5 cursor-pointer hover:border-primary-400 transition-all text-right shadow-2xs group max-w-[150px] sm:max-w-none flex-shrink-0"
                 title="Tocca per configurare i Buoni Pasto"
               >
                 <div className="flex items-center justify-end gap-1">
-                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Nel Carrello:
+                  <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Carrello:
                   </span>
-                  <span className="text-sm font-black text-primary-700 dark:text-primary-300">
+                  <span className="text-xs sm:text-sm font-black text-primary-700 dark:text-primary-300">
                     {cartTotal.toFixed(2)} €
                   </span>
                 </div>
                 {settings.mealVoucherEnabled ? (
-                  <p className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400">
+                  <p className="text-[9px] sm:text-[10px] font-extrabold text-amber-700 dark:text-amber-400 truncate">
                     {voucherSplit.label}
                   </p>
                 ) : (
-                  <p className="text-[9px] text-primary-600 dark:text-primary-400 group-hover:underline">
-                    + Configura Buoni Pasto
+                  <p className="text-[8px] sm:text-[9px] text-primary-600 dark:text-primary-400 group-hover:underline truncate">
+                    + Buoni Pasto
                   </p>
                 )}
               </div>
@@ -511,7 +511,7 @@ export default function ShoppingPage() {
                 <button
                   type="button"
                   onClick={() => exportList(currentList)}
-                  className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center text-sm transition-colors"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center text-xs sm:text-sm transition-colors flex-shrink-0"
                   title="Condividi lista"
                 >
                   📤
@@ -522,7 +522,7 @@ export default function ShoppingPage() {
         }
       />
 
-      <div className="px-4 pt-3 max-w-lg mx-auto space-y-4 pb-44">
+      <div className="px-3.5 sm:px-4 pt-3 max-w-lg mx-auto space-y-4 pb-44 w-full min-w-0 overflow-x-hidden">
         {/* Toast Notifica */}
         {toastMsg && (
           <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-center text-xs font-bold text-emerald-800 dark:text-emerald-300 animate-fade-in shadow-xs">
@@ -573,11 +573,11 @@ export default function ShoppingPage() {
             TAB 1: LISTA DELLA SPESA
            ═══════════════════════════════════════════════════════════════════════ */}
         {activeTab === 'shopping' && (
-          <div className="space-y-4 animate-fade-in">
-            {/* ── SEZIONE INSERIMENTO INGREDIENTE RIDISEGNATA ── */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 shadow-sm space-y-3.5 transition-all duration-300">
+          <div className="space-y-4 animate-fade-in w-full min-w-0">
+            {/* ── SEZIONE INSERIMENTO INGREDIENTE RIDISEGNATA (No Horizontal Overflow) ── */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-3.5 sm:p-4 shadow-sm space-y-3.5 transition-all duration-300 w-full min-w-0 max-w-full overflow-hidden">
               {/* 1. Categorie di Cibo in Alto */}
-              <div>
+              <div className="w-full min-w-0 overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     Scegli Categoria:
@@ -588,7 +588,7 @@ export default function ShoppingPage() {
                 </div>
 
                 {/* Barra orizzontale categorie */}
-                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1.5 touch-pan-x w-full">
                   {CATEGORY_ITEMS.map(({ key, label, icon }) => {
                     const isSelected = manualCat === key
                     return (
@@ -602,7 +602,7 @@ export default function ShoppingPage() {
                           }
                         }}
                         className={cn(
-                          'py-1.5 px-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs',
+                          'py-1.5 px-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs flex-shrink-0',
                           isSelected
                             ? 'bg-primary-600 text-white shadow-xs ring-2 ring-primary-500/30'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -617,11 +617,11 @@ export default function ShoppingPage() {
               </div>
 
               {/* 2. Card Add-on Sotto la Categoria Selezionata */}
-              <div>
+              <div className="w-full min-w-0 overflow-hidden">
                 <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-wider">
                   Alimenti frequenti in {CATEGORY_LABELS[manualCat]}:
                 </p>
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1.5 touch-pan-x w-full">
                   {CATEGORY_QUICK_ADDONS[manualCat].map((addon, idx) => (
                     <div
                       key={idx}
@@ -660,7 +660,7 @@ export default function ShoppingPage() {
               </div>
 
               {/* 3. Form Inserimento con Auto-Espansione, Input text-base (no zoom) e Stepper +/- */}
-              <form onSubmit={handleAddManualItem} className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <form onSubmit={handleAddManualItem} className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800 w-full min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300">
@@ -688,61 +688,63 @@ export default function ShoppingPage() {
                   />
                 </div>
 
-                {/* Sezione Espandibile Quantità con Stepper - / + e Unità */}
-                <div className="flex items-center gap-2">
-                  {/* Stepper Quantità */}
-                  <div className="flex-1 flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800/80 p-1 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={() => handleManualQtyStep(-1)}
-                      className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-extrabold text-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 transition-all shadow-2xs border border-gray-200/60 dark:border-gray-600/60"
-                      title="Diminuisci quantità"
-                    >
-                      −
-                    </button>
+                {/* Sezione Quantità con Stepper - / + e Unità e Bottone Aggiungi Responsive */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full min-w-0">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {/* Stepper Quantità */}
+                    <div className="flex-1 min-w-0 flex items-center gap-1 bg-gray-50 dark:bg-gray-800/80 p-1 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => handleManualQtyStep(-1)}
+                        className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-extrabold text-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 transition-all shadow-2xs border border-gray-200/60 dark:border-gray-600/60 flex-shrink-0"
+                        title="Diminuisci quantità"
+                      >
+                        −
+                      </button>
 
-                    <input
-                      type="number"
-                      step="any"
-                      min="0.1"
-                      value={manualQty}
-                      onChange={e => setManualQty(e.target.value)}
-                      className="flex-1 text-base font-black text-center py-1.5 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none"
-                      title="Quantità"
-                    />
+                      <input
+                        type="number"
+                        step="any"
+                        min="0.1"
+                        value={manualQty}
+                        onChange={e => setManualQty(e.target.value)}
+                        className="flex-1 min-w-0 text-base font-black text-center py-1.5 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none"
+                        title="Quantità"
+                      />
 
-                    <button
-                      type="button"
-                      onClick={() => handleManualQtyStep(1)}
-                      className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-extrabold text-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 transition-all shadow-2xs border border-gray-200/60 dark:border-gray-600/60"
-                      title="Aumenta quantità"
+                      <button
+                        type="button"
+                        onClick={() => handleManualQtyStep(1)}
+                        className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-extrabold text-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 transition-all shadow-2xs border border-gray-200/60 dark:border-gray-600/60 flex-shrink-0"
+                        title="Aumenta quantità"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Selettore Unità */}
+                    <select
+                      value={manualUnit}
+                      onChange={e => setManualUnit(e.target.value)}
+                      className="w-20 sm:w-24 h-11 text-xs font-bold bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl px-2 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-2xs flex-shrink-0"
                     >
-                      +
-                    </button>
+                      <option value="g">g</option>
+                      <option value="kg">kg</option>
+                      <option value="pz">pz</option>
+                      <option value="ml">ml</option>
+                      <option value="l">l</option>
+                      <option value="conf">conf</option>
+                    </select>
                   </div>
-
-                  {/* Selettore Unità */}
-                  <select
-                    value={manualUnit}
-                    onChange={e => setManualUnit(e.target.value)}
-                    className="w-24 h-11 text-xs font-bold bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl px-2 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-2xs"
-                  >
-                    <option value="g">g</option>
-                    <option value="kg">kg</option>
-                    <option value="pz">pz</option>
-                    <option value="ml">ml</option>
-                    <option value="l">l</option>
-                    <option value="conf">conf</option>
-                  </select>
 
                   {/* Bottone Aggiungi */}
                   <button
                     type="submit"
                     disabled={!manualName.trim()}
-                    className="btn-primary h-11 px-4 text-xs font-black rounded-2xl shadow-sm flex items-center gap-1.5 flex-shrink-0 disabled:opacity-50"
+                    className="btn-primary h-11 px-5 text-xs font-black rounded-2xl shadow-sm flex items-center justify-center gap-1.5 flex-shrink-0 disabled:opacity-50 w-full sm:w-auto"
                   >
                     <span>+</span>
-                    <span>Aggiungi</span>
+                    <span>Aggiungi alla Spesa</span>
                   </button>
                 </div>
               </form>
@@ -821,12 +823,12 @@ export default function ShoppingPage() {
                         </span>
                       </div>
 
-                      <div className="divide-y divide-gray-50 dark:divide-gray-800/60">
+                      <div className="divide-y divide-gray-50 dark:divide-gray-800/60 w-full min-w-0">
                         {items.map(item => (
                           <div
                             key={item.id}
                             className={cn(
-                              'group flex items-center gap-3 px-3.5 py-3 hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors',
+                              'group flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-3 hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors w-full min-w-0 overflow-hidden',
                               item.isChecked && 'bg-emerald-50/20 dark:bg-emerald-950/15'
                             )}
                           >
@@ -834,7 +836,7 @@ export default function ShoppingPage() {
                             <button
                               type="button"
                               onClick={() => handleItemCheckClick(item)}
-                              className="flex items-center justify-center p-1"
+                              className="flex items-center justify-center p-0.5 sm:p-1 flex-shrink-0"
                               title={item.isChecked ? 'Rimuovi dal carrello' : 'Spunta e inserisci prezzo'}
                             >
                               <input
@@ -847,7 +849,7 @@ export default function ShoppingPage() {
 
                             {/* Nome e Ricette collegate (tappabile per confermare prezzo) */}
                             <div
-                              className="flex-1 min-w-0 cursor-pointer"
+                              className="flex-1 min-w-0 cursor-pointer pr-1"
                               onClick={() => handleItemCheckClick(item)}
                             >
                               <p
@@ -868,7 +870,7 @@ export default function ShoppingPage() {
                             </div>
 
                             {/* Quantità (modificabile con tap) e Prezzo */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -876,7 +878,7 @@ export default function ShoppingPage() {
                                   setItemForQuantityModal(item)
                                 }}
                                 title="Tocca per modificare la quantità o l'unità"
-                                className="group px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-left transition-all active:scale-95 flex items-center gap-1 border border-gray-200/60 dark:border-gray-700/60"
+                                className="group px-2 sm:px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-left transition-all active:scale-95 flex items-center gap-1 border border-gray-200/60 dark:border-gray-700/60 flex-shrink-0"
                               >
                                 <span
                                   className={cn(
@@ -894,14 +896,14 @@ export default function ShoppingPage() {
                               </button>
 
                               {/* Prezzo Effettivo o Stimato */}
-                              <div className="text-right min-w-[50px]">
+                              <div className="text-right min-w-[42px] sm:min-w-[50px] flex-shrink-0">
                                 {item.isChecked && item.price !== undefined && item.price > 0 && (
-                                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 block shadow-2xs">
+                                  <span className="text-[11px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/80 px-1.5 sm:px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 block shadow-2xs">
                                     {item.price.toFixed(2)} €
                                   </span>
                                 )}
                                 {!item.isChecked && item.estimatedPrice && item.estimatedPrice > 0 && (
-                                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 block">
+                                  <span className="text-[10px] sm:text-[11px] font-semibold text-gray-400 dark:text-gray-500 block">
                                     ~{item.estimatedPrice.toFixed(2)} €
                                   </span>
                                 )}
@@ -915,7 +917,7 @@ export default function ShoppingPage() {
                                   handleDeleteItem(item.id)
                                 }}
                                 title="Rimuovi questo ingrediente dalla lista della spesa"
-                                className="w-8 h-8 rounded-xl bg-gray-50 hover:bg-rose-50 dark:bg-gray-800/60 dark:hover:bg-rose-950/60 text-gray-400 hover:text-rose-600 dark:text-gray-500 dark:hover:text-rose-400 flex items-center justify-center text-sm transition-all active:scale-90 border border-transparent hover:border-rose-200 dark:hover:border-rose-800 flex-shrink-0"
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gray-50 hover:bg-rose-50 dark:bg-gray-800/60 dark:hover:bg-rose-950/60 text-gray-400 hover:text-rose-600 dark:text-gray-500 dark:hover:text-rose-400 flex items-center justify-center text-xs sm:text-sm transition-all active:scale-90 border border-transparent hover:border-rose-200 dark:hover:border-rose-800 flex-shrink-0"
                               >
                                 🗑️
                               </button>
@@ -1016,7 +1018,7 @@ export default function ShoppingPage() {
 
       {/* ── BARRA FLUTTUANTE CHECKOUT (Posizionata rigorosamente sopra la BottomNav e la safe area) ── */}
       {activeTab === 'shopping' && checkedItems.length > 0 && (
-        <div className="fixed bottom-[calc(4.75rem+max(0.75rem,env(safe-area-inset-bottom,0px)))] left-0 right-0 p-3 z-40 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 pointer-events-none">
+        <div className="fixed bottom-[calc(4.75rem+max(0.75rem,env(safe-area-inset-bottom,0px)))] left-0 right-0 p-3 z-40 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 pointer-events-none w-full max-w-full overflow-hidden">
           <div className="max-w-lg mx-auto pointer-events-auto">
             <button
               type="button"

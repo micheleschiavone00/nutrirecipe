@@ -9,13 +9,13 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, action, className }: PageHeaderProps) {
   return (
-    <div className={cn('safe-top bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl sticky top-0 z-40 border-b border-gray-100 dark:border-gray-800 transition-colors', className)}>
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
-          {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>}
+    <div className={cn('safe-top bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl sticky top-0 z-40 border-b border-gray-100 dark:border-gray-800 transition-colors w-full max-w-full overflow-hidden', className)}>
+      <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 w-full max-w-full min-w-0">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
+          {subtitle && <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{subtitle}</p>}
         </div>
-        {action && <div>{action}</div>}
+        {action && <div className="flex-shrink-0 min-w-0">{action}</div>}
       </div>
     </div>
   )
