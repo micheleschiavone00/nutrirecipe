@@ -79,21 +79,103 @@ export async function getActiveProfile(): Promise<NutritionProfile | undefined> 
 
 // ─── Food Prices & Meal Vouchers ──────────────────────────────────────────────
 
-export async function saveFoodPrice(name: string, price: number, unit?: string): Promise<void> {
+export function normalizeQuantityToBaseUnit(
+  quantity: number,
+  unit = 'pz'
+): { baseQuantity: number; baseUnit: 'g' | 'ml' | 'pz' } {
+  const u = (unit || 'pz').toLowerCase().trim()
+  if (u === 'kg') return { baseQuantity: quantity * 1000, baseUnit: 'g' }
+  if (u === 'g' || u === 'gr' || u === 'grammi') return { baseQuantity: quantity, baseUnit: 'g' }
+  if (u === 'l' || u === 'litri' || u === 'lt') return { baseQuantity: quantity * 1000, baseUnit: 'ml' }
+  if (u === 'cl') return { baseQuantity: quantity * 10, baseUnit: 'ml' }
+  if (u === 'dl') return { baseQuantity: quantity * 100, baseUnit: 'ml' }
+  if (u === 'ml') return { baseQuantity: quantity, baseUnit: 'ml' }
+  return { baseQuantity: quantity, baseUnit: 'pz' }
+}
+
+export async function saveFoodPrice(
+  name: string,
+  price: number,
+  quantityOrUnit?: number | string,
+  maybeUnit?: string
+): Promise<void> {
   const clean = name.toLowerCase().trim()
   if (!clean || price <= 0) return
+
+  let quantity: number | undefined
+  let unit = 'pz'
+
+  if (typeof quantityOrUnit === 'number') {
+    quantity = quantityOrUnit
+    unit = maybeUnit || 'pz'
+  } else if (typeof quantityOrUnit === 'string') {
+    unit = quantityOrUnit
+  }
+
+  let unitPrice: number | undefined
+  let baseUnit: 'g' | 'ml' | 'pz' | undefined
+
+  if (quantity && quantity > 0) {
+    const norm = normalizeQuantityToBaseUnit(quantity, unit)
+    if (norm.baseQuantity > 0) {
+      unitPrice = price / norm.baseQuantity
+      baseUnit = norm.baseUnit
+    }
+  }
+
   await db.foodPrices.put({
     name: clean,
     lastPrice: Math.round(price * 100) / 100,
     unit,
+    lastQuantity: quantity,
+    unitPrice,
+    baseUnit,
     updatedAt: new Date(),
   })
 }
 
-export async function getFoodPrice(name: string): Promise<number | undefined> {
+export async function getFoodPriceDetails(name: string): Promise<FoodPrice | undefined> {
+  const clean = name.toLowerCase().trim()
+  return db.foodPrices.get(clean)
+}
+
+export async function estimateFoodPrice(
+  name: string,
+  quantity?: number,
+  unit?: string
+): Promise<{ estimatedPrice: number; pricePerUnitLabel?: string } | undefined> {
   const clean = name.toLowerCase().trim()
   const found = await db.foodPrices.get(clean)
-  return found?.lastPrice
+  if (!found) return undefined
+
+  if (quantity && quantity > 0 && found.unitPrice && found.baseUnit) {
+    const currentNorm = normalizeQuantityToBaseUnit(quantity, unit || found.unit || 'pz')
+    if (currentNorm.baseUnit === found.baseUnit && currentNorm.baseQuantity > 0) {
+      const calculated = Math.round(currentNorm.baseQuantity * found.unitPrice * 100) / 100
+      let pricePerUnitLabel = ''
+      if (found.baseUnit === 'g') {
+        const perKg = (found.unitPrice * 1000).toFixed(2)
+        pricePerUnitLabel = `${perKg} €/kg`
+      } else if (found.baseUnit === 'ml') {
+        const perLiter = (found.unitPrice * 1000).toFixed(2)
+        pricePerUnitLabel = `${perLiter} €/L`
+      } else {
+        pricePerUnitLabel = `${found.unitPrice.toFixed(2)} €/pz`
+      }
+      return { estimatedPrice: calculated, pricePerUnitLabel }
+    }
+  }
+
+  return { estimatedPrice: found.lastPrice }
+}
+
+export async function getFoodPrice(
+  name: string,
+  quantity?: number,
+  unit?: string
+): Promise<number | undefined> {
+  const res = await estimateFoodPrice(name, quantity, unit)
+  return res?.estimatedPrice
 }
 
 export function calculateVoucherSplit(
@@ -199,9 +281,9 @@ export async function checkoutShoppingList(
   const today = new Date().toISOString().split('T')[0]
 
   for (const item of checkedItems) {
-    // 1. Memorizza il prezzo per il futuro
+    // 1. Memorizza il prezzo e il prezzo unitario per il futuro
     if (item.price && item.price > 0) {
-      await saveFoodPrice(item.name, item.price, item.unit)
+      await saveFoodPrice(item.name, item.price, item.quantity, item.unit)
     }
 
     // 2. Crea elemento in dispensa
@@ -282,7 +364,7 @@ export async function generateShoppingList(weekStart: string, includeNextWeek = 
   let index = 0
 
   for (const [name, data] of itemMap.entries()) {
-    const historicalPrice = await getFoodPrice(name)
+    const historicalPrice = await getFoodPrice(name, data.qty, data.unit)
     items.push({
       id: `item-${index++}-${Date.now()}`,
       name,

@@ -206,8 +206,11 @@ export interface PantryItem {
 
 export interface FoodPrice {
   name: string                // lowercase trimmed name
-  lastPrice: number
-  unit?: string
+  lastPrice: number           // ultimo prezzo totale pagato
+  unit?: string               // unità di misura (g, kg, pz, etc.)
+  lastQuantity?: number       // quantità acquistata l'ultima volta
+  unitPrice?: number          // prezzo per unità base (€/g, €/ml, o €/pz)
+  baseUnit?: 'g' | 'ml' | 'pz' // unità normalizzata di calcolo
   updatedAt: Date
 }
 

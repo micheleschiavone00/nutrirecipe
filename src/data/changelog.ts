@@ -16,14 +16,63 @@ export interface Release {
   changes: ChangelogItem[]
 }
 
-export const APP_VERSION = '2.1.4'
+export const APP_VERSION = '2.2.0'
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.2.0',
+    date: '30 Ottobre 2026',
+    title: 'Nuova UI Spesa con Card Add-On, Prezzi Unitari Intelligenti & Modifica Quantità al Checkout',
+    isLatest: true,
+    summary:
+      'Versione 2.2.0: rivoluzione completa dell\'interfaccia della Lista Spesa per renderla ultra-pulita, veloce ed intuitiva; aggiunta la cancellazione diretta degli ingredienti da ogni riga; selettore categorie spostato in alto con comode card add-on frequenti; sezione inserimento espandibile con font anti-zoom e stepper +/-; memorizzazione immediata del prezzo e del prezzo unitario (€/kg, €/g, €/pz) con stima automatica ai successivi acquisti; e possibilità di correggere la quantità acquistata direttamente nella modale di conferma prezzo.',
+    changes: [
+      {
+        type: 'feat',
+        title: 'Eliminazione Diretta degli Ingredienti dalla Spesa',
+        description:
+          'Ogni alimento nella lista della spesa dispone ora di un pulsante cestino dedicato per rimuovere istantaneamente l\'articolo senza dover passare da menù secondari.',
+        howToUse: 'Tocca l\'icona del cestino 🗑️ accanto a qualsiasi ingrediente per rimuoverlo subito dalla lista.',
+      },
+      {
+        type: 'design',
+        title: 'UI Spesa Ridisegnata: Categorie in Alto & Card Add-On Rapide',
+        description:
+          'La sezione di inserimento è stata completamente riorganizzata: le categorie di cibo (Proteine, Verdure, Carboidrati, Latticini, Frutta, Grassi, Altro) sono posizionate in alto in una comoda barra a pillole, e sotto compaiono le card add-on dei cibi più frequenti per quella categoria, aggiungibili con un solo tocco.',
+        howToUse: 'Tocca una categoria per vedere le card consigliate e premi il "+" sulla card per aggiungere l\'alimento al volo.',
+      },
+      {
+        type: 'feat',
+        title: 'Sezione Espandibile con Stepper +/- e Zero Zoom su Mobile',
+        description:
+          'Il campo di testo per digitare il nome ha una dimensione ottimizzata (16px) che previene lo zoom automatico su iOS e smartphone, mentre accanto alla quantità sono presenti pulsanti stepper "-" e "+" per calibrare velocemente i grammi o i pezzi.',
+        howToUse: 'Tocca il campo per far espandere la sezione e usa i tasti - e + per dosare la quantità desiderata.',
+      },
+      {
+        type: 'feat',
+        title: 'Memorizzazione Prezzo Immediata (Conferma & Salva)',
+        description:
+          'Il prezzo dell\'alimento viene memorizzato nel database non appena confermi nella modale ("Salva e Metti nel Carrello"), senza dover necessariamente attendere il completamento della spesa e il checkout in dispensa.',
+      },
+      {
+        type: 'feat',
+        title: 'Prezzo Unitario Intelligente (€/kg, €/g, €/pz) & Stime Proporzionali',
+        description:
+          'L\'app memorizza ora il costo per unità base (al kg o al pezzo). Se compri 500g di pollo a 4.50€ (9€/kg), la prossima volta che la ricetta prevede 300g l\'app stimerà automaticamente 2.70€!',
+      },
+      {
+        type: 'feat',
+        title: 'Modifica Quantità Direttamente nella Modale di Prezzo',
+        description:
+          'Al supermercato il peso della confezione trovata può essere diverso da quanto pianificato: ora nella modale di conferma prezzo puoi modificare al volo la quantità effettiva acquistata con i tasti stepper o la tastiera, con ricalcolo proporzionale automatico del prezzo suggerito in tempo reale.',
+      },
+    ],
+  },
   {
     version: '2.1.4',
     date: '27 Ottobre 2026',
     title: 'Priorità Assoluta AI per Admin nell\'Import Social & Separatore Intelligente di Ingredienti Composti',
-    isLatest: true,
+    isLatest: false,
     summary:
       'Versione 2.1.4: ripristinato l\'utilizzo nativo e prioritario dell\'AI (OpenAI GPT-4o su Vercel con RapidAPI) per l\'utente Amministratore durante l\'import da Instagram, TikTok e YouTube; introdotto il nuovo algoritmo avanzato che scompone automaticamente gli ingredienti scritti sulla stessa riga o concatenati (es. "600gr pollo/ sale / origano /aglio"), separando proteine, spezie, erbe aromatiche e aromi q.b. ed evitando fusioni o classificazioni errate.',
     changes: [

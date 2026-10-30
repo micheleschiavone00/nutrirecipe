@@ -5,6 +5,8 @@ import {
   generateShoppingList,
   checkoutShoppingList,
   getFoodPrice,
+  getFoodPriceDetails,
+  saveFoodPrice,
   calculateVoucherSplit,
   saveSettings,
   getSettings,
@@ -16,9 +18,87 @@ import MealVoucherModal from '@/components/shopping/MealVoucherModal'
 import CheckoutModal from '@/components/shopping/CheckoutModal'
 import ItemQuantityModal from '@/components/shopping/ItemQuantityModal'
 import PantryView from '@/components/shopping/PantryView'
-import type { ShoppingList, ShoppingItem, FoodGroup, AppSettings } from '@/types'
+import type { ShoppingList, ShoppingItem, FoodGroup, AppSettings, FoodPrice } from '@/types'
 
 const CATEGORY_ORDER = ['proteins', 'vegetables', 'carbs', 'fruits', 'dairy', 'fats', 'other'] as const
+
+const CATEGORY_ITEMS: { key: FoodGroup['category']; label: string; icon: string }[] = [
+  { key: 'proteins', label: 'Proteine', icon: '🍗' },
+  { key: 'vegetables', label: 'Verdure', icon: '🥦' },
+  { key: 'carbs', label: 'Carboidrati', icon: '🍞' },
+  { key: 'dairy', label: 'Latticini', icon: '🧀' },
+  { key: 'fruits', label: 'Frutta', icon: '🍎' },
+  { key: 'fats', label: 'Grassi', icon: '🥑' },
+  { key: 'other', label: 'Altro', icon: '🧂' },
+]
+
+const CATEGORY_QUICK_ADDONS: Record<
+  FoodGroup['category'],
+  Array<{ name: string; quantity: number; unit: string; icon: string }>
+> = {
+  proteins: [
+    { name: 'Petto di pollo', quantity: 200, unit: 'g', icon: '🍗' },
+    { name: 'Salmone fresco', quantity: 200, unit: 'g', icon: '🐟' },
+    { name: 'Uova medie', quantity: 6, unit: 'pz', icon: '🥚' },
+    { name: 'Macinato magro', quantity: 250, unit: 'g', icon: '🥩' },
+    { name: 'Tonno al naturale', quantity: 160, unit: 'g', icon: '🥫' },
+    { name: 'Feta DOP', quantity: 200, unit: 'g', icon: '🧀' },
+    { name: 'Ricotta fresca', quantity: 200, unit: 'g', icon: '🥣' },
+    { name: 'Lenticchie secche', quantity: 250, unit: 'g', icon: '🍲' },
+  ],
+  vegetables: [
+    { name: 'Zucchine', quantity: 500, unit: 'g', icon: '🥒' },
+    { name: 'Pomodorini', quantity: 300, unit: 'g', icon: '🍅' },
+    { name: 'Spinaci freschi', quantity: 250, unit: 'g', icon: '🥬' },
+    { name: 'Insalata mista', quantity: 150, unit: 'g', icon: '🥗' },
+    { name: 'Carote', quantity: 500, unit: 'g', icon: '🥕' },
+    { name: 'Peperoni', quantity: 400, unit: 'g', icon: '🫑' },
+    { name: 'Finocchi', quantity: 400, unit: 'g', icon: '🧅' },
+    { name: 'Broccoli', quantity: 400, unit: 'g', icon: '🥦' },
+  ],
+  carbs: [
+    { name: 'Pasta integrale', quantity: 500, unit: 'g', icon: '🍝' },
+    { name: 'Riso Basmati', quantity: 500, unit: 'g', icon: '🍚' },
+    { name: 'Fiocchi d\'avena', quantity: 350, unit: 'g', icon: '🥣' },
+    { name: 'Pane di segale', quantity: 400, unit: 'g', icon: '🍞' },
+    { name: 'Patate', quantity: 1000, unit: 'g', icon: '🥔' },
+    { name: 'Gallette di riso', quantity: 120, unit: 'g', icon: '🍘' },
+    { name: 'Couscous', quantity: 500, unit: 'g', icon: '🌾' },
+    { name: 'Piadina integrale', quantity: 3, unit: 'pz', icon: '🫓' },
+  ],
+  dairy: [
+    { name: 'Yogurt Greco 0%', quantity: 170, unit: 'g', icon: '🥣' },
+    { name: 'Feta DOP', quantity: 200, unit: 'g', icon: '🧀' },
+    { name: 'Latte scremato', quantity: 1, unit: 'l', icon: '🥛' },
+    { name: 'Fiocchi di latte', quantity: 200, unit: 'g', icon: '🥣' },
+    { name: 'Mozzarella light', quantity: 125, unit: 'g', icon: '🧀' },
+    { name: 'Parmigiano Reggiano', quantity: 100, unit: 'g', icon: '🧀' },
+  ],
+  fruits: [
+    { name: 'Banane', quantity: 500, unit: 'g', icon: '🍌' },
+    { name: 'Mele', quantity: 600, unit: 'g', icon: '🍎' },
+    { name: 'Mirtilli freschi', quantity: 125, unit: 'g', icon: '🫐' },
+    { name: 'Arance', quantity: 1000, unit: 'g', icon: '🍊' },
+    { name: 'Kiwi', quantity: 400, unit: 'g', icon: '🥝' },
+    { name: 'Fragole', quantity: 250, unit: 'g', icon: '🍓' },
+  ],
+  fats: [
+    { name: 'Olio extravergine d\'oliva', quantity: 1, unit: 'l', icon: '🫒' },
+    { name: 'Mandorle sgusciate', quantity: 150, unit: 'g', icon: '🥜' },
+    { name: 'Noci sgusciate', quantity: 150, unit: 'g', icon: '🌰' },
+    { name: 'Burro d\'arachidi 100%', quantity: 350, unit: 'g', icon: '🥜' },
+    { name: 'Avocado Hass', quantity: 2, unit: 'pz', icon: '🥑' },
+    { name: 'Semi di chia', quantity: 200, unit: 'g', icon: '🌱' },
+  ],
+  other: [
+    { name: 'Sale fino iodato', quantity: 1, unit: 'conf', icon: '🧂' },
+    { name: 'Pepe nero macinato', quantity: 1, unit: 'conf', icon: '🧂' },
+    { name: 'Origano secco', quantity: 1, unit: 'conf', icon: '🌿' },
+    { name: 'Aglio fresco', quantity: 1, unit: 'conf', icon: '🧄' },
+    { name: 'Caffè macinato', quantity: 250, unit: 'g', icon: '☕' },
+    { name: 'Lievito istantaneo', quantity: 1, unit: 'conf', icon: '🧁' },
+  ],
+}
 
 export default function ShoppingPage() {
   const [activeTab, setActiveTab] = useState<'shopping' | 'pantry'>('shopping')
@@ -26,7 +106,7 @@ export default function ShoppingPage() {
 
   // Modali
   const [itemForPriceModal, setItemForPriceModal] = useState<ShoppingItem | null>(null)
-  const [historicalPriceForModal, setHistoricalPriceForModal] = useState<number | undefined>(undefined)
+  const [historicalPriceDetailsForModal, setHistoricalPriceDetailsForModal] = useState<FoodPrice | undefined>(undefined)
   const [itemForQuantityModal, setItemForQuantityModal] = useState<ShoppingItem | null>(null)
   const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false)
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false)
@@ -34,9 +114,10 @@ export default function ShoppingPage() {
 
   // Form rapido aggiungi cibo manuale
   const [manualName, setManualName] = useState('')
-  const [manualQty, setManualQty] = useState('1')
-  const [manualUnit, setManualUnit] = useState('pz')
-  const [manualCat, setManualCat] = useState<FoodGroup['category']>('vegetables')
+  const [manualQty, setManualQty] = useState('200')
+  const [manualUnit, setManualUnit] = useState('g')
+  const [manualCat, setManualCat] = useState<FoodGroup['category']>('proteins')
+  const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
 
   // Live queries
   const shoppingLists = useLiveQuery(
@@ -195,9 +276,9 @@ export default function ShoppingPage() {
     if (!currentList) return
 
     if (!item.isChecked) {
-      // Inserimento nel carrello: chiedi o conferma prezzo
-      const lastPrice = await getFoodPrice(item.name)
-      setHistoricalPriceForModal(lastPrice)
+      // Inserimento nel carrello: recupera dettagli prezzo e quota unitaria memorizzata
+      const details = await getFoodPriceDetails(item.name)
+      setHistoricalPriceDetailsForModal(details)
       setItemForPriceModal(item)
     } else {
       // Rimozione dal carrello: azzera il prezzo e togli la spunta
@@ -211,16 +292,49 @@ export default function ShoppingPage() {
     }
   }
 
-  const handleConfirmPrice = async (price: number) => {
+  const handleConfirmPrice = async (
+    price: number,
+    updatedQuantity?: number,
+    updatedUnit?: string
+  ) => {
     if (!currentList || !itemForPriceModal) return
+
+    const finalQty = updatedQuantity !== undefined ? updatedQuantity : itemForPriceModal.quantity
+    const finalUnit = updatedUnit !== undefined ? updatedUnit : itemForPriceModal.unit
+
+    // 1. Aggiorna l'articolo nella lista della spesa
     const updated = currentList.items.map(i =>
-      i.id === itemForPriceModal.id ? { ...i, isChecked: true, price } : i
+      i.id === itemForPriceModal.id
+        ? { ...i, isChecked: true, price, quantity: finalQty, unit: finalUnit }
+        : i
     )
     await db.shoppingLists.update(currentList.id, {
       items: updated,
       updatedAt: new Date(),
     })
+
+    // 2. Memorizza SUBITO il prezzo e il prezzo unitario nel database!
+    if (price > 0) {
+      await saveFoodPrice(itemForPriceModal.name, price, finalQty, finalUnit)
+    }
+
+    setToastMsg(`✅ "${itemForPriceModal.name}" inserito nel carrello (${price.toFixed(2)} €)`)
+    setTimeout(() => setToastMsg(''), 2500)
     setItemForPriceModal(null)
+  }
+
+  const handleManualQtyStep = (delta: number) => {
+    const current = parseFloat(manualQty) || 1
+    let stepAmount = delta
+    if (manualUnit === 'g' || manualUnit === 'ml') {
+      stepAmount = delta * (current >= 200 ? 50 : 25)
+    } else if (manualUnit === 'kg' || manualUnit === 'l') {
+      stepAmount = delta * 0.5
+    } else {
+      stepAmount = delta * 1
+    }
+    const next = Math.max(0.1, Math.round((current + stepAmount) * 10) / 10)
+    setManualQty(String(next))
   }
 
   const handleSaveItemQuantity = async (itemId: string, newQuantity: number, newUnit: string) => {
@@ -238,12 +352,13 @@ export default function ShoppingPage() {
 
   const handleDeleteItem = async (itemId: string) => {
     if (!currentList) return
+    const targetItem = currentList.items.find(i => i.id === itemId)
     const updated = currentList.items.filter(i => i.id !== itemId)
     await db.shoppingLists.update(currentList.id, {
       items: updated,
       updatedAt: new Date(),
     })
-    setToastMsg('🗑️ Articolo rimosso dalla spesa')
+    setToastMsg(`🗑️ "${targetItem?.name || 'Articolo'}" rimosso dalla spesa`)
     setTimeout(() => setToastMsg(''), 2500)
   }
 
@@ -252,7 +367,7 @@ export default function ShoppingPage() {
     if (!manualName.trim() || !currentList) return
 
     const qty = parseFloat(manualQty) || 1
-    const historicalPrice = await getFoodPrice(manualName.trim())
+    const historicalPrice = await getFoodPrice(manualName.trim(), qty, manualUnit)
 
     const newItem: ShoppingItem = {
       id: generateId(),
@@ -287,7 +402,7 @@ export default function ShoppingPage() {
       list = await generateShoppingList(weekStart)
     }
 
-    const historicalPrice = await getFoodPrice(name)
+    const historicalPrice = await getFoodPrice(name, quantity, unit)
     const newItem: ShoppingItem = {
       id: generateId(),
       name,
@@ -305,7 +420,7 @@ export default function ShoppingPage() {
       updatedAt: new Date(),
     })
 
-    setToastMsg(`+ "${name}" aggiunto alla spesa!`)
+    setToastMsg(`🛒 "${name}" aggiunto alla spesa!`)
     setTimeout(() => setToastMsg(''), 2500)
   }
 
@@ -459,67 +574,179 @@ export default function ShoppingPage() {
            ═══════════════════════════════════════════════════════════════════════ */}
         {activeTab === 'shopping' && (
           <div className="space-y-4 animate-fade-in">
-            {/* Form Aggiunta Rapida Alimento Manuale */}
-            <form
-              onSubmit={handleAddManualItem}
-              className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-2.5 shadow-2xs space-y-2"
-            >
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  required
-                  placeholder="Cosa ti serve? (es. Olio, Frutta, Pane)"
-                  value={manualName}
-                  onChange={e => setManualName(e.target.value)}
-                  className="input-field text-xs font-semibold flex-1 py-2"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  value={manualQty}
-                  onChange={e => setManualQty(e.target.value)}
-                  className="input-field text-xs font-semibold w-16 text-center py-2"
-                />
-                <select
-                  value={manualUnit}
-                  onChange={e => setManualUnit(e.target.value)}
-                  className="input-field text-xs font-semibold w-16 py-2 px-1"
-                >
-                  <option value="pz">pz</option>
-                  <option value="g">g</option>
-                  <option value="kg">kg</option>
-                  <option value="ml">ml</option>
-                  <option value="conf">conf</option>
-                </select>
-                <button
-                  type="submit"
-                  disabled={!manualName.trim()}
-                  className="btn-primary py-2 px-3 text-xs font-bold flex-shrink-0 rounded-xl shadow-xs"
-                >
-                  + Aggiungi
-                </button>
+            {/* ── SEZIONE INSERIMENTO INGREDIENTE RIDISEGNATA ── */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800 rounded-3xl p-4 shadow-sm space-y-3.5 transition-all duration-300">
+              {/* 1. Categorie di Cibo in Alto */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Scegli Categoria:
+                  </span>
+                  <span className="text-[11px] font-extrabold text-primary-600 dark:text-primary-400">
+                    {CATEGORY_LABELS[manualCat]}
+                  </span>
+                </div>
+
+                {/* Barra orizzontale categorie */}
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                  {CATEGORY_ITEMS.map(({ key, label, icon }) => {
+                    const isSelected = manualCat === key
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setManualCat(key)
+                          if (key === 'vegetables' || key === 'proteins' || key === 'carbs') {
+                            if (manualUnit === 'pz') setManualUnit('g')
+                          }
+                        }}
+                        className={cn(
+                          'py-1.5 px-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs',
+                          isSelected
+                            ? 'bg-primary-600 text-white shadow-xs ring-2 ring-primary-500/30'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        )}
+                      >
+                        <span>{icon}</span>
+                        <span>{label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pt-0.5">
-                <span className="text-[10px] text-gray-400 font-bold uppercase flex-shrink-0 mr-1">
-                  Cat:
-                </span>
-                {(['vegetables', 'proteins', 'carbs', 'dairy', 'fruits', 'fats', 'other'] as const).map(c => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setManualCat(c)}
-                    className={`py-0.5 px-2 rounded-lg text-[10px] font-bold whitespace-nowrap transition-colors ${
-                      manualCat === c
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                    }`}
-                  >
-                    {CATEGORY_ICONS[c]} {CATEGORY_LABELS[c]}
-                  </button>
-                ))}
+              {/* 2. Card Add-on Sotto la Categoria Selezionata */}
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-wider">
+                  Alimenti frequenti in {CATEGORY_LABELS[manualCat]}:
+                </p>
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                  {CATEGORY_QUICK_ADDONS[manualCat].map((addon, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setManualName(addon.name)
+                        setManualQty(String(addon.quantity))
+                        setManualUnit(addon.unit)
+                        setIsAddFormExpanded(true)
+                      }}
+                      className="group flex items-center gap-1.5 py-1.5 pl-2.5 pr-1.5 rounded-2xl bg-gray-50 dark:bg-gray-800/70 border border-gray-200/80 dark:border-gray-700 text-left cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 dark:hover:bg-primary-950/20 transition-all flex-shrink-0 active:scale-95 shadow-2xs"
+                      title="Tocca per inserire o premi + per aggiungere subito"
+                    >
+                      <span className="text-sm">{addon.icon}</span>
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-tight">
+                          {addon.name}
+                        </p>
+                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">
+                          {addon.quantity}{addon.unit}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleAddSuggestionToShopping(addon.name, manualCat, addon.quantity, addon.unit)
+                        }}
+                        className="w-6 h-6 rounded-xl bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-300 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-xs font-black hover:bg-primary-600 hover:text-white transition-colors ml-1 shadow-2xs"
+                        title="Aggiungi subito alla lista della spesa"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </form>
+
+              {/* 3. Form Inserimento con Auto-Espansione, Input text-base (no zoom) e Stepper +/- */}
+              <form onSubmit={handleAddManualItem} className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300">
+                      Nome ingrediente:
+                    </label>
+                    {isAddFormExpanded && (
+                      <button
+                        type="button"
+                        onClick={() => setIsAddFormExpanded(false)}
+                        className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        Comprimi
+                      </button>
+                    )}
+                  </div>
+                  {/* Campo di testo con font size >= 16px (text-base) per eliminare lo zoom automatico iOS */}
+                  <input
+                    type="text"
+                    required
+                    placeholder="Cosa ti serve? (es. Petto di pollo, Zucchine...)"
+                    value={manualName}
+                    onFocus={() => setIsAddFormExpanded(true)}
+                    onChange={e => setManualName(e.target.value)}
+                    className="w-full text-base font-semibold py-2.5 px-3.5 bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-gray-900 transition-all shadow-2xs"
+                  />
+                </div>
+
+                {/* Sezione Espandibile Quantità con Stepper - / + e Unità */}
+                <div className="flex items-center gap-2">
+                  {/* Stepper Quantità */}
+                  <div className="flex-1 flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800/80 p-1 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => handleManualQtyStep(-1)}
+                      className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-extrabold text-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 transition-all shadow-2xs border border-gray-200/60 dark:border-gray-600/60"
+                      title="Diminuisci quantità"
+                    >
+                      −
+                    </button>
+
+                    <input
+                      type="number"
+                      step="any"
+                      min="0.1"
+                      value={manualQty}
+                      onChange={e => setManualQty(e.target.value)}
+                      className="flex-1 text-base font-black text-center py-1.5 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none"
+                      title="Quantità"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => handleManualQtyStep(1)}
+                      className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-extrabold text-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-95 transition-all shadow-2xs border border-gray-200/60 dark:border-gray-600/60"
+                      title="Aumenta quantità"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Selettore Unità */}
+                  <select
+                    value={manualUnit}
+                    onChange={e => setManualUnit(e.target.value)}
+                    className="w-24 h-11 text-xs font-bold bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl px-2 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-2xs"
+                  >
+                    <option value="g">g</option>
+                    <option value="kg">kg</option>
+                    <option value="pz">pz</option>
+                    <option value="ml">ml</option>
+                    <option value="l">l</option>
+                    <option value="conf">conf</option>
+                  </select>
+
+                  {/* Bottone Aggiungi */}
+                  <button
+                    type="submit"
+                    disabled={!manualName.trim()}
+                    className="btn-primary h-11 px-4 text-xs font-black rounded-2xl shadow-sm flex items-center gap-1.5 flex-shrink-0 disabled:opacity-50"
+                  >
+                    <span>+</span>
+                    <span>Aggiungi</span>
+                  </button>
+                </div>
+              </form>
+            </div>
 
             {!currentList || currentList.items.length === 0 ? (
               <EmptyState
@@ -599,22 +826,33 @@ export default function ShoppingPage() {
                           <div
                             key={item.id}
                             className={cn(
-                              'flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors',
+                              'group flex items-center gap-3 px-3.5 py-3 hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors',
                               item.isChecked && 'bg-emerald-50/20 dark:bg-emerald-950/15'
                             )}
-                            onClick={() => handleItemCheckClick(item)}
                           >
-                            <input
-                              type="checkbox"
-                              checked={item.isChecked}
-                              onChange={() => {}} // gestito da onClick contenitore
-                              className="w-5 h-5 rounded border-gray-300 dark:border-gray-700 text-primary-500 accent-primary-500 cursor-pointer flex-shrink-0"
-                            />
+                            {/* Checkbox per confermare acquisto o rimuovere dal carrello */}
+                            <button
+                              type="button"
+                              onClick={() => handleItemCheckClick(item)}
+                              className="flex items-center justify-center p-1"
+                              title={item.isChecked ? 'Rimuovi dal carrello' : 'Spunta e inserisci prezzo'}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={item.isChecked}
+                                onChange={() => {}} // gestito da handleItemCheckClick
+                                className="w-5 h-5 rounded-md border-gray-300 dark:border-gray-700 text-emerald-600 accent-emerald-600 cursor-pointer"
+                              />
+                            </button>
 
-                            <div className="flex-1 min-w-0">
+                            {/* Nome e Ricette collegate (tappabile per confermare prezzo) */}
+                            <div
+                              className="flex-1 min-w-0 cursor-pointer"
+                              onClick={() => handleItemCheckClick(item)}
+                            >
                               <p
                                 className={cn(
-                                  'text-xs sm:text-sm font-semibold truncate',
+                                  'text-xs sm:text-sm font-semibold truncate transition-colors',
                                   item.isChecked
                                     ? 'line-through text-gray-400 dark:text-gray-500'
                                     : 'text-gray-900 dark:text-gray-100'
@@ -623,7 +861,7 @@ export default function ShoppingPage() {
                                 {item.name}
                               </p>
                               {item.recipes.length > 0 && (
-                                <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">
                                   {item.recipes.length} {item.recipes.length > 1 ? 'ricette' : 'ricetta'}
                                 </p>
                               )}
@@ -638,7 +876,7 @@ export default function ShoppingPage() {
                                   setItemForQuantityModal(item)
                                 }}
                                 title="Tocca per modificare la quantità o l'unità"
-                                className="group px-2 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-left transition-all active:scale-95 flex items-center gap-1 border border-gray-200/60 dark:border-gray-700/60"
+                                className="group px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-left transition-all active:scale-95 flex items-center gap-1 border border-gray-200/60 dark:border-gray-700/60"
                               >
                                 <span
                                   className={cn(
@@ -655,18 +893,32 @@ export default function ShoppingPage() {
                                 </span>
                               </button>
 
-                              <div className="text-right min-w-[48px]">
+                              {/* Prezzo Effettivo o Stimato */}
+                              <div className="text-right min-w-[50px]">
                                 {item.isChecked && item.price !== undefined && item.price > 0 && (
-                                  <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-800 block">
+                                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 block shadow-2xs">
                                     {item.price.toFixed(2)} €
                                   </span>
                                 )}
                                 {!item.isChecked && item.estimatedPrice && item.estimatedPrice > 0 && (
-                                  <span className="text-[10px] text-gray-400 dark:text-gray-500 block">
+                                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 block">
                                     ~{item.estimatedPrice.toFixed(2)} €
                                   </span>
                                 )}
                               </div>
+
+                              {/* Pulsante Eliminazione Diretta Articolo */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteItem(item.id)
+                                }}
+                                title="Rimuovi questo ingrediente dalla lista della spesa"
+                                className="w-8 h-8 rounded-xl bg-gray-50 hover:bg-rose-50 dark:bg-gray-800/60 dark:hover:bg-rose-950/60 text-gray-400 hover:text-rose-600 dark:text-gray-500 dark:hover:text-rose-400 flex items-center justify-center text-sm transition-all active:scale-90 border border-transparent hover:border-rose-200 dark:hover:border-rose-800 flex-shrink-0"
+                              >
+                                🗑️
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -804,7 +1056,7 @@ export default function ShoppingPage() {
       <PriceConfirmModal
         isOpen={Boolean(itemForPriceModal)}
         item={itemForPriceModal}
-        lastHistoricalPrice={historicalPriceForModal}
+        foodPriceDetails={historicalPriceDetailsForModal}
         onConfirm={handleConfirmPrice}
         onClose={() => setItemForPriceModal(null)}
       />
